@@ -1,0 +1,525 @@
+{
+package parser
+
+func toStringSlice(strs any) []string {
+	if strs == nil {
+		return nil
+	}
+
+	items := strs.([]any)
+	ret := make([]string, 0, len(items))
+	for i := range items {
+		item := items[i].(string)
+		
+		ret = append(ret, item)
+	}
+
+	return ret
+}
+
+func toFieldSlice(fields any) []*Field {
+	if fields == nil {
+		return nil
+	}
+	
+	items := fields.([]any)
+	ret := make([]*Field, 0, len(items))
+	for i := range items {
+		item := items[i].(*Field)
+		ret = append(ret, item)
+	}
+	return ret
+}
+
+func toConstValueSlice(values any) []*ConstValue {
+	if values == nil {
+		return nil
+	}
+
+	items := values.([]any)
+	ret := make([]*ConstValue, 0, len(items))
+	for i := range items {
+		item := items[i].(*ConstValue)
+		ret = append(ret, item)
+	}
+	return ret
+}
+
+func toString(text any) string {
+	if text == nil {
+		return ""
+	}
+
+	data := text.([]interface{})
+	
+	ret := bytes.NewBuffer(nil)
+	for i := range data {
+		ret.WriteString(data[i].(string))
+	}
+
+	return ret.String()
+}
+
+func toStructSlice(structs any) []*Struct {
+	if structs == nil {
+		return nil
+	}
+	items := structs.([]any)
+	ret := make([]*Struct, 0, len(items))
+	for i := range items {
+		ret = append(ret, items[i].(*Struct))
+	}
+	return ret
+}
+
+}
+
+Document = def:Definition* Skip !. {
+	return NewDocument(toStructSlice(def)), nil
+}
+
+Definition = Skip s:Struct SkipLine {
+	return s.(*Struct), nil
+}
+
+Struct = STRUCT id:StructIdentifier LCUR fields:Field* RCUR {
+	return NewStruct(id.(*Identifier), toFieldSlice(fields)), nil
+} //{errIdentifier} ErrStructIdentifier //{errLCUR} ErrStructLCUR //{errRCUR} ErrStructRCUR
+
+Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldType:FieldType id:Identifier value:(EQUAL ConstValue)? ListSeparator? lineComments:ReservedEndLineComments SkipLine {
+        var constV *ConstValue
+	if value !=  nil {
+	   constV = value.([]interface{})[1].(*ConstValue)
+	}
+	var requiredV *Required
+	if required != nil {
+		requiredV = required.(*Required)
+	}
+
+	return NewField(comments.(string), lineComments.(string), int(index.(int64)), requiredV, fieldType.(*FieldType), id.(*Identifier), constV), nil
+} //{errFieldIndex} ErrFieldIndex
+
+
+FieldId = Skip i:FieldIndex COLON Indent* {
+	return i, nil
+} 
+FieldReq = Skip r:IsRequired Indent* {
+	if r == nil {
+		return nil, nil
+	}
+	return r.(*Required), nil
+}
+IsRequired = v:("required" / "optional") {
+	if v == nil {
+		return nil, nil
+	}
+	return NewRequired(string(v.([]byte)) == "required", c.pos), nil
+}
+
+FieldType  = v:(ContainerType / BaseType / IdentifierType) {
+	return v.(*FieldType), nil
+}
+
+IdentifierType = v:Identifier {
+	return v.(*Identifier).ToFieldType(), nil
+}
+
+BaseType = v:(BOOL / BYTE / I8 / I16 / I32 / I64 / DOUBLE / STRING / BINARY) {
+	return NewFieldType(v.(*TypeName), nil, nil), nil
+}
+
+ContainerType = v:(MapType / SetType / ListType) {
+	return v.(*FieldType), nil
+}
+
+MapType =  t:MAP CppType? LPOINT key:FieldType COMMA value:FieldType RPOINT {
+	return NewFieldType(t.(*TypeName), key.(*FieldType), value.(*FieldType)), nil
+}
+
+SetType = t:SET CppType? LPOINT key:FieldType RPOINT {
+	return NewFieldType(t.(*TypeName), key.(*FieldType), nil), nil
+}
+
+ListType = t:LIST LPOINT key:FieldType RPOINT CppType? {
+	return NewFieldType(t.(*TypeName), key.(*FieldType), nil), nil
+}
+
+CppType = CPPTYPE Literal
+
+ConstValue = v:(DoubleConstant / IntConstant / Literal / IdentifierConst / ConstList / ConstMap) {
+	return v.(*ConstValue), nil
+}
+
+IdentifierConst = id:Identifier {
+	return NewConstValue("identifier", id.(*Identifier).Name), nil
+}
+
+IntConstant = Skip  v:(HexIntConstant / OctIntConstant / NormalIntConstant)  Indent* {
+	return v.(*ConstValue), nil
+}
+
+HexIntConstant = "0x" ([0-9] / [A-Z] / [a-z])+ {
+        v, err := strconv.ParseInt(string(c.text), 16, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewConstValue("i64", v), nil
+}
+
+OctIntConstant = "0o" Digit+ {
+	v, err := strconv.ParseInt(string(c.text), 8, 64)
+	if err != nil {
+		return nil, err
+	}
+	return NewConstValue("i64", v), nil
+}
+
+NormalIntConstant = ('+' / '-')? Digit+ {
+	v, err := strconv.ParseInt(string(c.text), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return NewConstValue("i64", v), nil
+}
+
+FieldIndex = Digit+ {
+	v, err := strconv.ParseInt(string(c.text), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return v, nil
+} / %{errFieldIndex}
+
+DoubleConstant  = Skip ('+' / '-')? v:(
+        Digit* '.' Digit+  Exponent?
+    /   Digit+ Exponent
+    ) Indent* {
+    	v, err := strconv.ParseFloat(string(c.text), 64)
+	if err != nil {
+		return nil, err
+	}
+    	return NewConstValue("double", v), nil
+    }
+
+Exponent = ('e' / 'E') IntConstant
+
+ConstList  = LBRK v:ConstListItem* RBRK {
+	return toConstValueSlice(v), nil
+}
+
+ConstListItem = v:ConstValue ListSeparator? {
+	return v.(*ConstValue), nil
+}
+
+ConstMap  = LCUR v:ConstMapItem* RCUR {
+	return toConstValueSlice(v), nil
+}
+
+ConstMapItem = key:ConstValue COLON value:ConstValue ListSeparator? {
+	return NewMapConstValue(key.(*ConstValue), value.(*ConstValue)), nil
+}
+
+EscapeLiteralChar = '\\' ["']
+
+Literal = l:(Literal1 / Literal2) {
+	return l, nil
+}
+
+Literal1 = Skip '"' t:(EscapeLiteralChar / !'"' .)* '"' Indent* {
+	return t.(string), nil	
+}
+Literal2 = Skip "'" t:(EscapeLiteralChar / !"'" .)* "'" Indent* {
+	return t.(string), nil
+}
+
+StructIdentifier = id:Identifier {
+	return id.(*Identifier), nil
+} / %{errIdentifier}
+
+Identifier = Skip id:IdentifierToken Indent* {
+	return id.(*Identifier), nil
+}
+
+IdentifierToken = Letter ( Letter / Digit / '.' )* {
+	return NewIdentifier(string(c.text), c.pos), nil
+} 
+
+ListSeparator = Skip (',' / ';') Indent*
+
+Letter = [A-Z] / [a-z] / '_' {
+	return string(c.text), nil
+}
+LetterOrDigit = [a-z] / [A-Z] / [0-9] / [_$] {
+	return string(c.text), nil
+}
+
+Digit = [0-9] {
+	return string(c.text), nil
+}
+
+ReservedComments = Skip 
+ReservedEndLineComments = SkipLine
+
+Skip = comments:(Space / Comment)* {
+	return strings.Join(toStringSlice(comments), "\n"), nil
+}
+SkipLine = comments:(Indent / Comment)* {
+	return strings.Join(toStringSlice(comments), "\n"), nil
+}
+
+Space = (Indent / CarriageReturnLineFeed)+ {
+	return "", nil
+}
+Indent = [ \t\v] {
+	return "", nil
+}
+CarriageReturnLineFeed = [\r\n]
+
+Comment = v:(LongComment / LineComment / UnixComment) {
+	return v.(string), nil
+}
+LongComment = "/*" comment:LongCommentMatch "*/" {
+	return comment.(string), nil
+}
+LongCommentMatch = (!"*/" .)* {
+	return string(c.text), nil
+}
+
+LineComment = "//" comment:LineCommentMatch {
+	return comment.(string), nil
+}
+LineCommentMatch = (![\r\n] .)* {
+	return string(c.text), nil
+}
+
+UnixComment = '#' comment:UnixCommentMatch {
+	return comment.(string), nil
+}
+UnixCommentMatch = (![\r\n] .)*  {
+	return string(c.text), nil
+}
+
+BOOL        = Skip t:BOOLToken        !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+BOOLToken  = "bool" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+BYTE        = Skip t:BYTEToken        !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+BYTEToken = "byte" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+I8          = Skip t:I8Token          !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+I8Token = "i8" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+
+I16         = Skip t:I16Token         !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+I16Token = "i16" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+I32         = Skip t:I32Token         !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+I32Token = "i32" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+I64         = Skip t:I64Token         !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+I64Token = "i64" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+DOUBLE      = Skip t:DOUBLEToken      !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+DOUBLEToken = "double" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+STRING      = Skip t:STRINGToken      !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+STRINGToken = "string" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+BINARY      = Skip t:BINARYToken      !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+BINARYToken = "binary" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+CONST       = Skip t:CONSTToken         !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+CONSTToken = "const" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+ONEWAY      = Skip t:ONEWAYToken        !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+ONEWAYToken = "oneway" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+TYPEDEF     = Skip "typedef"       !LetterOrDigit  Indent* {
+	return "typedef", nil
+}
+MAP         = Skip t:MAPToken           !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+MAPToken = "map" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+SET         = Skip t:SETToken           !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+SETToken = "set" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+LIST        = Skip t:ListToken          !LetterOrDigit  Indent* {
+	return t.(*TypeName), nil
+}
+ListToken = "list" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+VOID        = Skip "void"          !LetterOrDigit  Indent* {
+	return "void", nil
+}
+THROWS      = Skip "throws"        !LetterOrDigit  Indent* {
+	return "throws", nil
+}
+EXCEPTION   = Skip "exception"     !LetterOrDigit  Indent* {
+	return "exception", nil
+}
+EXTENDS     = Skip "extends"       !LetterOrDigit  Indent* {
+	return "extends", nil
+}
+SERVICE     = Skip "service"       !LetterOrDigit  Indent* {
+	return "service", nil
+}
+STRUCT      = Skip "struct"        !LetterOrDigit  Indent* {
+	return "struct", nil
+}
+UNION       = Skip "union"         !LetterOrDigit  Indent* {
+	return "union", nil
+}
+ENUM        = Skip "enum"          !LetterOrDigit  Indent* {
+	return "enum", nil
+}
+INCLUDE     = Skip "include"       !LetterOrDigit  Indent* {
+	return "include", nil
+}
+CPPINCLUDE  = Skip "cpp_include"   !LetterOrDigit  Indent* {
+	return "cpp_include", nil
+}
+NAMESPACE   = Skip "namespace"     !LetterOrDigit  Indent* {
+	return "namespace", nil
+}
+CPPTYPE     = Skip "cpp_type"      !LetterOrDigit  Indent* {
+	return "cpp_type", nil
+}
+LBRK        = Skip "["     Indent* {
+	return "[", nil
+}
+RBRK        = Skip "]"     Indent* {
+	return "]", nil
+}
+LCUR       = Skip t:LCURToken     Indent* {
+	return t.(string), nil
+}
+RCUR       = Skip t:RCURToken     Indent* {
+	return t.(string), nil
+}
+LCURToken = "{" {
+	return string(c.text), nil
+} / %{errLCUR}
+RCURToken = "}" {
+	return string(c.text), nil
+} / %{errRCUR}
+EQUAL       = Skip "="     Indent* {
+	return "=", nil
+}
+LPOINT      = Skip "<"     Indent* {
+	return "<", nil
+}
+RPOINT      = Skip ">"     Indent* {
+	return ">", nil
+}
+COMMA       = Skip ","     Indent* {
+	return ",", nil
+}
+LPAR        = Skip "("     Indent* {
+	return "(", nil
+}
+RPAR        = Skip ")"     Indent* {
+	return ")", nil
+}
+COLON       = Skip ":"     Indent* {
+	return ":", nil
+}
+
+DefinitionStart = "struct"
+
+ErrFieldType = #{
+	return InvalidFieldTypeError
+} (.)* {
+	t := NewFieldType(nil, nil, nil)
+	t.BadNode = true
+	return t, nil
+}
+
+ErrFieldIndex = &{  
+	return true, nil
+} / #{	
+	return InvalidStructFieldIndexError
+} ( ![0-9] . )* {
+	fmt.Println("recovery field index:", string(c.text))
+	return -1, nil
+}
+
+ErrFieldIndexCOLON = #{
+	return InvalidStructFieldIndexColonError 
+} ( !Letter . ) * {
+	return "?", nil
+}
+
+ErrStructIdentifier = #{
+	return InvalidStructIdentifierError
+} ( !'{' .)* { // struct identifier 异常，consume 掉异常字符直到出现 '{' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+} // 构造 identifier 的 badnode
+
+ErrStructRCUR = #{
+	return InvalidStructBlockRCURError
+} ( !"struct" .)* { // 缺少 '}'，消费异常字符直到出现下一个 struct。TODO(jpf): 后面会加入 typedef 等定义，需要扩展补充
+	return "?", nil
+}
+
+ErrStructLCUR = #{
+	return InvalidStructBlockLCURError
+} ( !(Field / '}') .)* { // 缺少 '}'，消费异常字符直到出现下一个 Field 或者 '}'
+	return "?", nil
+}
