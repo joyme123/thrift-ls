@@ -38,11 +38,10 @@ var (
 	RequiredError         error = errors.New("expecting 'required' or 'optional'")
 	InvalidFieldTypeError error = errors.New("expecting a valid field type")
 
-	InvalidStructIdentifierError      error = errors.New("expecting a valid struct identifier")
-	InvalidStructBlockLCURError       error = errors.New("expecting a starting '{' of struct block")
-	InvalidStructBlockRCURError       error = errors.New("expecting an ending '}' of struct block")
-	InvalidStructFieldIndexError      error = errors.New("expecting a valid struct field index")
-	InvalidStructFieldIndexColonError error = errors.New("expecting a ':' after struct field index")
+	InvalidStructIdentifierError error = errors.New("expecting a valid struct identifier")
+	InvalidStructBlockLCURError  error = errors.New("expecting a starting '{' of struct block")
+	InvalidStructBlockRCURError  error = errors.New("expecting an ending '}' of struct block")
+	InvalidStructFieldError      error = errors.New("expecting a valid field")
 
 	InvalidIdentifierError error = errors.New("expecting a valid identifier")
 )
