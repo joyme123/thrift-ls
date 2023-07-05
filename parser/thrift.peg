@@ -82,9 +82,13 @@ Definition = Skip s:Struct SkipLine {
 	return s.(*Struct), nil
 }
 
-Struct = STRUCT id:StructIdentifier LCUR fields:Field* RCUR {
+Struct = STRUCT id:StructIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewStruct(id.(*Identifier), toFieldSlice(fields)), nil
-} //{errIdentifier} ErrStructIdentifier //{errLCUR} ErrStructLCUR //{errRCUR} ErrStructRCUR
+} //{errIdentifier} ErrStructIdentifier //{errLCUR} ErrStructLCUR //{errRCUR} ErrStructRCUR  //{errField} ErrField
+
+FieldWithThrow = Field / x:( !((Skip '}' Indent*) / STRUCT) %{errField} ) {
+	return x.([]any)[1], nil
+}
 
 Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldType:FieldType id:Identifier value:(EQUAL ConstValue)? ListSeparator? lineComments:ReservedEndLineComments SkipLine {
         var constV *ConstValue
@@ -97,7 +101,7 @@ Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldTyp
 	}
 
 	return NewField(comments.(string), lineComments.(string), int(index.(int64)), requiredV, fieldType.(*FieldType), id.(*Identifier), constV), nil
-} //{errFieldIndex} ErrFieldIndex
+}
 
 
 FieldId = Skip i:FieldIndex COLON Indent* {
@@ -480,27 +484,10 @@ COLON       = Skip ":"     Indent* {
 
 DefinitionStart = "struct"
 
-ErrFieldType = #{
-	return InvalidFieldTypeError
-} (.)* {
-	t := NewFieldType(nil, nil, nil)
-	t.BadNode = true
-	return t, nil
-}
-
-ErrFieldIndex = &{  
-	return true, nil
-} / #{	
-	return InvalidStructFieldIndexError
-} ( ![0-9] . )* {
-	fmt.Println("recovery field index:", string(c.text))
-	return -1, nil
-}
-
-ErrFieldIndexCOLON = #{
-	return InvalidStructFieldIndexColonError 
-} ( !Letter . ) * {
-	return "?", nil
+ErrField = #{
+	return InvalidStructFieldError
+} ( !(Field / (Skip '}' Indent*) / STRUCT ) . )* {
+	return NewField("", "", 0, nil, nil, nil, nil), nil
 }
 
 ErrStructIdentifier = #{
@@ -514,12 +501,12 @@ ErrStructIdentifier = #{
 
 ErrStructRCUR = #{
 	return InvalidStructBlockRCURError
-} ( !"struct" .)* { // 缺少 '}'，消费异常字符直到出现下一个 struct。TODO(jpf): 后面会加入 typedef 等定义，需要扩展补充
+} ( !STRUCT .)* { // 缺少 '}'，消费异常字符直到出现下一个 struct。TODO(jpf): 后面会加入 typedef 等定义，需要扩展补充
 	return "?", nil
 }
 
 ErrStructLCUR = #{
 	return InvalidStructBlockLCURError
-} ( !(Field / '}') .)* { // 缺少 '}'，消费异常字符直到出现下一个 Field 或者 '}'
+} ( !'}' .)* { // 缺少 '{'，消费异常字符直到出现下一个 Field 或者 '}'
 	return "?", nil
 }

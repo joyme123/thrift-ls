@@ -71,6 +71,8 @@ type Field struct {
 	FieldType    *FieldType
 	Identifier   *Identifier
 	ConstValue   *ConstValue
+
+	BadNode bool
 }
 
 func NewField(comments string, lineComments string, index int, required *Required, fieldType *FieldType, identifier *Identifier, constValue *ConstValue) *Field {
@@ -82,6 +84,7 @@ func NewField(comments string, lineComments string, index int, required *Require
 		FieldType:    fieldType,
 		Identifier:   identifier,
 		ConstValue:   constValue,
+		BadNode:      fieldType == nil,
 	}
 	return field
 }
