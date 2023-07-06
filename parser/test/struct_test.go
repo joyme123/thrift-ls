@@ -48,40 +48,6 @@ struct Demos{
 	os.WriteFile("/tmp/ast", data, os.ModePerm)
 }
 
-func Test_ParseStructBlockLCURError(t *testing.T) {
-
-	demoContent := `struct Demo
-  // Name is demo name, err1, line 3, col 12
-  2: optional boo Required = true; 
-}
-struct Demos!!{ } // err2, line5, col 13
-struct Demos} // err2, line 6, col 13
-struct Demos{}
-`
-
-	ast, err := parser.Parse("test.thrift", []byte(demoContent))
-	assert.Error(t, err)
-	if err != nil {
-		errList, ok := err.(parser.ErrorLister)
-		assert.True(t, ok)
-		errPos := []string{"3:3", "5:13", "6:13"}
-		assert.Len(t, errList.Errors(), len(errPos))
-		assert.True(t, containsError(errList.Errors(), parser.InvalidStructBlockLCURError))
-
-		for i, err := range errList.Errors() {
-			assert.Contains(t, err.Error(), errPos[i])
-			t.Logf("error %d: %v\n", i, err)
-		}
-	}
-
-	assert.NotNil(t, ast)
-
-	data, err := json.MarshalIndent(ast, "", "  ")
-	assert.NoError(t, err)
-
-	os.WriteFile("/tmp/ast", data, os.ModePerm)
-}
-
 func Test_ParseStructBlockRCURError(t *testing.T) {
 
 	demoContent := `struct Demo {
@@ -143,6 +109,24 @@ func Test_ParseStructFieldError(t *testing.T) {
 			t.Logf("error %d: %v\n", i, err)
 		}
 	}
+
+	assert.NotNil(t, ast)
+
+	data, err := json.MarshalIndent(ast, "", "  ")
+	assert.NoError(t, err)
+
+	os.WriteFile("/tmp/ast", data, os.ModePerm)
+}
+
+func Test_ParseStructFieldDefault(t *testing.T) {
+	demoContent := `struct Demo {
+1: optional set<string> with_default = [ "test", "aaa" ]
+2: optional set<binary> bin_set = {}
+3: optional map<binary,i32> bin_map = {}
+}
+`
+	ast, err := parser.Parse("test.thrift", []byte(demoContent))
+	assert.NoError(t, err)
 
 	assert.NotNil(t, ast)
 

@@ -9,7 +9,17 @@ func toStringSlice(strs any) []string {
 	items := strs.([]any)
 	ret := make([]string, 0, len(items))
 	for i := range items {
-		item := items[i].(string)
+		var item string
+		if _, ok := items[i].([]interface{}); ok {
+			data := items[i].([]interface{})[1]
+			if bs, ok := data.([]uint8); ok {
+				item = string(bs)
+			} else {
+				item = items[i].([]interface{})[1].(string)
+			}
+		} else {
+			item = items[i].(string)
+		}
 		
 		ret = append(ret, item)
 	}
@@ -60,37 +70,100 @@ func toString(text any) string {
 	return ret.String()
 }
 
-func toStructSlice(structs any) []*Struct {
-	if structs == nil {
+func toDefinitionSlice(defs any) []Definition {
+	if defs == nil {
 		return nil
 	}
-	items := structs.([]any)
-	ret := make([]*Struct, 0, len(items))
+	items := defs.([]any)
+	ret := make([]Definition, 0, len(items))
 	for i := range items {
-		ret = append(ret, items[i].(*Struct))
+		ret = append(ret, items[i].(Definition))
+	}
+	return ret
+}
+
+func toEnumValueSlice(v any) []*EnumValue {
+	if v == nil {
+		return nil
+	}
+	values := v.([]any)
+
+	ret := make([]*EnumValue, 0, len(values))
+	value := int64(0)
+	for _, v := range values {
+		fields := v.([]any)
+		comments := fields[0].(string)
+		name := fields[1].(*Identifier)
+		valuePair := fields[2]
+		if valuePair != nil {
+			value = valuePair.([]any)[1].(*ConstValue).Value.(int64)
+		}
+
+		enumValue := NewEnumValue(name, value, comments)
+		value++
+		ret = append(ret, enumValue)
 	}
 	return ret
 }
 
 }
 
-Document = def:Definition* Skip !. {
-	return NewDocument(toStructSlice(def)), nil
+Document = Header*  def:Definition* Skip !. {
+	return NewDocument(toDefinitionSlice(def)), nil
 }
 
-Definition = Skip s:Struct SkipLine {
-	return s.(*Struct), nil
+Header <- Skip (Include / CppInclude / Namespace) SkipLine
+
+Include <- INCLUDE Literal
+
+CppInclude <- CPPINCLUDE Literal
+
+Namespace <- NAMESPACE NamespaceScope Identifier Annotations?
+
+NamespaceScope <- Skip
+    '*' Indent*
+    / Identifier
+
+Definition = comments:ReservedComments Skip v:(Const / Typedef / Enum / Service / Struct / Union / Exception) Annotations? SkipLine {
+	def := v.(Definition)
+	def.SetComments(comments.(string))
+	return def, nil
+}
+
+Const <- CONST t:FieldType name:Identifier EQUAL v:ConstValue ListSeparator? {
+	return NewConst(name.(*Identifier), t.(*FieldType), v.(*ConstValue), ""), nil
+}
+
+Typedef <- TYPEDEF t:FieldType alias:Identifier {
+	return NewTypedef(t.(*FieldType), alias.(*Identifier)), nil
+}
+
+Enum  <- ENUM name:Identifier LCUR v:(ReservedComments Identifier (EQUAL IntConstant)? Annotations? ListSeparator? SkipLine)* RCUR {
+	values := toEnumValueSlice(v)
+	return NewEnum(name.(*Identifier), values), nil
+}
+
+Service <- SERVICE Identifier ( EXTENDS Identifier )? LCUR Function* RCUR {
+	return NewService(), nil
 }
 
 Struct = STRUCT id:StructIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewStruct(id.(*Identifier), toFieldSlice(fields)), nil
-} //{errIdentifier} ErrStructIdentifier //{errLCUR} ErrStructLCUR //{errRCUR} ErrStructRCUR  //{errField} ErrField
+} //{errIdentifier} ErrStructIdentifier //{errRCUR} ErrStructRCUR  //{errField} ErrField
+
+Union <- UNION Identifier LCUR Field* RCUR {
+	return NewUnion(), nil
+}
+
+Exception <- EXCEPTION Identifier LCUR Field* RCUR {
+	return NewException(), nil
+}
 
 FieldWithThrow = Field / x:( !((Skip '}' Indent*) / STRUCT) %{errField} ) {
 	return x.([]any)[1], nil
 }
 
-Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldType:FieldType id:Identifier value:(EQUAL ConstValue)? ListSeparator? lineComments:ReservedEndLineComments SkipLine {
+Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldType:FieldType id:Identifier value:(EQUAL ConstValue)? Annotations? ListSeparator? lineComments:ReservedEndLineComments SkipLine {
         var constV *ConstValue
 	if value !=  nil {
 	   constV = value.([]interface{})[1].(*ConstValue)
@@ -120,7 +193,13 @@ IsRequired = v:("required" / "optional") {
 	return NewRequired(string(v.([]byte)) == "required", c.pos), nil
 }
 
-FieldType  = v:(ContainerType / BaseType / IdentifierType) {
+Function  <- ReservedComments Skip ONEWAY? FunctionType Identifier LPAR Field* RPAR Throws? Annotations? ListSeparator? SkipLine
+
+FunctionType  <- VOID / FieldType
+
+Throws <- THROWS LPAR Field* RPAR
+
+FieldType  = v:(ContainerType / BaseType / IdentifierType) Annotations? {
 	return v.(*FieldType), nil
 }
 
@@ -150,7 +229,12 @@ ListType = t:LIST LPOINT key:FieldType RPOINT CppType? {
 
 CppType = CPPTYPE Literal
 
-ConstValue = v:(DoubleConstant / IntConstant / Literal / IdentifierConst / ConstList / ConstMap) {
+ConstValue = v:(DoubleConstant / IntConstant / Literal / IdentifierConst / ConstMap / ConstList ) {
+	if str, ok := v.(string); ok {
+		fmt.Println("constvalue string", v)
+		return NewConstValue("string", str), nil
+	}
+	fmt.Println("constvalue", v)
 	return v.(*ConstValue), nil
 }
 
@@ -208,33 +292,43 @@ DoubleConstant  = Skip ('+' / '-')? v:(
 
 Exponent = ('e' / 'E') IntConstant
 
+Annotations <- LPAR Annotation+ RPAR
+
+Annotation <- Identifier EQUAL Literal ListSeparator?
+
 ConstList  = LBRK v:ConstListItem* RBRK {
-	return toConstValueSlice(v), nil
+	fmt.Println("constlist")
+	return NewConstValue("list", toConstValueSlice(v)), nil
 }
 
 ConstListItem = v:ConstValue ListSeparator? {
+	fmt.Println("ConstListItem", v)
 	return v.(*ConstValue), nil
 }
 
 ConstMap  = LCUR v:ConstMapItem* RCUR {
-	return toConstValueSlice(v), nil
+	return NewConstValue("map", toConstValueSlice(v)), nil
 }
 
 ConstMapItem = key:ConstValue COLON value:ConstValue ListSeparator? {
 	return NewMapConstValue(key.(*ConstValue), value.(*ConstValue)), nil
 }
 
-EscapeLiteralChar = '\\' ["']
+EscapeLiteralChar = '\\' ["'] {
+	return string(c.text), nil
+}
 
 Literal = l:(Literal1 / Literal2) {
 	return l, nil
 }
 
 Literal1 = Skip '"' t:(EscapeLiteralChar / !'"' .)* '"' Indent* {
-	return t.(string), nil	
+	strs := toStringSlice(t)
+	return strings.Join(strs, ""), nil
 }
 Literal2 = Skip "'" t:(EscapeLiteralChar / !"'" .)* "'" Indent* {
-	return t.(string), nil
+	strs := toStringSlice(t)
+	return strings.Join(strs, ""), nil
 }
 
 StructIdentifier = id:Identifier {
@@ -446,6 +540,7 @@ LBRK        = Skip "["     Indent* {
 	return "[", nil
 }
 RBRK        = Skip "]"     Indent* {
+	fmt.Println("match RBRK")
 	return "]", nil
 }
 LCUR       = Skip t:LCURToken     Indent* {
@@ -456,7 +551,7 @@ RCUR       = Skip t:RCURToken     Indent* {
 }
 LCURToken = "{" {
 	return string(c.text), nil
-} / %{errLCUR}
+}
 RCURToken = "}" {
 	return string(c.text), nil
 } / %{errRCUR}
