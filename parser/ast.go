@@ -5,20 +5,49 @@ import (
 )
 
 type Document struct {
-	Filename string
-	Structs  []*Struct
+	Filename   string
+	Consts     []*Const
+	Typedefs   []*Typedef
+	Enums      []*Enum
+	Services   []*Service
+	Structs    []*Struct
+	Unions     []*Union
+	Exceptions []*Exception
 }
 
-func NewDocument(structs []*Struct) *Document {
-	doc := &Document{
-		Structs: structs,
+func NewDocument(defs []Definition) *Document {
+	doc := &Document{}
+
+	for _, def := range defs {
+		switch def.Type() {
+		case "Const":
+			doc.Consts = append(doc.Consts, def.(*Const))
+		case "Typedef":
+			doc.Typedefs = append(doc.Typedefs, def.(*Typedef))
+		case "Enum":
+			doc.Enums = append(doc.Enums, def.(*Enum))
+		case "Service":
+			doc.Services = append(doc.Services, def.(*Service))
+		case "Struct":
+			doc.Structs = append(doc.Structs, def.(*Struct))
+		case "Union":
+			doc.Unions = append(doc.Unions, def.(*Union))
+		case "Exception":
+			doc.Exceptions = append(doc.Exceptions, def.(*Exception))
+		}
 	}
 	return doc
+}
+
+type Definition interface {
+	Type() string
+	SetComments(comments string)
 }
 
 type Struct struct {
 	Identifier *Identifier
 	Fields     []*Field
+	Comments   string
 }
 
 func NewStruct(identifier *Identifier, fields []*Field) *Struct {
@@ -26,6 +55,142 @@ func NewStruct(identifier *Identifier, fields []*Field) *Struct {
 		Identifier: identifier,
 		Fields:     fields,
 	}
+}
+
+func (s *Struct) Type() string {
+	return "Struct"
+}
+
+func (s *Struct) SetComments(comments string) {
+	s.Comments = comments
+}
+
+type Const struct {
+	Name      *Identifier
+	ConstType *FieldType
+	Value     *ConstValue
+	Comments  string
+}
+
+func NewConst(name *Identifier, t *FieldType, v *ConstValue, comments string) *Const {
+	return &Const{
+		Name:      name,
+		ConstType: t,
+		Value:     v,
+		Comments:  comments,
+	}
+}
+
+func (c *Const) Type() string {
+	return "Const"
+}
+
+func (c *Const) SetComments(comments string) {
+	c.Comments = comments
+}
+
+type Typedef struct {
+	T        *FieldType
+	Alias    *Identifier
+	Comments string
+}
+
+func NewTypedef(t *FieldType, alias *Identifier) *Typedef {
+	return &Typedef{
+		T:     t,
+		Alias: alias,
+	}
+}
+
+func (t *Typedef) Type() string {
+	return "Typedef"
+}
+
+func (t *Typedef) SetComments(comments string) {
+	t.Comments = comments
+}
+
+type Enum struct {
+	Name     *Identifier
+	Values   []*EnumValue
+	Comments string
+}
+
+func NewEnum(name *Identifier, values []*EnumValue) *Enum {
+	return &Enum{
+		Name:   name,
+		Values: values,
+	}
+}
+
+func (e *Enum) Type() string {
+	return "Enum"
+}
+
+func (e *Enum) SetComments(comments string) {
+	e.Comments = comments
+}
+
+type EnumValue struct {
+	Name     *Identifier
+	Value    int64
+	Comments string
+}
+
+func NewEnumValue(name *Identifier, value int64, comments string) *EnumValue {
+	return &EnumValue{
+		Name:     name,
+		Value:    value,
+		Comments: comments,
+	}
+}
+
+type Service struct {
+	Comments string
+}
+
+func NewService() *Service {
+	return &Service{}
+}
+
+func (s *Service) Type() string {
+	return "Service"
+}
+
+func (s *Service) SetComments(comments string) {
+	s.Comments = comments
+}
+
+type Union struct {
+	Comments string
+}
+
+func NewUnion() *Union {
+	return &Union{}
+}
+
+func (u *Union) Type() string {
+	return "Union"
+}
+
+func (u *Union) SetComments(comments string) {
+	u.Comments = comments
+}
+
+type Exception struct {
+	Comments string
+}
+
+func NewException() *Exception {
+	return &Exception{}
+}
+
+func (e *Exception) Type() string {
+	return "Exception"
+}
+
+func (e *Exception) SetComments(comments string) {
+	e.Comments = comments
 }
 
 type Identifier struct {
@@ -120,17 +285,17 @@ func NewBadRequired(text string, pos position) *Required {
 type FieldType struct {
 	TypeName *TypeName
 	// only exist when TypeName is map or set or list
-	Key *FieldType
+	KeyType *FieldType
 	// only exist when TypeName is map
-	Value   *FieldType
-	BadNode bool
+	ValueType *FieldType
+	BadNode   bool
 }
 
-func NewFieldType(typeName *TypeName, key *FieldType, value *FieldType) *FieldType {
+func NewFieldType(typeName *TypeName, keyType *FieldType, valueType *FieldType) *FieldType {
 	return &FieldType{
-		TypeName: typeName,
-		Key:      key,
-		Value:    value,
+		TypeName:  typeName,
+		KeyType:   keyType,
+		ValueType: valueType,
 	}
 }
 
