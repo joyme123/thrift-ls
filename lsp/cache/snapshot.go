@@ -19,7 +19,8 @@ type Snapshot struct {
 
 	files *FilesMap
 
-	parsedCache map[uri.URI]ParsedFile
+	parsedCacheMu sync.Mutex
+	parsedCache   map[uri.URI]*ParsedFile
 }
 
 func (s *Snapshot) Acquire() func() {
@@ -41,4 +42,24 @@ func (s *Snapshot) ReadFile(ctx context.Context, uri uri.URI) (FileHandle, error
 	s.files.Set(uri, fh)
 
 	return fh, nil
+}
+
+func (s *Snapshot) Parse(ctx context.Context, uri uri.URI) error {
+	fh, err := s.ReadFile(ctx, uri)
+	if err != nil {
+		return err
+	}
+
+	pf, err := Parse(fh)
+	if err != nil {
+		return err
+	}
+
+	// TODO(jpf): parse recursively here
+
+	s.parsedCacheMu.Lock()
+	s.parsedCache[uri] = pf
+	s.parsedCacheMu.Unlock()
+
+	return nil
 }
