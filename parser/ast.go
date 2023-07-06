@@ -146,11 +146,18 @@ func NewEnumValue(name *Identifier, value int64, comments string) *EnumValue {
 }
 
 type Service struct {
-	Comments string
+	Name      *Identifier
+	Extends   *Identifier
+	Functions []*Function
+	Comments  string
 }
 
-func NewService() *Service {
-	return &Service{}
+func NewService(name *Identifier, extends *Identifier, fns []*Function) *Service {
+	return &Service{
+		Name:      name,
+		Extends:   extends,
+		Functions: fns,
+	}
 }
 
 func (s *Service) Type() string {
@@ -161,12 +168,39 @@ func (s *Service) SetComments(comments string) {
 	s.Comments = comments
 }
 
+type Function struct {
+	Name         *Identifier
+	Oneway       bool
+	Void         bool
+	FunctionType *FieldType
+	Arguments    []*Field
+	Throws       []*Field
+	Comments     string
+}
+
+func NewFunction(name *Identifier, oneway bool, void bool, ft *FieldType, args []*Field, throws []*Field, comments string) *Function {
+	return &Function{
+		Name:         name,
+		Oneway:       oneway,
+		Void:         void,
+		FunctionType: ft,
+		Arguments:    args,
+		Throws:       throws,
+		Comments:     comments,
+	}
+}
+
 type Union struct {
+	Name     *Identifier
+	Fields   []*Field
 	Comments string
 }
 
-func NewUnion() *Union {
-	return &Union{}
+func NewUnion(name *Identifier, fields []*Field) *Union {
+	return &Union{
+		Name:   name,
+		Fields: fields,
+	}
 }
 
 func (u *Union) Type() string {
@@ -178,11 +212,16 @@ func (u *Union) SetComments(comments string) {
 }
 
 type Exception struct {
+	Name     *Identifier
+	Fields   []*Field
 	Comments string
 }
 
-func NewException() *Exception {
-	return &Exception{}
+func NewException(name *Identifier, fields []*Field) *Exception {
+	return &Exception{
+		Name:   name,
+		Fields: fields,
+	}
 }
 
 func (e *Exception) Type() string {

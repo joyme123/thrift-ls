@@ -106,6 +106,18 @@ func toEnumValueSlice(v any) []*EnumValue {
 	return ret
 }
 
+func toFunctionSlice(fns any) []*Function {
+	if fns == nil {
+		return nil
+	}
+	items := fns.([]any)
+	ret := make([]*Function, 0, len(items))
+	for i := range items {
+		ret = append(ret, items[i].(*Function))
+	}
+	return ret
+}
+
 }
 
 Document = Header*  def:Definition* Skip !. {
@@ -143,23 +155,28 @@ Enum  <- ENUM name:Identifier LCUR v:(ReservedComments Identifier (EQUAL IntCons
 	return NewEnum(name.(*Identifier), values), nil
 }
 
-Service <- SERVICE Identifier ( EXTENDS Identifier )? LCUR Function* RCUR {
-	return NewService(), nil
+Service <- SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Function* RCUR {
+	var extendsVal *Identifier
+	if extends != nil {
+		extendsVal = extends.(*Identifier)
+	}
+	fnsVal := toFunctionSlice(fns)
+	return NewService(name.(*Identifier), extendsVal, fnsVal), nil
 }
 
 Struct = STRUCT id:StructIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewStruct(id.(*Identifier), toFieldSlice(fields)), nil
 } //{errIdentifier} ErrStructIdentifier //{errRCUR} ErrStructRCUR  //{errField} ErrField
 
-Union <- UNION Identifier LCUR Field* RCUR {
-	return NewUnion(), nil
+Union <- UNION name:Identifier LCUR fields:Field* RCUR {
+	return NewUnion(name.(*Identifier), toFieldSlice(fields)), nil
 }
 
-Exception <- EXCEPTION Identifier LCUR Field* RCUR {
-	return NewException(), nil
+Exception <- EXCEPTION name:Identifier LCUR fields:Field* RCUR {
+	return NewException(name.(*Identifier), toFieldSlice(fields)), nil
 }
 
-FieldWithThrow = Field / x:( !((Skip '}' Indent*) / STRUCT) %{errField} ) {
+FieldWithThrow = Field / x:( !((Skip '}' Indent*) / STRUCT / CONST / TYPEDEF / ENUM / SERVICE / UNION / EXCEPTION) %{errField} ) {
 	return x.([]any)[1], nil
 }
 
@@ -193,11 +210,26 @@ IsRequired = v:("required" / "optional") {
 	return NewRequired(string(v.([]byte)) == "required", c.pos), nil
 }
 
-Function  <- ReservedComments Skip ONEWAY? FunctionType Identifier LPAR Field* RPAR Throws? Annotations? ListSeparator? SkipLine
+Function  <- comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:Identifier LPAR args:Field* RPAR throws:Throws? Annotations? ListSeparator? SkipLine {
+	void := false
+	var ftype *FieldType
+	if str, ok := ft.(string); ok && str == "void" {
+		void = true
+	} else {
+		ftype = ft.(*FieldType) 
+	}
+	var throwsFields []*Field
+	if throws != nil {
+		throwsFields = throws.([]*Field)
+	}
+	return NewFunction(name.(*Identifier), oneway != nil, void, ftype, toFieldSlice(args), throwsFields, comments.(string)), nil
+}
 
 FunctionType  <- VOID / FieldType
 
-Throws <- THROWS LPAR Field* RPAR
+Throws <- THROWS LPAR fields:Field* RPAR {
+	return toFieldSlice(fields), nil
+}
 
 FieldType  = v:(ContainerType / BaseType / IdentifierType) Annotations? {
 	return v.(*FieldType), nil
@@ -540,7 +572,6 @@ LBRK        = Skip "["     Indent* {
 	return "[", nil
 }
 RBRK        = Skip "]"     Indent* {
-	fmt.Println("match RBRK")
 	return "]", nil
 }
 LCUR       = Skip t:LCURToken     Indent* {
