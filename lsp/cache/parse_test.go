@@ -36,6 +36,28 @@ struct Xtruct3
 			},
 			assertion: assert.NoError,
 		},
+		{
+			name: "invalid ast",
+			args: args{
+				fh: &Overlay{
+					uri: "file:///tmp/types.thrift",
+					content: []byte(`
+#include "base.thrift"
+struct Xtruct3
+{
+  1:  string string_thing,
+  4:  i32    changed,
+  9:  i32    i32_thing,
+  11: i64    i64_thing,
+  12: 
+}
+					`),
+					version: 0,
+					saved:   false,
+				},
+			},
+			assertion: assert.NoError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
