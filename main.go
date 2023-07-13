@@ -3,28 +3,22 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"io"
 	"math/rand"
 	"os"
 	"time"
 
+	"github.com/joyme123/thrift-ls/log"
 	"github.com/joyme123/thrift-ls/lsp"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/pkg/fakenet"
-	"k8s.io/klog/v2"
 )
 
 type Options struct{}
 
 func main() {
 	rand.Seed(time.Now().UnixMilli())
-
-	klog.InitFlags(nil)
-	flag.Set("logtostderr", "false")
-	flag.Set("log_file", "/tmp/thriftls.log")
-	flag.Parse()
-	defer klog.Flush()
+	log.Init()
 
 	ctx := context.Background()
 	// server := &lsp.Server{}

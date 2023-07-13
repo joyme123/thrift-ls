@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
+	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/protocol"
 )
 
@@ -298,6 +299,8 @@ func (s *Server) ColorPresentation(ctx context.Context, params *protocol.ColorPr
 }
 
 func (s *Server) Completion(ctx context.Context, params *protocol.CompletionParams) (result *protocol.CompletionList, err error) {
+	log.Debugln("------------Completion called--------------")
+	defer log.Debugln("-----------Completion finish--------------")
 	return s.completion(ctx, params)
 }
 
@@ -314,7 +317,9 @@ func (s *Server) Definition(ctx context.Context, params *protocol.DefinitionPara
 }
 
 func (s *Server) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) (err error) {
-	return nil
+	log.Debugln("-----------DidChange called-----------")
+	defer log.Debugln("-----------DidChange finish-----------")
+	return s.didChange(ctx, params)
 }
 
 func (s *Server) DidChangeConfiguration(ctx context.Context, params *protocol.DidChangeConfigurationParams) (err error) {
@@ -334,6 +339,8 @@ func (s *Server) DidClose(ctx context.Context, params *protocol.DidCloseTextDocu
 }
 
 func (s *Server) DidOpen(ctx context.Context, params *protocol.DidOpenTextDocumentParams) (err error) {
+	log.Debugln("-----------DidOpen called-----------")
+	defer log.Debugln("-----------DidOpen finish-----------")
 	return s.didOpen(ctx, params)
 }
 

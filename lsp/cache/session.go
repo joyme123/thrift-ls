@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -11,12 +12,15 @@ import (
 type Session struct {
 	id int64
 
+	// cache is shared global
 	cache *Cache
 
 	viewMu  sync.Mutex
 	views   []*View
 	viewMap map[uri.URI]*View // map of URI->best view
 
+	// session holds overlayFS to manage file content
+	// view, snapshot only holds FileSource to read from overlayFS
 	*overlayFS
 }
 
@@ -33,7 +37,8 @@ func NewSession(cache *Cache) *Session {
 }
 
 func (s *Session) CreateView(folder uri.URI) {
-	s.views = append(s.views, NewView(folder.Filename(), folder, s.overlayFS))
+	view := NewView(folder.Filename(), folder, s.overlayFS, s.cache.store)
+	s.views = append(s.views, view)
 }
 
 func (s *Session) ViewOf(fileURI uri.URI) (*View, error) {
@@ -63,4 +68,8 @@ func (s *Session) ViewOf(fileURI uri.URI) (*View, error) {
 	}
 
 	return s.views[0], nil
+}
+
+func (s *Session) UpdateOverlayFS(ctx context.Context, changes []*FileChange) error {
+	return s.overlayFS.Update(ctx, changes)
 }

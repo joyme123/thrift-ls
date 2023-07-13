@@ -1,8 +1,6 @@
 package test
 
 import (
-	"encoding/json"
-	"os"
 	"testing"
 
 	"github.com/joyme123/thrift-ls/parser"
@@ -12,13 +10,7 @@ import (
 func Test_Parse(t *testing.T) {
 	ast, err := parser.Parse("thrifttest.thrift", []byte(ThriftTestContent))
 	assert.NoError(t, err)
-
 	assert.NotNil(t, ast)
-
-	data, err := json.MarshalIndent(ast, "", "  ")
-	assert.NoError(t, err)
-
-	os.WriteFile("/tmp/ast", data, os.ModePerm)
 }
 
 const ThriftTestContent = `

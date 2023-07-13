@@ -1,11 +1,31 @@
 package parser
 
 import (
+	"path"
+	"strings"
 	"unicode/utf8"
 )
 
+type Node interface {
+	// position of first charactor of this node
+	Pos() Position
+	// position of first charactor immediately after this node
+	End() Position
+
+	Contains(pos Position) bool
+
+	Children() []Node
+
+	Type() string
+}
+
 type Document struct {
-	Filename   string
+	Filename string
+
+	Includes    []*Include
+	CPPIncludes []*CPPInclude
+	Namespaces  []*Namespace
+
 	Consts     []*Const
 	Typedefs   []*Typedef
 	Enums      []*Enum
@@ -13,10 +33,28 @@ type Document struct {
 	Structs    []*Struct
 	Unions     []*Union
 	Exceptions []*Exception
+
+	Nodes []Node
+
+	Location
 }
 
-func NewDocument(defs []Definition) *Document {
-	doc := &Document{}
+func NewDocument(headers []Header, defs []Definition, loc Location) *Document {
+	doc := &Document{
+		Location: loc,
+	}
+
+	for _, header := range headers {
+		switch header.Type() {
+		case "Include":
+			doc.Includes = append(doc.Includes, header.(*Include))
+		case "CPPInclude":
+			doc.CPPIncludes = append(doc.CPPIncludes, header.(*CPPInclude))
+		case "Namespace":
+			doc.Namespaces = append(doc.Namespaces, header.(*Namespace))
+		}
+		doc.Nodes = append(doc.Nodes, header)
+	}
 
 	for _, def := range defs {
 		switch def.Type() {
@@ -35,11 +73,96 @@ func NewDocument(defs []Definition) *Document {
 		case "Exception":
 			doc.Exceptions = append(doc.Exceptions, def.(*Exception))
 		}
+		doc.Nodes = append(doc.Nodes, def)
 	}
 	return doc
 }
 
+func (d *Document) Children() []Node {
+	return d.Nodes
+}
+
+func (d *Document) Type() string {
+	return "Document"
+}
+
+type Header interface {
+	Type() string
+	Node
+}
+
+type Include struct {
+	Path    string
+	BadNode bool
+	Location
+}
+
+func NewInclude(path string, loc Location) *Include {
+	return &Include{
+		Location: loc,
+		Path:     path,
+		BadNode:  path == "",
+	}
+}
+
+func (i *Include) Type() string {
+	return "Include"
+}
+
+func (i *Include) Name() string {
+	_, file := path.Split(i.Path)
+	name := strings.TrimRight(file, path.Ext(file))
+	return name
+}
+
+func (i *Include) Children() []Node {
+	return nil
+}
+
+type CPPInclude struct {
+	Path string
+	Location
+}
+
+func NewCPPInclude(path string, loc Location) *CPPInclude {
+	return &CPPInclude{
+		Location: loc,
+		Path:     path,
+	}
+}
+
+func (i *CPPInclude) Type() string {
+	return "CPPInclude"
+}
+
+func (i *CPPInclude) Children() []Node {
+	return nil
+}
+
+type Namespace struct {
+	Language string
+	Name     string
+	Location
+}
+
+func NewNamespace(language, name string, loc Location) *Namespace {
+	return &Namespace{
+		Language: language,
+		Name:     name,
+		Location: loc,
+	}
+}
+
+func (n *Namespace) Type() string {
+	return "Namespace"
+}
+
+func (n *Namespace) Children() []Node {
+	return nil
+}
+
 type Definition interface {
+	Node
 	Type() string
 	SetComments(comments string)
 }
@@ -48,12 +171,14 @@ type Struct struct {
 	Identifier *Identifier
 	Fields     []*Field
 	Comments   string
+	Location
 }
 
-func NewStruct(identifier *Identifier, fields []*Field) *Struct {
+func NewStruct(identifier *Identifier, fields []*Field, loc Location) *Struct {
 	return &Struct{
 		Identifier: identifier,
 		Fields:     fields,
+		Location:   loc,
 	}
 }
 
@@ -65,19 +190,30 @@ func (s *Struct) SetComments(comments string) {
 	s.Comments = comments
 }
 
+func (s *Struct) Children() []Node {
+	nodes := []Node{s.Identifier}
+	for i := range s.Fields {
+		nodes = append(nodes, s.Fields[i])
+	}
+
+	return nodes
+}
+
 type Const struct {
 	Name      *Identifier
 	ConstType *FieldType
 	Value     *ConstValue
 	Comments  string
+	Location
 }
 
-func NewConst(name *Identifier, t *FieldType, v *ConstValue, comments string) *Const {
+func NewConst(name *Identifier, t *FieldType, v *ConstValue, comments string, loc Location) *Const {
 	return &Const{
 		Name:      name,
 		ConstType: t,
 		Value:     v,
 		Comments:  comments,
+		Location:  loc,
 	}
 }
 
@@ -89,16 +225,23 @@ func (c *Const) SetComments(comments string) {
 	c.Comments = comments
 }
 
+func (c *Const) Children() []Node {
+	return []Node{c.Name, c.ConstType, c.Value}
+}
+
 type Typedef struct {
 	T        *FieldType
 	Alias    *Identifier
 	Comments string
+
+	Location
 }
 
-func NewTypedef(t *FieldType, alias *Identifier) *Typedef {
+func NewTypedef(t *FieldType, alias *Identifier, loc Location) *Typedef {
 	return &Typedef{
-		T:     t,
-		Alias: alias,
+		T:        t,
+		Alias:    alias,
+		Location: loc,
 	}
 }
 
@@ -110,16 +253,23 @@ func (t *Typedef) SetComments(comments string) {
 	t.Comments = comments
 }
 
+func (t *Typedef) Children() []Node {
+	return []Node{t.T, t.Alias}
+}
+
 type Enum struct {
 	Name     *Identifier
 	Values   []*EnumValue
 	Comments string
+
+	Location
 }
 
-func NewEnum(name *Identifier, values []*EnumValue) *Enum {
+func NewEnum(name *Identifier, values []*EnumValue, loc Location) *Enum {
 	return &Enum{
-		Name:   name,
-		Values: values,
+		Name:     name,
+		Values:   values,
+		Location: loc,
 	}
 }
 
@@ -131,18 +281,44 @@ func (e *Enum) SetComments(comments string) {
 	e.Comments = comments
 }
 
-type EnumValue struct {
-	Name     *Identifier
-	Value    int64
-	Comments string
+func (e *Enum) Children() []Node {
+	nodes := []Node{e.Name}
+	for i := range e.Values {
+		nodes = append(nodes, e.Values[i])
+	}
+	return nodes
 }
 
-func NewEnumValue(name *Identifier, value int64, comments string) *EnumValue {
+type EnumValue struct {
+	Name      *Identifier
+	ValueNode *ConstValue
+	Value     int64 // Value only record enum value. it is not a ast node
+	Comments  string
+
+	Location
+}
+
+func NewEnumValue(name *Identifier, valueNode *ConstValue, value int64, comments string, loc Location) *EnumValue {
 	return &EnumValue{
-		Name:     name,
-		Value:    value,
-		Comments: comments,
+		Name:      name,
+		ValueNode: valueNode,
+		Value:     value,
+		Comments:  comments,
+		Location:  loc,
 	}
+}
+
+func (e *EnumValue) Children() []Node {
+	nodes := []Node{e.Name}
+	if e.ValueNode != nil {
+		nodes = append(nodes, e.ValueNode)
+	}
+
+	return nodes
+}
+
+func (e *EnumValue) Type() string {
+	return "EnumValue"
 }
 
 type Service struct {
@@ -150,13 +326,15 @@ type Service struct {
 	Extends   *Identifier
 	Functions []*Function
 	Comments  string
+	Location
 }
 
-func NewService(name *Identifier, extends *Identifier, fns []*Function) *Service {
+func NewService(name *Identifier, extends *Identifier, fns []*Function, loc Location) *Service {
 	return &Service{
 		Name:      name,
 		Extends:   extends,
 		Functions: fns,
+		Location:  loc,
 	}
 }
 
@@ -168,6 +346,15 @@ func (s *Service) SetComments(comments string) {
 	s.Comments = comments
 }
 
+func (s *Service) Children() []Node {
+	nodes := []Node{s.Name, s.Extends}
+	for i := range s.Functions {
+		nodes = append(nodes, s.Functions[i])
+	}
+
+	return nodes
+}
+
 type Function struct {
 	Name         *Identifier
 	Oneway       bool
@@ -176,9 +363,10 @@ type Function struct {
 	Arguments    []*Field
 	Throws       []*Field
 	Comments     string
+	Location
 }
 
-func NewFunction(name *Identifier, oneway bool, void bool, ft *FieldType, args []*Field, throws []*Field, comments string) *Function {
+func NewFunction(name *Identifier, oneway bool, void bool, ft *FieldType, args []*Field, throws []*Field, comments string, loc Location) *Function {
 	return &Function{
 		Name:         name,
 		Oneway:       oneway,
@@ -187,19 +375,38 @@ func NewFunction(name *Identifier, oneway bool, void bool, ft *FieldType, args [
 		Arguments:    args,
 		Throws:       throws,
 		Comments:     comments,
+		Location:     loc,
 	}
+}
+
+func (f *Function) Children() []Node {
+	nodes := []Node{f.Name, f.FunctionType}
+	for i := range f.Arguments {
+		nodes = append(nodes, f.Arguments[i])
+	}
+	for i := range f.Throws {
+		nodes = append(nodes, f.Throws[i])
+	}
+
+	return nodes
+}
+
+func (f *Function) Type() string {
+	return "Function"
 }
 
 type Union struct {
 	Name     *Identifier
 	Fields   []*Field
 	Comments string
+	Location
 }
 
-func NewUnion(name *Identifier, fields []*Field) *Union {
+func NewUnion(name *Identifier, fields []*Field, loc Location) *Union {
 	return &Union{
-		Name:   name,
-		Fields: fields,
+		Name:     name,
+		Fields:   fields,
+		Location: loc,
 	}
 }
 
@@ -211,16 +418,26 @@ func (u *Union) SetComments(comments string) {
 	u.Comments = comments
 }
 
+func (u *Union) Children() []Node {
+	nodes := []Node{u.Name}
+	for i := range u.Fields {
+		nodes = append(nodes, u.Fields[i])
+	}
+	return nodes
+}
+
 type Exception struct {
 	Name     *Identifier
 	Fields   []*Field
 	Comments string
+	Location
 }
 
-func NewException(name *Identifier, fields []*Field) *Exception {
+func NewException(name *Identifier, fields []*Field, loc Location) *Exception {
 	return &Exception{
-		Name:   name,
-		Fields: fields,
+		Name:     name,
+		Fields:   fields,
+		Location: loc,
 	}
 }
 
@@ -232,17 +449,25 @@ func (e *Exception) SetComments(comments string) {
 	e.Comments = comments
 }
 
+func (e *Exception) Children() []Node {
+	nodes := []Node{e.Name}
+	for i := range e.Fields {
+		nodes = append(nodes, e.Fields[i])
+	}
+	return nodes
+}
+
 type Identifier struct {
 	Name    string
-	Loc     Location
 	BadNode bool
+	Location
 }
 
 func NewIdentifier(name string, pos position) *Identifier {
 	id := &Identifier{
-		Name:    name,
-		Loc:     NewLocation(pos, name),
-		BadNode: name == "",
+		Name:     name,
+		Location: NewLocation(pos, name),
+		BadNode:  name == "",
 	}
 
 	return id
@@ -251,12 +476,20 @@ func NewIdentifier(name string, pos position) *Identifier {
 func (i *Identifier) ToFieldType() *FieldType {
 	t := &FieldType{
 		TypeName: &TypeName{
-			Name: i.Name,
-			Loc:  i.Loc,
+			Name:     i.Name,
+			Location: i.Location,
 		},
 	}
 
 	return t
+}
+
+func (i *Identifier) Children() []Node {
+	return nil
+}
+
+func (i *Identifier) Type() string {
+	return "Identifier"
 }
 
 func ConvertPosition(pos position) Position {
@@ -277,9 +510,10 @@ type Field struct {
 	ConstValue   *ConstValue
 
 	BadNode bool
+	Location
 }
 
-func NewField(comments string, lineComments string, index int, required *Required, fieldType *FieldType, identifier *Identifier, constValue *ConstValue) *Field {
+func NewField(comments string, lineComments string, index int, required *Required, fieldType *FieldType, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
 	field := &Field{
 		Comments:     comments,
 		LineComments: lineComments,
@@ -289,14 +523,23 @@ func NewField(comments string, lineComments string, index int, required *Require
 		Identifier:   identifier,
 		ConstValue:   constValue,
 		BadNode:      fieldType == nil,
+		Location:     loc,
 	}
 	return field
 }
 
+func (f *Field) Children() []Node {
+	return []Node{f.Required, f.FieldType, f.Identifier, f.ConstValue}
+}
+
+func (f *Field) Type() string {
+	return "Field"
+}
+
 type Required struct {
 	Required bool
-	Loc      Location
 	BadNode  bool
+	Location
 }
 
 func NewRequired(required bool, pos position) *Required {
@@ -304,9 +547,9 @@ func NewRequired(required bool, pos position) *Required {
 		Required: required,
 	}
 	if required {
-		req.Loc = NewLocation(pos, "required")
+		req.Location = NewLocation(pos, "required")
 	} else {
-		req.Loc = NewLocation(pos, "optional")
+		req.Location = NewLocation(pos, "optional")
 	}
 
 	return req
@@ -314,11 +557,19 @@ func NewRequired(required bool, pos position) *Required {
 
 func NewBadRequired(text string, pos position) *Required {
 	req := &Required{
-		Loc:     NewLocation(pos, text),
-		BadNode: true,
+		Location: NewLocation(pos, text),
+		BadNode:  true,
 	}
 
 	return req
+}
+
+func (r *Required) Children() []Node {
+	return nil
+}
+
+func (r *Required) Type() string {
+	return "Required"
 }
 
 type FieldType struct {
@@ -328,14 +579,34 @@ type FieldType struct {
 	// only exist when TypeName is map
 	ValueType *FieldType
 	BadNode   bool
+
+	Location
 }
 
-func NewFieldType(typeName *TypeName, keyType *FieldType, valueType *FieldType) *FieldType {
+func NewFieldType(typeName *TypeName, keyType *FieldType, valueType *FieldType, loc Location) *FieldType {
 	return &FieldType{
 		TypeName:  typeName,
 		KeyType:   keyType,
 		ValueType: valueType,
+		Location:  loc,
 	}
+}
+
+func (c *FieldType) Children() []Node {
+	nodes := make([]Node, 0, 1)
+	nodes = append(nodes, c.TypeName)
+	if c.KeyType != nil {
+		nodes = append(nodes, c.KeyType)
+	}
+	if c.ValueType != nil {
+		nodes = append(nodes, c.ValueType)
+	}
+
+	return nodes
+}
+
+func (c *FieldType) Type() string {
+	return "FieldType"
 }
 
 type TypeName struct {
@@ -344,16 +615,24 @@ type TypeName struct {
 	// base type: bool, byte, i8, i16, i32, i64, double, string, binary
 	// struct
 	Name string
-	Loc  Location
+	Location
 }
 
 func NewTypeName(name string, pos position) *TypeName {
 	t := &TypeName{
-		Name: name,
-		Loc:  NewLocation(pos, name),
+		Name:     name,
+		Location: NewLocation(pos, name),
 	}
 
 	return t
+}
+
+func (t *TypeName) Children() []Node {
+	return nil
+}
+
+func (t *TypeName) Type() string {
+	return "TypeName"
 }
 
 type ConstValue struct {
@@ -362,42 +641,121 @@ type ConstValue struct {
 
 	// only exist when TypeName is map
 	Key any
+
+	Location
 }
 
-func NewConstValue(typeName string, value any) *ConstValue {
+func NewConstValue(typeName string, value any, loc Location) *ConstValue {
 	return &ConstValue{
 		TypeName: typeName,
 		Value:    value,
+		Location: loc,
 	}
 }
 
-func NewMapConstValue(key, value *ConstValue) *ConstValue {
+func NewMapConstValue(key, value *ConstValue, loc Location) *ConstValue {
 	return &ConstValue{
 		TypeName: "map",
 		Key:      key,
 		Value:    value,
+		Location: loc,
 	}
+}
+
+// TODO(jpf): nodes of key, value
+func (c *ConstValue) Children() []Node {
+	return nil
+}
+
+func (c *ConstValue) Type() string {
+	return "ConstValue"
 }
 
 type Location struct {
-	Start Position
-	End   Position
+	start Position
+	end   Position
 }
 
-func NewLocation(startPos position, token string) Location {
+func (l *Location) Pos() Position {
+	return l.start
+}
+
+// end col and offset is excluded
+func (l *Location) End() Position {
+	return l.end
+}
+
+func (l *Location) Contains(pos Position) bool {
+	return (l.start.Less(pos) || l.start.Equal(pos)) && l.end.Greater(pos)
+}
+
+func NewLocationFromPos(start, end Position) Location {
+	return Location{start: start, end: end}
+}
+
+func NewLocationFromCurrent(c *current) Location {
+	return NewLocation(c.pos, string(c.text))
+}
+
+func NewLocation(startPos position, text string) Location {
 	start := ConvertPosition(startPos)
-	end := start
-	end.Col = start.Col + utf8.RuneCountInString(token)
-	end.Offset = start.Offset + utf8.RuneCountInString(token)
+
+	nLine := strings.Count(text, "\n")
+	lastLineOffset := strings.LastIndexByte(text, '\n')
+	if lastLineOffset == -1 {
+		lastLineOffset = 0
+	}
+	lastLine := []byte(text)[lastLineOffset:]
+	col := utf8.RuneCount(lastLine) + 1
+	if nLine == 0 {
+		col += start.Col - 1
+	}
+	end := Position{
+		Line:   start.Line + nLine,
+		Col:    col,
+		Offset: start.Offset + len(text),
+	}
 
 	return Location{
-		Start: start,
-		End:   end,
+		start: start,
+		end:   end,
 	}
 }
 
+var InvalidPosition = Position{
+	Line:   -1,
+	Col:    -1,
+	Offset: -1,
+}
+
 type Position struct {
-	Line   int
-	Col    int
-	Offset int
+	Line   int // 1-based line number
+	Col    int // 1-based rune count from start of line.
+	Offset int // 0-based byte offset
+}
+
+func (p *Position) Less(other Position) bool {
+	if p.Line < other.Line {
+		return true
+	} else if p.Line == other.Line {
+		return p.Col < other.Col
+	}
+	return false
+}
+
+func (p *Position) Equal(other Position) bool {
+	return p.Line == other.Line && p.Col == other.Col
+}
+
+func (p *Position) Greater(other Position) bool {
+	if p.Line > other.Line {
+		return true
+	} else if p.Line == other.Line {
+		return p.Col > other.Col
+	}
+	return false
+}
+
+func (p *Position) Invalid() bool {
+	return p.Line < 1 || p.Col < 1 || p.Offset < 0
 }

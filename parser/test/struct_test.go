@@ -1,8 +1,6 @@
 package test
 
 import (
-	"encoding/json"
-	"os"
 	"testing"
 
 	"github.com/joyme123/thrift-ls/parser"
@@ -41,11 +39,6 @@ struct Demos{
 	}
 
 	assert.NotNil(t, ast)
-
-	data, err := json.MarshalIndent(ast, "", "  ")
-	assert.NoError(t, err)
-
-	os.WriteFile("/tmp/ast", data, os.ModePerm)
 }
 
 func Test_ParseStructBlockRCURError(t *testing.T) {
@@ -76,11 +69,6 @@ struct Demos{}
 	}
 
 	assert.NotNil(t, ast)
-
-	data, err := json.MarshalIndent(ast, "", "  ")
-	assert.NoError(t, err)
-
-	os.WriteFile("/tmp/ast", data, os.ModePerm)
 }
 
 func Test_ParseStructFieldError(t *testing.T) {
@@ -111,11 +99,6 @@ func Test_ParseStructFieldError(t *testing.T) {
 	}
 
 	assert.NotNil(t, ast)
-
-	data, err := json.MarshalIndent(ast, "", "  ")
-	assert.NoError(t, err)
-
-	os.WriteFile("/tmp/ast", data, os.ModePerm)
 }
 
 func Test_ParseStructFieldDefault(t *testing.T) {
@@ -129,9 +112,39 @@ func Test_ParseStructFieldDefault(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.NotNil(t, ast)
+}
 
-	data, err := json.MarshalIndent(ast, "", "  ")
+func Test_ParseLocation(t *testing.T) {
+	demoContent := `struct Demo {
+1: optional set<string> with_default = [ "😀", "aaa" ]
+}`
+	ast, err := parser.Parse("test.thrift", []byte(demoContent))
 	assert.NoError(t, err)
+	assert.NotNil(t, ast)
 
-	os.WriteFile("/tmp/ast", data, os.ModePerm)
+	doc := ast.(*parser.Document)
+	docPos := doc.Location.Pos()
+	docEnd := doc.Location.End()
+
+	// doc pos
+	assert.Equal(t, 1, docPos.Line)
+	assert.Equal(t, 1, docPos.Col)
+	assert.Equal(t, 0, docPos.Offset)
+	// doc end
+	assert.Equal(t, 3, docEnd.Line)
+	assert.Equal(t, 3, docEnd.Col)
+	assert.Equal(t, 72, docEnd.Offset)
+
+	assert.Len(t, doc.Structs, 1)
+	structNamePos := doc.Structs[0].Identifier.Pos()
+	structNameEnd := doc.Structs[0].Identifier.End()
+
+	// struct pos
+	assert.Equal(t, 1, structNamePos.Line)
+	assert.Equal(t, 8, structNamePos.Col)
+	assert.Equal(t, 7, structNamePos.Offset)
+	// struct end
+	assert.Equal(t, 1, structNameEnd.Line)
+	assert.Equal(t, 12, structNameEnd.Col)
+	assert.Equal(t, 11, structNameEnd.Offset)
 }

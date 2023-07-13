@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/uri"
 )
 
@@ -35,6 +36,7 @@ func (fs *overlayFS) Overlays() []*Overlay {
 }
 
 func (fs *overlayFS) ReadFile(ctx context.Context, uri uri.URI) (FileHandle, error) {
+	log.Debug("read uri: ", uri)
 	fs.mu.Lock()
 	overlay, ok := fs.overlays[uri]
 	fs.mu.Unlock()
@@ -42,6 +44,31 @@ func (fs *overlayFS) ReadFile(ctx context.Context, uri uri.URI) (FileHandle, err
 		return overlay, nil
 	}
 	return fs.delegate.ReadFile(ctx, uri)
+}
+
+// Update only updates overlays
+func (fs *overlayFS) Update(ctx context.Context, changes []*FileChange) error {
+	for _, change := range changes {
+		var base []byte
+		if change.From == FileChangeTypeDidChange {
+			fh, err := fs.ReadFile(ctx, change.URI)
+			if err != nil {
+				return err
+			}
+			base, err = fh.Content()
+			if err != nil {
+				return err
+			}
+		}
+		overlay := NewOverlay(change.URI, change.FullContent(base), int32(change.Version))
+
+		log.Debug("new overlay content: ", string(overlay.content), "uri", change.URI)
+
+		fs.mu.Lock()
+		fs.overlays[change.URI] = overlay
+		fs.mu.Unlock()
+	}
+	return nil
 }
 
 // An Overlay is a file open in the editor. It may have unsaved edits.
@@ -55,6 +82,15 @@ type Overlay struct {
 	// saved is true if a file matches the state on disk,
 	// and therefore does not need to be part of the overlay sent to go/packages.
 	saved bool
+}
+
+func NewOverlay(uri uri.URI, content []byte, version int32) *Overlay {
+	return &Overlay{
+		uri:     uri,
+		content: content,
+		version: version,
+		hash:    HashOf(content),
+	}
 }
 
 func (o *Overlay) URI() uri.URI { return o.uri }

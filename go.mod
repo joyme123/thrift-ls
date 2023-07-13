@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/cloudwego/thriftgo v0.2.11
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.7.0
 	go.lsp.dev/jsonrpc2 v0.10.0
 	go.lsp.dev/pkg v0.0.0-20210717090340-384b27a52fb2

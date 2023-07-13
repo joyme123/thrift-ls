@@ -7,8 +7,11 @@ import (
 	"go.lsp.dev/protocol"
 )
 
-func Completion(ctx context.Context, ss *cache.Snapshot, cmp *CompletionRequest) ([]*CompletionItem, error) {
+type Interface interface {
+	Completion(ctx context.Context, ss *cache.Snapshot, cmp *CompletionRequest) ([]*CompletionItem, error)
+}
 
+func Completion(ctx context.Context, ss *cache.Snapshot, cmp *CompletionRequest) ([]*CompletionItem, error) {
 	return []*CompletionItem{
 		{
 			Label:         "test",
@@ -29,4 +32,16 @@ func Completion(ctx context.Context, ss *cache.Snapshot, cmp *CompletionRequest)
 			Documentation: "test2 doc",
 		},
 	}, nil
+}
+
+func BuildCompletionItem(text string) *CompletionItem {
+	return &CompletionItem{
+		Label:         text,
+		Detail:        text,
+		InsertText:    text,
+		Kind:          protocol.CompletionItemKindText,
+		Deprecated:    false,
+		Score:         90,
+		Documentation: "",
+	}
 }

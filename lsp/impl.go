@@ -8,6 +8,7 @@ import (
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/completion"
+	"github.com/joyme123/thrift-ls/lsp/types"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
@@ -19,6 +20,17 @@ func (s *Server) didOpen(ctx context.Context, params *protocol.DidOpenTextDocume
 	}
 
 	fileURI := document.URI
+	change := &cache.FileChange{
+		URI:     fileURI,
+		Version: int(document.Version),
+		Content: []byte(document.Text),
+		From:    cache.FileChangeTypeDidOpen,
+	}
+
+	if err := s.session.UpdateOverlayFS(ctx, []*cache.FileChange{change}); err != nil {
+		return err
+	}
+
 	if _, err := s.session.ViewOf(fileURI); err != nil {
 		// create view for this folder
 		filename := fileURI.Filename()
@@ -26,7 +38,26 @@ func (s *Server) didOpen(ctx context.Context, params *protocol.DidOpenTextDocume
 		s.session.CreateView(dir)
 	}
 
-	// TODO(jpf): do async parse
+	view, _ := s.session.ViewOf(fileURI)
+	view.FileChange(ctx, []*cache.FileChange{change})
+
+	return nil
+}
+
+func (s *Server) didChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) error {
+	changes := cache.FileChangeFromLSPDidChange(params)
+	if err := s.session.UpdateOverlayFS(ctx, changes); err != nil {
+		return err
+	}
+
+	document := params.TextDocument
+	fileURI := document.URI
+	view, err := s.session.ViewOf(fileURI)
+	if err != nil {
+		return err
+	}
+
+	view.FileChange(ctx, changes)
 
 	return nil
 }
@@ -38,9 +69,9 @@ func (s *Server) completion(ctx context.Context, params *protocol.CompletionPara
 	}
 	defer release()
 
-	items, err := completion.Completion(ctx, snapshot, &completion.CompletionRequest{
+	items, err := completion.DefaultTokenCompletion.Completion(ctx, snapshot, &completion.CompletionRequest{
 		TriggerKind: 0,
-		Pos: completion.Position{
+		Pos: types.Position{
 			Line:      params.Position.Line,
 			Character: params.Position.Character,
 		},

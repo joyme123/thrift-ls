@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 
@@ -165,4 +166,22 @@ type FileChange struct {
 	Version int
 	Content []byte
 	From    FileChangeType
+}
+
+func (f *FileChange) FullContent(base []byte) []byte {
+	// only support full change now
+	return f.Content
+}
+
+func FileChangeFromLSPDidChange(params *protocol.DidChangeTextDocumentParams) []*FileChange {
+	changes := make([]*FileChange, 0, len(params.ContentChanges))
+	for i := range params.ContentChanges {
+		changes = append(changes, &FileChange{
+			URI:     params.TextDocument.TextDocumentIdentifier.URI,
+			Version: int(params.TextDocument.Version),
+			Content: []byte(params.ContentChanges[i].Text),
+			From:    FileChangeTypeDidChange,
+		})
+	}
+	return changes
 }

@@ -70,6 +70,18 @@ func toString(text any) string {
 	return ret.String()
 }
 
+func toHeaderSlice(headers any) []Header {
+	if headers == nil {
+		return nil
+	}
+	items := headers.([]any)
+	ret := make([]Header, 0, len(items))
+	for i := range items {
+		ret = append(ret, items[i].(Header))
+	}
+	return ret
+}
+
 func toDefinitionSlice(defs any) []Definition {
 	if defs == nil {
 		return nil
@@ -90,18 +102,15 @@ func toEnumValueSlice(v any) []*EnumValue {
 
 	ret := make([]*EnumValue, 0, len(values))
 	value := int64(0)
-	for _, v := range values {
-		fields := v.([]any)
-		comments := fields[0].(string)
-		name := fields[1].(*Identifier)
-		valuePair := fields[2]
-		if valuePair != nil {
-			value = valuePair.([]any)[1].(*ConstValue).Value.(int64)
+	for i := range values {
+		enumV := values[i].(*EnumValue)
+		if enumV.ValueNode == nil {
+			enumV.Value = value
+		} else {
+			value = enumV.Value
 		}
-
-		enumValue := NewEnumValue(name, value, comments)
 		value++
-		ret = append(ret, enumValue)
+		ret = append(ret, enumV)
 	}
 	return ret
 }
@@ -120,17 +129,32 @@ func toFunctionSlice(fns any) []*Function {
 
 }
 
-Document = Header*  def:Definition* Skip !. {
-	return NewDocument(toDefinitionSlice(def)), nil
+Document = headers:Header*  defs:Definition* Skip !. {
+	return NewDocument(toHeaderSlice(headers), toDefinitionSlice(defs), NewLocationFromCurrent(c)), nil
 }
 
-Header <- Skip (Include / CppInclude / Namespace) SkipLine
+Header <- Skip v:(Include / CppInclude / Namespace) SkipLine {
+	return v, nil
+}
 
-Include <- INCLUDE Literal
+Include <- INCLUDE include:Literal {
+	return NewInclude(include.(string), NewLocationFromCurrent(c)), nil
+}
 
-CppInclude <- CPPINCLUDE Literal
+CppInclude <- CPPINCLUDE include:Literal {
+	return NewCPPInclude(include.(string), NewLocationFromCurrent(c)), nil
+}
 
-Namespace <- NAMESPACE NamespaceScope Identifier Annotations?
+Namespace <- NAMESPACE language:NamespaceScope name:Identifier Annotations? {
+	var lang string
+	id, ok := language.(*Identifier)
+	if ok {
+		lang = id.Name
+	} else {
+		lang = "*"
+	}
+	return NewNamespace(lang, name.(*Identifier).Name, NewLocationFromCurrent(c)), nil
+}
 
 NamespaceScope <- Skip
     '*' Indent*
@@ -143,16 +167,26 @@ Definition = comments:ReservedComments Skip v:(Const / Typedef / Enum / Service 
 }
 
 Const <- CONST t:FieldType name:Identifier EQUAL v:ConstValue ListSeparator? {
-	return NewConst(name.(*Identifier), t.(*FieldType), v.(*ConstValue), ""), nil
+	return NewConst(name.(*Identifier), t.(*FieldType), v.(*ConstValue), "", NewLocationFromCurrent(c)), nil
 }
 
 Typedef <- TYPEDEF t:FieldType alias:Identifier {
-	return NewTypedef(t.(*FieldType), alias.(*Identifier)), nil
+	return NewTypedef(t.(*FieldType), alias.(*Identifier), NewLocationFromCurrent(c)), nil
 }
 
-Enum  <- ENUM name:Identifier LCUR v:(ReservedComments Identifier (EQUAL IntConstant)? Annotations? ListSeparator? SkipLine)* RCUR {
+Enum  <- ENUM name:Identifier LCUR v:EnumValue* RCUR {
 	values := toEnumValueSlice(v)
-	return NewEnum(name.(*Identifier), values), nil
+	return NewEnum(name.(*Identifier), values, NewLocationFromCurrent(c)), nil
+}
+
+EnumValue = comments:ReservedComments name:Identifier value:(EQUAL IntConstant)? Annotations? ListSeparator? SkipLine {
+	var valueNode *ConstValue
+	intV := int64(-1)
+	if value != nil {
+		valueNode = value.([]any)[1].(*ConstValue)
+		intV = value.([]any)[1].(*ConstValue).Value.(int64)
+	}
+	return NewEnumValue(name.(*Identifier), valueNode, intV, comments.(string), NewLocationFromCurrent(c)), nil
 }
 
 Service <- SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Function* RCUR {
@@ -161,19 +195,19 @@ Service <- SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Func
 		extendsVal = extends.(*Identifier)
 	}
 	fnsVal := toFunctionSlice(fns)
-	return NewService(name.(*Identifier), extendsVal, fnsVal), nil
+	return NewService(name.(*Identifier), extendsVal, fnsVal, NewLocationFromCurrent(c)), nil
 }
 
 Struct = STRUCT id:StructIdentifier LCUR fields:FieldWithThrow* RCUR {
-	return NewStruct(id.(*Identifier), toFieldSlice(fields)), nil
+	return NewStruct(id.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 } //{errIdentifier} ErrStructIdentifier //{errRCUR} ErrStructRCUR  //{errField} ErrField
 
 Union <- UNION name:Identifier LCUR fields:Field* RCUR {
-	return NewUnion(name.(*Identifier), toFieldSlice(fields)), nil
+	return NewUnion(name.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 }
 
 Exception <- EXCEPTION name:Identifier LCUR fields:Field* RCUR {
-	return NewException(name.(*Identifier), toFieldSlice(fields)), nil
+	return NewException(name.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 }
 
 FieldWithThrow = Field / x:( !((Skip '}' Indent*) / STRUCT / CONST / TYPEDEF / ENUM / SERVICE / UNION / EXCEPTION) %{errField} ) {
@@ -190,7 +224,7 @@ Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldTyp
 		requiredV = required.(*Required)
 	}
 
-	return NewField(comments.(string), lineComments.(string), int(index.(int64)), requiredV, fieldType.(*FieldType), id.(*Identifier), constV), nil
+	return NewField(comments.(string), lineComments.(string), int(index.(int64)), requiredV, fieldType.(*FieldType), id.(*Identifier), constV, NewLocationFromCurrent(c)), nil
 }
 
 
@@ -222,7 +256,7 @@ Function  <- comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:
 	if throws != nil {
 		throwsFields = throws.([]*Field)
 	}
-	return NewFunction(name.(*Identifier), oneway != nil, void, ftype, toFieldSlice(args), throwsFields, comments.(string)), nil
+	return NewFunction(name.(*Identifier), oneway != nil, void, ftype, toFieldSlice(args), throwsFields, comments.(string), NewLocationFromCurrent(c)), nil
 }
 
 FunctionType  <- VOID / FieldType
@@ -240,7 +274,7 @@ IdentifierType = v:Identifier {
 }
 
 BaseType = v:(BOOL / BYTE / I8 / I16 / I32 / I64 / DOUBLE / STRING / BINARY) {
-	return NewFieldType(v.(*TypeName), nil, nil), nil
+	return NewFieldType(v.(*TypeName), nil, nil, NewLocationFromCurrent(c)), nil
 }
 
 ContainerType = v:(MapType / SetType / ListType) {
@@ -248,30 +282,28 @@ ContainerType = v:(MapType / SetType / ListType) {
 }
 
 MapType =  t:MAP CppType? LPOINT key:FieldType COMMA value:FieldType RPOINT {
-	return NewFieldType(t.(*TypeName), key.(*FieldType), value.(*FieldType)), nil
+	return NewFieldType(t.(*TypeName), key.(*FieldType), value.(*FieldType), NewLocationFromCurrent(c)), nil
 }
 
 SetType = t:SET CppType? LPOINT key:FieldType RPOINT {
-	return NewFieldType(t.(*TypeName), key.(*FieldType), nil), nil
+	return NewFieldType(t.(*TypeName), key.(*FieldType), nil, NewLocationFromCurrent(c)), nil
 }
 
 ListType = t:LIST LPOINT key:FieldType RPOINT CppType? {
-	return NewFieldType(t.(*TypeName), key.(*FieldType), nil), nil
+	return NewFieldType(t.(*TypeName), key.(*FieldType), nil, NewLocationFromCurrent(c)), nil
 }
 
 CppType = CPPTYPE Literal
 
 ConstValue = v:(DoubleConstant / IntConstant / Literal / IdentifierConst / ConstMap / ConstList ) {
 	if str, ok := v.(string); ok {
-		fmt.Println("constvalue string", v)
-		return NewConstValue("string", str), nil
+		return NewConstValue("string", str, NewLocationFromCurrent(c)), nil
 	}
-	fmt.Println("constvalue", v)
 	return v.(*ConstValue), nil
 }
 
 IdentifierConst = id:Identifier {
-	return NewConstValue("identifier", id.(*Identifier).Name), nil
+	return NewConstValue("identifier", id.(*Identifier).Name, NewLocationFromCurrent(c)), nil
 }
 
 IntConstant = Skip  v:(HexIntConstant / OctIntConstant / NormalIntConstant)  Indent* {
@@ -279,20 +311,20 @@ IntConstant = Skip  v:(HexIntConstant / OctIntConstant / NormalIntConstant)  Ind
 }
 
 HexIntConstant = "0x" ([0-9] / [A-Z] / [a-z])+ {
-        v, err := strconv.ParseInt(string(c.text), 16, 64)
+        v, err := strconv.ParseInt(strings.TrimLeft(string(c.text), "0x"), 16, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewConstValue("i64", v), nil
+	return NewConstValue("i64", v, NewLocationFromCurrent(c)), nil
 }
 
 OctIntConstant = "0o" Digit+ {
-	v, err := strconv.ParseInt(string(c.text), 8, 64)
+	v, err := strconv.ParseInt(strings.TrimLeft(string(c.text), "0o"), 8, 64)
 	if err != nil {
 		return nil, err
 	}
-	return NewConstValue("i64", v), nil
+	return NewConstValue("i64", v, NewLocationFromCurrent(c)), nil
 }
 
 NormalIntConstant = ('+' / '-')? Digit+ {
@@ -300,7 +332,7 @@ NormalIntConstant = ('+' / '-')? Digit+ {
 	if err != nil {
 		return nil, err
 	}
-	return NewConstValue("i64", v), nil
+	return NewConstValue("i64", v, NewLocationFromCurrent(c)), nil
 }
 
 FieldIndex = Digit+ {
@@ -319,7 +351,7 @@ DoubleConstant  = Skip ('+' / '-')? v:(
 	if err != nil {
 		return nil, err
 	}
-    	return NewConstValue("double", v), nil
+    	return NewConstValue("double", v, NewLocationFromCurrent(c)), nil
     }
 
 Exponent = ('e' / 'E') IntConstant
@@ -329,21 +361,19 @@ Annotations <- LPAR Annotation+ RPAR
 Annotation <- Identifier EQUAL Literal ListSeparator?
 
 ConstList  = LBRK v:ConstListItem* RBRK {
-	fmt.Println("constlist")
-	return NewConstValue("list", toConstValueSlice(v)), nil
+	return NewConstValue("list", toConstValueSlice(v), NewLocationFromCurrent(c)), nil
 }
 
 ConstListItem = v:ConstValue ListSeparator? {
-	fmt.Println("ConstListItem", v)
 	return v.(*ConstValue), nil
 }
 
 ConstMap  = LCUR v:ConstMapItem* RCUR {
-	return NewConstValue("map", toConstValueSlice(v)), nil
+	return NewConstValue("map", toConstValueSlice(v), NewLocationFromCurrent(c)), nil
 }
 
 ConstMapItem = key:ConstValue COLON value:ConstValue ListSeparator? {
-	return NewMapConstValue(key.(*ConstValue), value.(*ConstValue)), nil
+	return NewMapConstValue(key.(*ConstValue), value.(*ConstValue), NewLocationFromCurrent(c)), nil
 }
 
 EscapeLiteralChar = '\\' ["'] {
@@ -613,7 +643,7 @@ DefinitionStart = "struct"
 ErrField = #{
 	return InvalidStructFieldError
 } ( !(Field / (Skip '}' Indent*) / STRUCT ) . )* {
-	return NewField("", "", 0, nil, nil, nil, nil), nil
+	return NewField("", "", 0, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
 
 ErrStructIdentifier = #{
