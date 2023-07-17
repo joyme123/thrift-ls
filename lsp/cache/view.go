@@ -49,18 +49,7 @@ func NewView(name string, folder uri.URI, fs FileSource, store *memoize.Store) *
 		knownFiles: make(map[uri.URI]bool),
 	}
 
-	view.snapshot = &Snapshot{
-		id:          rand.Int63(),
-		view:        view,
-		store:       store,
-		ctx:         context.Background(),
-		refCount:    sync.WaitGroup{},
-		parsedCache: NewParseCaches(),
-		files: &FilesMap{
-			files:    make(map[uri.URI]FileHandle),
-			overlays: make(map[uri.URI]*Overlay),
-		},
-	}
+	view.snapshot = NewSnapshot(view, store)
 
 	view.snapshotRelease = view.snapshot.Acquire()
 
@@ -116,7 +105,7 @@ func (v *View) FileKnown(uri uri.URI) bool {
 	return v.knownFiles[uri]
 }
 
-func (v *View) FileChange(ctx context.Context, changes []*FileChange) {
+func (v *View) FileChange(ctx context.Context, changes []*FileChange, postFns ...func()) {
 	for _, change := range changes {
 		v.MarkFileKnown(change.URI)
 	}
@@ -127,30 +116,35 @@ func (v *View) FileChange(ctx context.Context, changes []*FileChange) {
 	v.snapshotRelease()
 	v.snapshotMu.Lock()
 	v.snapshot = newSnapshot
+	for _, change := range changes {
+		v.snapshot.ForgetFile(change.URI)
+	}
 	v.snapshotMu.Unlock()
 	v.snapshotRelease = release
 
 	asyncRelease := v.snapshot.Acquire()
 	// handle current snapshot
 
-	// TODO(jpf): 异步 parse 会导致 completion 时取到旧版本的 snapshot
-	// go func() {
-	defer asyncRelease()
-	uris := make(map[uri.URI]struct{})
-	for _, change := range changes {
-		uris[change.URI] = struct{}{}
-	}
-	for uri := range uris {
-		err := v.snapshot.Parse(ctx, uri)
-		if err != nil {
-			log.Errorf("parse error: %v", err)
-		} else {
-			pf := v.snapshot.GetParsedFile(uri)
-			ast, _ := json.MarshalIndent(pf.ast, "", "  ")
-			log.Debugln("parsed ast: ", string(ast))
+	go func() {
+		defer asyncRelease()
+		uris := make(map[uri.URI]struct{})
+		for _, change := range changes {
+			uris[change.URI] = struct{}{}
 		}
-	}
-	// }()
+		for uri := range uris {
+			pf, err := v.snapshot.Parse(ctx, uri)
+			if err != nil {
+				log.Errorf("parse error: %v", err)
+			} else {
+				ast, _ := json.MarshalIndent(pf.ast, "", "  ")
+				log.Debugln("parsed ast: ", string(ast))
+			}
+		}
+
+		for i := range postFns {
+			postFns[i]()
+		}
+	}()
 	return
 }
 

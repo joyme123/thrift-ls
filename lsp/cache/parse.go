@@ -10,7 +10,7 @@ import (
 )
 
 type ParseCaches struct {
-	mu     sync.Mutex
+	mu     sync.RWMutex
 	caches map[uri.URI]*ParsedFile
 	tokens map[string]struct{}
 }
@@ -29,12 +29,23 @@ func (c *ParseCaches) Set(filePath uri.URI, res *ParsedFile) {
 }
 
 func (c *ParseCaches) Get(filePath uri.URI) *ParsedFile {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.caches[filePath]
 }
 
+func (c *ParseCaches) Forget(filePath uri.URI) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	delete(c.caches, filePath)
+	c.tokens = nil
+}
+
 func (c *ParseCaches) Clone() *ParseCaches {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	clone := make(map[uri.URI]*ParsedFile)
 	for i := range c.caches {
 		clone[i] = c.caches[i]
@@ -56,7 +67,7 @@ func (c *ParseCaches) Tokens() map[string]struct{} {
 			continue
 		}
 		for _, item := range parsed.ast.Includes {
-			if item.BadNode {
+			if item.Path == nil || item.Path.BadNode {
 				continue
 			}
 			tokens[item.Name()] = struct{}{}
@@ -130,6 +141,21 @@ type ParsedFile struct {
 
 func (p *ParsedFile) Mapper() *mapper.Mapper {
 	return p.mapper
+}
+
+func (p *ParsedFile) AST() *parser.Document {
+	return p.ast
+}
+
+func (p *ParsedFile) Errors() []error {
+	return p.errs
+}
+
+func (p *ParsedFile) AggregatedError() error {
+	if len(p.errs) == 0 {
+		return nil
+	}
+	return fmt.Errorf("aggregated error: %v", p.errs)
 }
 
 // TODO(jpf): use promise

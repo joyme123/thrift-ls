@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"os"
+	"sync"
 	"syscall"
 	"time"
 
@@ -117,23 +118,40 @@ type FileSource interface {
 
 // FilesMap holds files on disk and overlay files
 type FilesMap struct {
+	mu       sync.RWMutex
 	files    map[uri.URI]FileHandle
 	overlays map[uri.URI]*Overlay
 }
 
 func (m *FilesMap) Get(key uri.URI) (FileHandle, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	fh, ok := m.files[key]
 	return fh, ok
 }
 
 func (m *FilesMap) Set(key uri.URI, file FileHandle) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.files[key] = file
 	if o, ok := file.(*Overlay); ok {
 		m.overlays[key] = o
 	}
 }
 
+func (m *FilesMap) Forget(key uri.URI) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	delete(m.files, key)
+	delete(m.overlays, key)
+}
+
 func (m *FilesMap) Clone() *FilesMap {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	newMap := &FilesMap{
 		files:    make(map[uri.URI]FileHandle),
 		overlays: make(map[uri.URI]*Overlay),

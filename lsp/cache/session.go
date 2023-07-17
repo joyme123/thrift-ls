@@ -30,7 +30,7 @@ func NewSession(cache *Cache) *Session {
 		cache:     cache,
 		views:     make([]*View, 0),
 		viewMap:   make(map[uri.URI]*View),
-		overlayFS: newOverlayFS(cache),
+		overlayFS: NewOverlayFS(cache),
 	}
 
 	return sess
