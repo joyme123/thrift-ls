@@ -74,13 +74,13 @@ struct Demos{}
 func Test_ParseStructFieldError(t *testing.T) {
 	demoContent := `struct Demo {
   1: optional i64 count
-  a: optional boo Required = true; // err1, line 3, col 0
+  a: optional boo Required = true; // err1, line 3, col 3
   2: required i32 test4;
-  required string test; // err2, line 5, col 0
+  required string test; // err2, line 5, col 3
   4: required i32 test;
-  5 required string test; // err3, line 7, col 0
+  5 required string test; // err3, line 7, col 3
   6: required test test;
-  no comment // err4, line 9, col 0
+  no comment // err4, line 9, col 3
 }
 `
 	ast, err := parser.Parse("test.thrift", []byte(demoContent))
@@ -88,7 +88,7 @@ func Test_ParseStructFieldError(t *testing.T) {
 	if err != nil {
 		errList, ok := err.(parser.ErrorLister)
 		assert.True(t, ok)
-		errPos := []string{"3:0", "5:0", "7:0", "9:0"}
+		errPos := []string{"3:3", "5:3", "7:3", "9:3"}
 		assert.Len(t, errList.Errors(), len(errPos))
 		assert.True(t, containsError(errList.Errors(), parser.InvalidStructFieldError))
 
