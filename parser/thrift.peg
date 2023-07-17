@@ -138,11 +138,19 @@ Header <- Skip v:(Include / CppInclude / Namespace) SkipLine {
 }
 
 Include <- INCLUDE include:Literal {
-	return NewInclude(include.(string), NewLocationFromCurrent(c)), nil
+	includeV, ok := include.(*Literal)
+	if !ok {
+		includeV = include.([]interface{})[0].(*Literal)
+	}
+	return NewInclude(includeV, NewLocationFromCurrent(c)), nil
 }
 
 CppInclude <- CPPINCLUDE include:Literal {
-	return NewCPPInclude(include.(string), NewLocationFromCurrent(c)), nil
+	includeV, ok := include.(*Literal)
+	if !ok {
+		includeV = include.([]interface{})[0].(*Literal)
+	}
+	return NewCPPInclude(includeV, NewLocationFromCurrent(c)), nil
 }
 
 Namespace <- NAMESPACE language:NamespaceScope name:Identifier Annotations? {
@@ -296,8 +304,8 @@ ListType = t:LIST LPOINT key:FieldType RPOINT CppType? {
 CppType = CPPTYPE Literal
 
 ConstValue = v:(DoubleConstant / IntConstant / Literal / IdentifierConst / ConstMap / ConstList ) {
-	if str, ok := v.(string); ok {
-		return NewConstValue("string", str, NewLocationFromCurrent(c)), nil
+	if str, ok := v.(*Literal); ok {
+		return NewConstValue("string", str.Value, NewLocationFromCurrent(c)), nil
 	}
 	return v.(*ConstValue), nil
 }
@@ -382,15 +390,20 @@ EscapeLiteralChar = '\\' ["'] {
 
 Literal = l:(Literal1 / Literal2) {
 	return l, nil
-}
+} //{errLiteral1MissingRight} ErrLiteral1MissingRight //{errLiteral1} ErrLiteral1 //{errLiteral2MissingRight} ErrLiteral2MissingRight //{errLiteral2} ErrLiteral2
 
 Literal1 = Skip '"' t:(EscapeLiteralChar / !'"' .)* '"' Indent* {
 	strs := toStringSlice(t)
-	return strings.Join(strs, ""), nil
+	return NewLiteral(strings.Join(strs, ""), NewLocationFromCurrent(c)), nil
+} / x:(&(Skip '"' t:(EscapeLiteralChar / !'"' .)* Indent*) %{errLiteral1MissingRight}) {
+	 return x.([]any)[1], nil 
 }
+
 Literal2 = Skip "'" t:(EscapeLiteralChar / !"'" .)* "'" Indent* {
 	strs := toStringSlice(t)
-	return strings.Join(strs, ""), nil
+	return NewLiteral(strings.Join(strs, ""), NewLocationFromCurrent(c)), nil
+} / x:(&(Skip "'" t:(EscapeLiteralChar / !"'" .)* Indent*) %{errLiteral2MissingRight}) {
+	 return x.([]any)[1], nil 
 }
 
 StructIdentifier = id:Identifier {
@@ -665,4 +678,30 @@ ErrStructLCUR = #{
 	return InvalidStructBlockLCURError
 } ( !'}' .)* { // 缺少 '{'，消费异常字符直到出现下一个 Field 或者 '}'
 	return "?", nil
+}
+
+ErrLiteral1MissingRight = #{
+	return InvalidLiteral1MissingRightError
+} ( ![\r\n] .)* { // 消费异常字符直到这行结束
+	fmt.Println("literal--------------------------", string(c.text))
+	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+}
+
+
+ErrLiteral1 = #{
+	return InvalidLiteral1Error
+} ( ![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+}
+
+ErrLiteral2MissingRight = #{
+	return InvalidLiteral2MissingRightError
+} ( ![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+}
+
+ErrLiteral2 = #{
+	return InvalidLiteral2Error
+} ( ![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
 }

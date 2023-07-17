@@ -44,4 +44,9 @@ var (
 	InvalidStructFieldError      error = errors.New("expecting a valid field")
 
 	InvalidIdentifierError error = errors.New("expecting a valid identifier")
+
+	InvalidLiteral1MissingRightError error = errors.New("expecting a right \" ")
+	InvalidLiteral1Error             error = errors.New("expecting a valid literal")
+	InvalidLiteral2MissingRightError error = errors.New("expecting a right ' ")
+	InvalidLiteral2Error             error = errors.New("expecting a valid literal")
 )

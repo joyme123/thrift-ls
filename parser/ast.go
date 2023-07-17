@@ -92,16 +92,14 @@ type Header interface {
 }
 
 type Include struct {
-	Path    string
-	BadNode bool
+	Path *Literal
 	Location
 }
 
-func NewInclude(path string, loc Location) *Include {
+func NewInclude(path *Literal, loc Location) *Include {
 	return &Include{
 		Location: loc,
 		Path:     path,
-		BadNode:  path == "",
 	}
 }
 
@@ -110,7 +108,7 @@ func (i *Include) Type() string {
 }
 
 func (i *Include) Name() string {
-	_, file := path.Split(i.Path)
+	_, file := path.Split(i.Path.Value)
 	name := strings.TrimRight(file, path.Ext(file))
 	return name
 }
@@ -120,11 +118,11 @@ func (i *Include) Children() []Node {
 }
 
 type CPPInclude struct {
-	Path string
+	Path *Literal
 	Location
 }
 
-func NewCPPInclude(path string, loc Location) *CPPInclude {
+func NewCPPInclude(path *Literal, loc Location) *CPPInclude {
 	return &CPPInclude{
 		Location: loc,
 		Path:     path,
@@ -669,6 +667,27 @@ func (c *ConstValue) Children() []Node {
 
 func (c *ConstValue) Type() string {
 	return "ConstValue"
+}
+
+type Literal struct {
+	Value   string
+	BadNode bool
+
+	Location
+}
+
+func NewLiteral(v string, loc Location) *Literal {
+	return &Literal{
+		Value:    v,
+		Location: loc,
+	}
+}
+
+func NewBadLiteral(v string, loc Location) *Literal {
+	return &Literal{
+		Location: loc,
+		BadNode:  true,
+	}
 }
 
 type Location struct {

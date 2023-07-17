@@ -9,6 +9,7 @@ import (
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/completion"
 	"github.com/joyme123/thrift-ls/lsp/types"
+	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
@@ -39,7 +40,14 @@ func (s *Server) didOpen(ctx context.Context, params *protocol.DidOpenTextDocume
 	}
 
 	view, _ := s.session.ViewOf(fileURI)
-	view.FileChange(ctx, []*cache.FileChange{change})
+	view.FileChange(ctx, []*cache.FileChange{change}, func() {
+		ss, release := view.Snapshot()
+		defer release()
+		err := s.diagnostic(ctx, ss, change)
+		if err != nil {
+			log.Error("diagnostic error", err)
+		}
+	})
 
 	return nil
 }
@@ -57,7 +65,16 @@ func (s *Server) didChange(ctx context.Context, params *protocol.DidChangeTextDo
 		return err
 	}
 
-	view.FileChange(ctx, changes)
+	view.FileChange(ctx, changes, func() {
+		ss, release := view.Snapshot()
+		defer release()
+		for i := range changes {
+			err := s.diagnostic(ctx, ss, changes[i])
+			if err != nil {
+				log.Error("diagnostic error", err)
+			}
+		}
+	})
 
 	return nil
 }

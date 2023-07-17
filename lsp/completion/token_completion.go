@@ -19,7 +19,10 @@ func (c *TokenCompletion) Completion(ctx context.Context, ss *cache.Snapshot, cm
 
 	log.Debugln("all tokens:", tokens)
 
-	parsedFile := ss.GetParsedFile(cmp.Fh.URI())
+	parsedFile, err := ss.Parse(ctx, cmp.Fh.URI())
+	if err != nil {
+		return nil, err
+	}
 	pos, err := parsedFile.Mapper().LSPPosToParserPosition(cmp.Pos)
 	if err != nil {
 		return nil, err
