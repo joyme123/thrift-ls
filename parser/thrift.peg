@@ -263,8 +263,8 @@ Exception <- EXCEPTION name:Identifier LCUR fields:Field* RCUR {
 }
 
 
-FieldWithThrow = Field / x:( !((Skip '}' Indent*) / STRUCT / CONST / TYPEDEF / ENUM / SERVICE / UNION / EXCEPTION) %{errField} ) {
-	return x.([]any)[1], nil
+FieldWithThrow = Field / x:( Skip !(( '}' Indent*) / STRUCT / CONST / TYPEDEF / ENUM / SERVICE / UNION / EXCEPTION) %{errField} ) {
+	return x.([]any)[2], nil
 }
 
 Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldType:FieldType id:Identifier value:(EQUAL ConstValue)? Annotations? ListSeparator? lineComments:ReservedEndLineComments SkipLine {
