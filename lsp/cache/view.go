@@ -125,26 +125,29 @@ func (v *View) FileChange(ctx context.Context, changes []*FileChange, postFns ..
 	asyncRelease := v.snapshot.Acquire()
 	// handle current snapshot
 
-	go func() {
-		defer asyncRelease()
-		uris := make(map[uri.URI]struct{})
-		for _, change := range changes {
-			uris[change.URI] = struct{}{}
+	// TODO(jpf): 异步 parse 和 completion 的顺序问题
+	// go func() {
+	defer asyncRelease()
+	uris := make(map[uri.URI]struct{})
+	for _, change := range changes {
+		uris[change.URI] = struct{}{}
+	}
+	for uri := range uris {
+		v.snapshotMu.Lock()
+		pf, err := v.snapshot.Parse(ctx, uri)
+		v.snapshotMu.Unlock()
+		if err != nil {
+			log.Errorf("parse error: %v", err)
+		} else {
+			ast, _ := json.MarshalIndent(pf.ast, "", "  ")
+			log.Debugln("parsed ast: ", string(ast))
 		}
-		for uri := range uris {
-			pf, err := v.snapshot.Parse(ctx, uri)
-			if err != nil {
-				log.Errorf("parse error: %v", err)
-			} else {
-				ast, _ := json.MarshalIndent(pf.ast, "", "  ")
-				log.Debugln("parsed ast: ", string(ast))
-			}
-		}
+	}
 
-		for i := range postFns {
-			postFns[i]()
-		}
-	}()
+	for i := range postFns {
+		postFns[i]()
+	}
+	// }()
 	return
 }
 

@@ -49,4 +49,26 @@ var (
 	InvalidLiteral1Error             error = errors.New("expecting a valid literal")
 	InvalidLiteral2MissingRightError error = errors.New("expecting a right ' ")
 	InvalidLiteral2Error             error = errors.New("expecting a valid literal")
+
+	InvalidHeaderError error = errors.New("expecting a valid header")
+
+	InvalidIncludeError    error = errors.New("expecting a valid include header")
+	InvalidCppIncludeError error = errors.New("expecting a valid cpp include header")
+	InvalidNamespaceError  error = errors.New("expecting a valid namespace header")
+
+	InvalidDefinitionError error = errors.New("expecting a valid definition")
+
+	InvalidConstError error = errors.New("expecting a valid const definition")
+
+	InvalidTypedefError error = errors.New("expecting a valid typedef definition")
+
+	InvalidEnumError error = errors.New("expecting a valid enum definition")
+
+	InvalidServiceError error = errors.New("expecting a valid service definition")
+
+	InvalidStructError error = errors.New("expecting a valid struct definition")
+
+	InvalidUnionError error = errors.New("expecting a valid union definition")
+
+	InvalidExceptionError error = errors.New("expecting a valid exception definition")
 )

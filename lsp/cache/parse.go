@@ -6,6 +6,7 @@ import (
 
 	"github.com/joyme123/thrift-ls/lsp/mapper"
 	"github.com/joyme123/thrift-ls/parser"
+	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/uri"
 )
 
@@ -136,7 +137,7 @@ type ParsedFile struct {
 	mapper *mapper.Mapper
 
 	// errs hold all ast parsing errors
-	errs []error
+	errs []parser.ParserError
 }
 
 func (p *ParsedFile) Mapper() *mapper.Mapper {
@@ -147,7 +148,7 @@ func (p *ParsedFile) AST() *parser.Document {
 	return p.ast
 }
 
-func (p *ParsedFile) Errors() []error {
+func (p *ParsedFile) Errors() []parser.ParserError {
 	return p.errs
 }
 
@@ -172,8 +173,14 @@ func Parse(fh FileHandle) (*ParsedFile, error) {
 	psr := &parser.PEGParser{}
 
 	ast, errs := psr.Parse(fh.URI().Filename(), content)
-	pf.errs = errs
+	for i := range errs {
+		parserErr, ok := errs[i].(parser.ParserError)
+		if ok {
+			pf.errs = append(pf.errs, parserErr)
+		}
+	}
 	pf.ast = ast
+	log.Debugf("peg parsed err: %v", errs)
 
 	mp := mapper.NewMapper(fh.URI(), content)
 	pf.mapper = mp
@@ -181,19 +188,19 @@ func Parse(fh FileHandle) (*ParsedFile, error) {
 	return pf, nil
 }
 
-type ParseError struct {
-	Pos Position
-	Msg string
-}
-
-func (e *ParseError) Error() string {
-	if e.Pos.Filename != "" || e.Pos.IsValid() {
-		// don't print "<unknown position>"
-		// TODO(gri) reconsider the semantics of Position.IsValid
-		return e.Pos.String() + ": " + e.Msg
-	}
-	return e.Msg
-}
+// type ParseError struct {
+// 	Pos Position
+// 	Msg string
+// }
+//
+// func (e *ParseError) Error() string {
+// 	if e.Pos.Filename != "" || e.Pos.IsValid() {
+// 		// don't print "<unknown position>"
+// 		// TODO(gri) reconsider the semantics of Position.IsValid
+// 		return e.Pos.String() + ": " + e.Msg
+// 	}
+// 	return e.Msg
+// }
 
 type Position struct {
 	Filename string // filename, if any

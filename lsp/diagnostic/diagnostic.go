@@ -15,6 +15,7 @@ func init() {
 	registry = []Interface{
 		&CycleCheck{},
 		&SemanticAnalysis{},
+		&Parse{},
 	}
 }
 
@@ -41,7 +42,11 @@ func (d *Diagnostic) Diagnostic(ctx context.Context, ss *cache.Snapshot, changeF
 			res[key] = append(res[key], items...)
 		}
 	}
-	return res, errors.NewAggregate(errs)
+	if len(errs) > 0 {
+		return nil, errors.NewAggregate(errs)
+
+	}
+	return res, nil
 }
 
 type DiagnosticResult map[uri.URI][]protocol.Diagnostic

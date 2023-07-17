@@ -18,6 +18,7 @@ func (s *Server) diagnostic(ctx context.Context, ss *cache.Snapshot, changeFile 
 	diag := diagnostic.NewDiagnostic()
 	diagRes, err := diag.Diagnostic(ctx, ss, []uri.URI{changeFile.URI})
 	if err != nil {
+		log.Errorf("diagnostic failed: %v", err)
 		return err
 	}
 
@@ -27,6 +28,7 @@ func (s *Server) diagnostic(ctx context.Context, ss *cache.Snapshot, changeFile 
 			URI:         file,
 			Diagnostics: res,
 		}
+		log.Debug("file:", file, "diagnostics", res)
 		err = s.client.PublishDiagnostics(ctx, params)
 		if err != nil {
 			errs = append(errs, err)

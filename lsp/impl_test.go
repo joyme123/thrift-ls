@@ -185,6 +185,7 @@ struct Test {
 			},
 		},
 	}
+	assert.Equal(t, len(expectCompletionList.Items), len(completionList.Items))
 	assert.Equal(t, expectCompletionList.Items[0].TextEdit, completionList.Items[0].TextEdit)
 	assert.Equal(t, expectCompletionList, completionList)
 }

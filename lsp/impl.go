@@ -45,7 +45,7 @@ func (s *Server) didOpen(ctx context.Context, params *protocol.DidOpenTextDocume
 		defer release()
 		err := s.diagnostic(ctx, ss, change)
 		if err != nil {
-			log.Error("diagnostic error", err)
+			log.Errorf("diagnostic error: %v", err)
 		}
 	})
 
