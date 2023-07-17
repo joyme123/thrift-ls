@@ -94,6 +94,7 @@ func (s *Snapshot) Parse(ctx context.Context, uri uri.URI) (*ParsedFile, error) 
 
 	pf, err := Parse(fh)
 	if err != nil {
+		log.Debugf("snapshot parse err: %v", err)
 		return nil, err
 	}
 

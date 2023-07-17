@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"path"
 	"strings"
 	"unicode/utf8"
@@ -22,17 +23,19 @@ type Node interface {
 type Document struct {
 	Filename string
 
+	BadHeaders  []*BadHeader
 	Includes    []*Include
 	CPPIncludes []*CPPInclude
 	Namespaces  []*Namespace
 
-	Consts     []*Const
-	Typedefs   []*Typedef
-	Enums      []*Enum
-	Services   []*Service
-	Structs    []*Struct
-	Unions     []*Union
-	Exceptions []*Exception
+	Consts         []*Const
+	Typedefs       []*Typedef
+	Enums          []*Enum
+	Services       []*Service
+	Structs        []*Struct
+	Unions         []*Union
+	Exceptions     []*Exception
+	BadDefinitions []*BadDefinition
 
 	Nodes []Node
 
@@ -52,6 +55,8 @@ func NewDocument(headers []Header, defs []Definition, loc Location) *Document {
 			doc.CPPIncludes = append(doc.CPPIncludes, header.(*CPPInclude))
 		case "Namespace":
 			doc.Namespaces = append(doc.Namespaces, header.(*Namespace))
+		case "BadHeader":
+			doc.BadHeaders = append(doc.BadHeaders, header.(*BadHeader))
 		}
 		doc.Nodes = append(doc.Nodes, header)
 	}
@@ -72,6 +77,8 @@ func NewDocument(headers []Header, defs []Definition, loc Location) *Document {
 			doc.Unions = append(doc.Unions, def.(*Union))
 		case "Exception":
 			doc.Exceptions = append(doc.Exceptions, def.(*Exception))
+		case "BadDefinition":
+			doc.BadDefinitions = append(doc.BadDefinitions, def.(*BadDefinition))
 		}
 		doc.Nodes = append(doc.Nodes, def)
 	}
@@ -91,8 +98,30 @@ type Header interface {
 	Node
 }
 
+type BadHeader struct {
+	BadNode bool
+	Location
+}
+
+func NewBadHeader(loc Location) *BadHeader {
+	return &BadHeader{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
+func (h *BadHeader) Type() string {
+	return "BadHeader"
+}
+
+func (h *BadHeader) Children() []Node {
+	return nil
+}
+
 type Include struct {
 	Path *Literal
+
+	BadNode bool
 	Location
 }
 
@@ -100,6 +129,13 @@ func NewInclude(path *Literal, loc Location) *Include {
 	return &Include{
 		Location: loc,
 		Path:     path,
+	}
+}
+
+func NewBadInclude(loc Location) *Include {
+	return &Include{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -119,6 +155,8 @@ func (i *Include) Children() []Node {
 
 type CPPInclude struct {
 	Path *Literal
+
+	BadNode bool
 	Location
 }
 
@@ -126,6 +164,13 @@ func NewCPPInclude(path *Literal, loc Location) *CPPInclude {
 	return &CPPInclude{
 		Location: loc,
 		Path:     path,
+	}
+}
+
+func NewBadCPPInclude(loc Location) *CPPInclude {
+	return &CPPInclude{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -140,6 +185,8 @@ func (i *CPPInclude) Children() []Node {
 type Namespace struct {
 	Language string
 	Name     string
+
+	BadNode bool
 	Location
 }
 
@@ -147,6 +194,13 @@ func NewNamespace(language, name string, loc Location) *Namespace {
 	return &Namespace{
 		Language: language,
 		Name:     name,
+		Location: loc,
+	}
+}
+
+func NewBadNamespace(loc Location) *Namespace {
+	return &Namespace{
+		BadNode:  true,
 		Location: loc,
 	}
 }
@@ -165,10 +219,35 @@ type Definition interface {
 	SetComments(comments string)
 }
 
+type BadDefinition struct {
+	BadNode bool
+	Location
+}
+
+func NewBadDefinition(loc Location) *BadDefinition {
+	return &BadDefinition{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
+func (d *BadDefinition) Type() string {
+	return "Definition"
+}
+
+func (d *BadDefinition) Children() []Node {
+	return nil
+}
+
+func (d *BadDefinition) SetComments(string) {
+}
+
 type Struct struct {
 	Identifier *Identifier
 	Fields     []*Field
 	Comments   string
+
+	BadNode bool
 	Location
 }
 
@@ -177,6 +256,13 @@ func NewStruct(identifier *Identifier, fields []*Field, loc Location) *Struct {
 		Identifier: identifier,
 		Fields:     fields,
 		Location:   loc,
+	}
+}
+
+func NewBadStruct(loc Location) *Struct {
+	return &Struct{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -202,6 +288,8 @@ type Const struct {
 	ConstType *FieldType
 	Value     *ConstValue
 	Comments  string
+
+	BadNode bool
 	Location
 }
 
@@ -212,6 +300,13 @@ func NewConst(name *Identifier, t *FieldType, v *ConstValue, comments string, lo
 		Value:     v,
 		Comments:  comments,
 		Location:  loc,
+	}
+}
+
+func NewBadConst(loc Location) *Const {
+	return &Const{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -231,6 +326,7 @@ type Typedef struct {
 	T        *FieldType
 	Alias    *Identifier
 	Comments string
+	BadNode  bool
 
 	Location
 }
@@ -239,6 +335,13 @@ func NewTypedef(t *FieldType, alias *Identifier, loc Location) *Typedef {
 	return &Typedef{
 		T:        t,
 		Alias:    alias,
+		Location: loc,
+	}
+}
+
+func NewBadTypedef(loc Location) *Typedef {
+	return &Typedef{
+		BadNode:  true,
 		Location: loc,
 	}
 }
@@ -260,6 +363,7 @@ type Enum struct {
 	Values   []*EnumValue
 	Comments string
 
+	BadNode bool
 	Location
 }
 
@@ -267,6 +371,13 @@ func NewEnum(name *Identifier, values []*EnumValue, loc Location) *Enum {
 	return &Enum{
 		Name:     name,
 		Values:   values,
+		Location: loc,
+	}
+}
+
+func NewBadEnum(loc Location) *Enum {
+	return &Enum{
+		BadNode:  true,
 		Location: loc,
 	}
 }
@@ -324,6 +435,8 @@ type Service struct {
 	Extends   *Identifier
 	Functions []*Function
 	Comments  string
+
+	BadNode bool
 	Location
 }
 
@@ -333,6 +446,13 @@ func NewService(name *Identifier, extends *Identifier, fns []*Function, loc Loca
 		Extends:   extends,
 		Functions: fns,
 		Location:  loc,
+	}
+}
+
+func NewBadService(loc Location) *Service {
+	return &Service{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -361,6 +481,8 @@ type Function struct {
 	Arguments    []*Field
 	Throws       []*Field
 	Comments     string
+
+	BadNode bool
 	Location
 }
 
@@ -374,6 +496,13 @@ func NewFunction(name *Identifier, oneway bool, void bool, ft *FieldType, args [
 		Throws:       throws,
 		Comments:     comments,
 		Location:     loc,
+	}
+}
+
+func NewBadFunc(loc Location) *Function {
+	return &Function{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -397,6 +526,8 @@ type Union struct {
 	Name     *Identifier
 	Fields   []*Field
 	Comments string
+
+	BadNode bool
 	Location
 }
 
@@ -404,6 +535,13 @@ func NewUnion(name *Identifier, fields []*Field, loc Location) *Union {
 	return &Union{
 		Name:     name,
 		Fields:   fields,
+		Location: loc,
+	}
+}
+
+func NewBadUnion(loc Location) *Union {
+	return &Union{
+		BadNode:  true,
 		Location: loc,
 	}
 }
@@ -428,6 +566,8 @@ type Exception struct {
 	Name     *Identifier
 	Fields   []*Field
 	Comments string
+
+	BadNode bool
 	Location
 }
 
@@ -435,6 +575,13 @@ func NewException(name *Identifier, fields []*Field, loc Location) *Exception {
 	return &Exception{
 		Name:     name,
 		Fields:   fields,
+		Location: loc,
+	}
+}
+
+func NewBadException(loc Location) *Exception {
+	return &Exception{
+		BadNode:  true,
 		Location: loc,
 	}
 }
@@ -693,6 +840,15 @@ func NewBadLiteral(v string, loc Location) *Literal {
 type Location struct {
 	start Position
 	end   Position
+}
+
+func (l Location) MoveStartInLine(n int) Location {
+	newL := l
+	newL.start.Col += n
+	newL.start.Offset += n
+
+	fmt.Println(newL)
+	return newL
 }
 
 func (l *Location) Pos() Position {

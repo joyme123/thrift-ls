@@ -39,12 +39,12 @@ func cyclePairToDiagnostic(pair CyclePair) protocol.Diagnostic {
 	res := protocol.Diagnostic{
 		Range: protocol.Range{
 			Start: protocol.Position{
-				Line:      uint32(pair.include.include.Pos().Line),
-				Character: uint32(pair.include.include.Pos().Col),
+				Line:      uint32(pair.include.include.Pos().Line - 1),
+				Character: uint32(pair.include.include.Pos().Col - 1),
 			},
 			End: protocol.Position{
-				Line:      uint32(pair.include.include.End().Line),
-				Character: uint32(pair.include.include.End().Col),
+				Line:      uint32(pair.include.include.End().Line - 1),
+				Character: uint32(pair.include.include.End().Col - 1),
 			},
 		},
 		Severity: protocol.DiagnosticSeverityWarning,

@@ -12,5 +12,6 @@ func Init() {
 	if err != nil {
 		panic(err)
 	}
+	log.SetLevel(log.DebugLevel)
 	log.SetOutput(logFile) // 将文件设置为log输出的文件
 }
