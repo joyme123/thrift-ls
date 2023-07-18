@@ -11,6 +11,7 @@ import (
 
 var DefaultTokenCompletion Interface = &TokenCompletion{}
 
+// TokenCompletion is token based completion. It generates completion list based on identifier in ast
 type TokenCompletion struct {
 }
 
