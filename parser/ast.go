@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"path"
 	"strings"
 	"unicode/utf8"
@@ -876,7 +875,6 @@ func (l Location) MoveStartInLine(n int) Location {
 	newL.start.Col += n
 	newL.start.Offset += n
 
-	fmt.Println(newL)
 	return newL
 }
 

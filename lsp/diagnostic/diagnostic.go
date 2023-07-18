@@ -5,6 +5,7 @@ import (
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/utils/errors"
+	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
@@ -14,14 +15,15 @@ var registry []Interface
 func init() {
 	registry = []Interface{
 		&CycleCheck{},
-		&SemanticAnalysis{},
 		&Parse{},
 		&FieldIDCheck{},
+		&SemanticAnalysis{},
 	}
 }
 
 type Interface interface {
 	Diagnostic(ctx context.Context, ss *cache.Snapshot, changeFiles []uri.URI) (DiagnosticResult, error)
+	Name() string
 }
 
 type Diagnostic struct {
@@ -35,6 +37,7 @@ func (d *Diagnostic) Diagnostic(ctx context.Context, ss *cache.Snapshot, changeF
 	res := make(DiagnosticResult)
 	var errs []error
 	for _, impl := range registry {
+		log.Debugln("diagnostic called: ", impl.Name())
 		diagRes, err := impl.Diagnostic(ctx, ss, changeFiles)
 		if err != nil {
 			errs = append(errs, err)
@@ -44,10 +47,14 @@ func (d *Diagnostic) Diagnostic(ctx context.Context, ss *cache.Snapshot, changeF
 		}
 	}
 	if len(errs) > 0 {
-		return nil, errors.NewAggregate(errs)
+		return res, errors.NewAggregate(errs)
 
 	}
 	return res, nil
+}
+
+func (d *Diagnostic) Name() string {
+	return "Diagnostic"
 }
 
 type DiagnosticResult map[uri.URI][]protocol.Diagnostic

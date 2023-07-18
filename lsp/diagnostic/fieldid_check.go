@@ -8,6 +8,7 @@ import (
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/lsputils"
 	"github.com/joyme123/thrift-ls/parser"
+	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
@@ -31,6 +32,10 @@ func (c *FieldIDCheck) Diagnostic(ctx context.Context, ss *cache.Snapshot, chang
 	return res, nil
 }
 
+func (c *FieldIDCheck) Name() string {
+	return "FieldIDCheck"
+}
+
 func (c *FieldIDCheck) diagnostic(ctx context.Context, ss *cache.Snapshot, file uri.URI) ([]protocol.Diagnostic, error) {
 	pf, err := ss.Parse(ctx, file)
 	if err != nil {
@@ -42,7 +47,7 @@ func (c *FieldIDCheck) diagnostic(ctx context.Context, ss *cache.Snapshot, file 
 	}
 
 	for _, err := range pf.Errors() {
-		fmt.Println("parse err", err)
+		log.Debugln("parse err", err)
 	}
 
 	var ret []protocol.Diagnostic
@@ -51,7 +56,7 @@ func (c *FieldIDCheck) diagnostic(ctx context.Context, ss *cache.Snapshot, file 
 		fieldIDSet := make(map[int][]*parser.Field)
 		for i := range fields {
 			field := fields[i]
-			if field.Index.BadNode {
+			if field.Index == nil || field.Index.BadNode {
 				continue
 			}
 			fieldIDSet[field.Index.Value] = append(fieldIDSet[field.Index.Value], field)

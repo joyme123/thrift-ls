@@ -12,19 +12,20 @@ import (
 )
 
 func (s *Server) diagnostic(ctx context.Context, ss *cache.Snapshot, changeFile *cache.FileChange) error {
-	log.Debugln("-----------diagnostic called-----------")
-	defer log.Debugln("-----------diagnostic finish-----------")
-
 	if s.client == nil {
 		return nil
 	}
+
+	log.Debugln("-----------diagnostic called-----------")
+	defer log.Debugln("-----------diagnostic finish-----------")
 
 	diag := diagnostic.NewDiagnostic()
 	diagRes, err := diag.Diagnostic(ctx, ss, []uri.URI{changeFile.URI})
 	if err != nil {
 		log.Errorf("diagnostic failed: %v", err)
-		return err
 	}
+
+	log.Debugln("publish diagnostric result: ", len(diagRes))
 
 	var errs []error
 	for file, res := range diagRes {
@@ -32,7 +33,7 @@ func (s *Server) diagnostic(ctx context.Context, ss *cache.Snapshot, changeFile 
 			URI:         file,
 			Diagnostics: res,
 		}
-		log.Debug("file:", file, "diagnostics", res)
+		log.Debugln("file:", file, "diagnostics", res)
 		err = s.client.PublishDiagnostics(ctx, params)
 		if err != nil {
 			errs = append(errs, err)

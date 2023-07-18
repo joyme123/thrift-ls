@@ -14,3 +14,7 @@ func (s *SemanticAnalysis) Diagnostic(ctx context.Context, ss *cache.Snapshot, c
 
 	return nil, nil
 }
+
+func (s *SemanticAnalysis) Name() string {
+	return "SemanticAnalysis"
+}
