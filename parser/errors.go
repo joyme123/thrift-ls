@@ -35,8 +35,9 @@ func (p *parserError) Expected() []string {
 }
 
 var (
-	RequiredError         error = errors.New("expecting 'required' or 'optional'")
-	InvalidFieldTypeError error = errors.New("expecting a valid field type")
+	RequiredError          error = errors.New("expecting 'required' or 'optional'")
+	InvalidFieldTypeError  error = errors.New("expecting a valid field type")
+	InvalidFieldIndexError error = errors.New("expecting a valid int16 field index")
 
 	InvalidStructIdentifierError error = errors.New("expecting a valid struct identifier")
 	InvalidStructBlockLCURError  error = errors.New("expecting a starting '{' of struct block")

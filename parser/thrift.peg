@@ -277,13 +277,14 @@ Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldTyp
 		requiredV = required.(*Required)
 	}
 
-	return NewField(comments.(string), lineComments.(string), int(index.(int64)), requiredV, fieldType.(*FieldType), id.(*Identifier), constV, NewLocationFromCurrent(c)), nil
+	return NewField(comments.(string), lineComments.(string), index.(*FieldIndex), requiredV, fieldType.(*FieldType), id.(*Identifier), constV, NewLocationFromCurrent(c)), nil
 }
 
 
 FieldId = Skip i:FieldIndex COLON Indent* {
 	return i, nil
-} 
+} //{errFieldIndex} ErrFieldIndex
+
 FieldReq = Skip r:IsRequired Indent* {
 	if r == nil {
 		return nil, nil
@@ -393,8 +394,10 @@ FieldIndex = Digit+ {
 	if err != nil {
 		return nil, err
 	}
-	return v, nil
-} / %{errFieldIndex}
+	return NewFieldIndex(int(v), NewLocationFromCurrent(c)), nil
+} / x:(Skip &([a-zA-Z]+ COLON) %{errFieldIndex}) {
+	return x.([]any)[2], nil
+}
 
 DoubleConstant  = Skip ('+' / '-')? v:(
         Digit* '.' Digit+  Exponent?
@@ -701,7 +704,13 @@ DefinitionStart = "struct"
 ErrField = #{
 	return InvalidStructFieldError
 } ( !(Field / (Skip '}' Indent*) / STRUCT ) . )* {
-	return NewField("", "", 0, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
+	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
+}
+
+ErrFieldIndex = #{
+	return InvalidFieldIndexError
+} (!([:\r\n]) .)* { // 消费到冒号或本行结束
+	return NewBadFieldIndex(NewLocationFromCurrent(c)), nil
 }
 
 ErrStructIdentifier = #{

@@ -648,7 +648,7 @@ func ConvertPosition(pos position) Position {
 type Field struct {
 	Comments     string
 	LineComments string
-	Index        int
+	Index        *FieldIndex
 	Required     *Required
 	FieldType    *FieldType
 	Identifier   *Identifier
@@ -658,7 +658,7 @@ type Field struct {
 	Location
 }
 
-func NewField(comments string, lineComments string, index int, required *Required, fieldType *FieldType, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
+func NewField(comments string, lineComments string, index *FieldIndex, required *Required, fieldType *FieldType, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
 	field := &Field{
 		Comments:     comments,
 		LineComments: lineComments,
@@ -679,6 +679,35 @@ func (f *Field) Children() []Node {
 
 func (f *Field) Type() string {
 	return "Field"
+}
+
+type FieldIndex struct {
+	Value int
+
+	BadNode bool
+	Location
+}
+
+func NewFieldIndex(v int, loc Location) *FieldIndex {
+	return &FieldIndex{
+		Value:    v,
+		Location: loc,
+	}
+}
+
+func NewBadFieldIndex(loc Location) *FieldIndex {
+	return &FieldIndex{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
+func (f *FieldIndex) Children() []Node {
+	return nil
+}
+
+func (f *FieldIndex) Type() string {
+	return "FieldIndex"
 }
 
 type Required struct {
