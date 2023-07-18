@@ -38,10 +38,14 @@ func (p *Parse) Diagnostic(ctx context.Context, ss *cache.Snapshot, changeFiles 
 	}
 
 	if len(errs) > 0 {
-		return nil, errors.NewAggregate(errs)
+		return res, errors.NewAggregate(errs)
 	}
 
 	return res, nil
+}
+
+func (p *Parse) Name() string {
+	return "Parse"
 }
 
 func parseErrToDiagnostic(err parser.ParserError) protocol.Diagnostic {

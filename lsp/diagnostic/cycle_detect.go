@@ -27,6 +27,10 @@ func (c *CycleCheck) Diagnostic(ctx context.Context, ss *cache.Snapshot, changeF
 	return cycleToDiagnosticItems(cyclePairs), nil
 }
 
+func (c *CycleCheck) Name() string {
+	return "CycleCheck"
+}
+
 func cycleToDiagnosticItems(pairs []CyclePair) DiagnosticResult {
 	diagnostics := make(DiagnosticResult)
 	for i := range pairs {
