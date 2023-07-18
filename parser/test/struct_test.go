@@ -91,6 +91,7 @@ func Test_ParseStructFieldError(t *testing.T) {
 		errPos := []string{"3:3", "5:3", "7:3", "9:3"}
 		assert.Len(t, errList.Errors(), len(errPos))
 		assert.True(t, containsError(errList.Errors(), parser.InvalidStructFieldError))
+		assert.True(t, containsError(errList.Errors(), parser.InvalidFieldIndexError))
 
 		for i, err := range errList.Errors() {
 			assert.Contains(t, err.Error(), errPos[i])

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
+	"github.com/joyme123/thrift-ls/lsp/lsputils"
 	"github.com/joyme123/thrift-ls/parser"
 	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/protocol"
@@ -37,16 +38,7 @@ func cycleToDiagnosticItems(pairs []CyclePair) DiagnosticResult {
 
 func cyclePairToDiagnostic(pair CyclePair) protocol.Diagnostic {
 	res := protocol.Diagnostic{
-		Range: protocol.Range{
-			Start: protocol.Position{
-				Line:      uint32(pair.include.include.Pos().Line - 1),
-				Character: uint32(pair.include.include.Pos().Col - 1),
-			},
-			End: protocol.Position{
-				Line:      uint32(pair.include.include.End().Line - 1),
-				Character: uint32(pair.include.include.End().Col - 1),
-			},
-		},
+		Range:    lsputils.ASTNodeToRange(pair.include.include),
 		Severity: protocol.DiagnosticSeverityWarning,
 		Source:   "thrift-ls",
 		Message:  fmt.Sprintf("cycle dependency in %s", pair.include.file),

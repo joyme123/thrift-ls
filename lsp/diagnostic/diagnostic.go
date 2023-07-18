@@ -16,6 +16,7 @@ func init() {
 		&CycleCheck{},
 		&SemanticAnalysis{},
 		&Parse{},
+		&FieldIDCheck{},
 	}
 }
 

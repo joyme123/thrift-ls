@@ -15,3 +15,7 @@ func Init() {
 	log.SetLevel(log.DebugLevel)
 	log.SetOutput(logFile) // 将文件设置为log输出的文件
 }
+
+type Logger struct {
+
+}

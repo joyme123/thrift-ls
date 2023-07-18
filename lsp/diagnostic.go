@@ -15,6 +15,10 @@ func (s *Server) diagnostic(ctx context.Context, ss *cache.Snapshot, changeFile 
 	log.Debugln("-----------diagnostic called-----------")
 	defer log.Debugln("-----------diagnostic finish-----------")
 
+	if s.client == nil {
+		return nil
+	}
+
 	diag := diagnostic.NewDiagnostic()
 	diagRes, err := diag.Diagnostic(ctx, ss, []uri.URI{changeFile.URI})
 	if err != nil {
