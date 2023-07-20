@@ -313,7 +313,9 @@ func (s *Server) Declaration(ctx context.Context, params *protocol.DeclarationPa
 }
 
 func (s *Server) Definition(ctx context.Context, params *protocol.DefinitionParams) (result []protocol.Location, err error) {
-	return nil, nil
+	log.Debugln("-------------------Definition called-----------------")
+	defer log.Debugln("-------------------Definition finish-----------------")
+	return s.definition(ctx, params)
 }
 
 func (s *Server) DidChange(ctx context.Context, params *protocol.DidChangeTextDocumentParams) (err error) {
@@ -401,7 +403,9 @@ func (s *Server) RangeFormatting(ctx context.Context, params *protocol.DocumentR
 }
 
 func (s *Server) References(ctx context.Context, params *protocol.ReferenceParams) (result []protocol.Location, err error) {
-	return nil, nil
+	log.Debugln("--------------------References called----------------------")
+	defer log.Debugln("--------------------References finish----------------------")
+	return s.references(ctx, params)
 }
 
 func (s *Server) Rename(ctx context.Context, params *protocol.RenameParams) (result *protocol.WorkspaceEdit, err error) {
@@ -417,7 +421,9 @@ func (s *Server) Symbols(ctx context.Context, params *protocol.WorkspaceSymbolPa
 }
 
 func (s *Server) TypeDefinition(ctx context.Context, params *protocol.TypeDefinitionParams) (result []protocol.Location, err error) {
-	return nil, nil
+	log.Debugln("--------------------TypeDefinition called----------------------")
+	defer log.Debugln("--------------------TypeDefinition finish----------------------")
+	return s.typeDefinition(ctx, params)
 }
 
 func (s *Server) WillSave(ctx context.Context, params *protocol.WillSaveTextDocumentParams) (err error) {

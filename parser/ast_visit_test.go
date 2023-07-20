@@ -3,18 +3,25 @@ package parser
 import (
 	"testing"
 
+	"github.com/joyme123/thrift-ls/utils"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSearchNodePath(t *testing.T) {
 	demoContent := `struct Demo {
 1: optional set<string> with_default = [ "😀", "aaa" ]
+}
+
+service Demo {
+  user.Test Api(1:user.Test2 arg1, 2:user.Test3 arg2) throws (1:user.Error1 err)
 }`
 
 	ast, err := Parse("test.thrift", []byte(demoContent))
 	assert.NoError(t, err)
 	assert.NotNil(t, ast)
 	doc := ast.(*Document)
+
+	utils.MustDumpJsonToFile(doc, "/tmp/ast")
 
 	type args struct {
 		root Node
@@ -37,6 +44,17 @@ func TestSearchNodePath(t *testing.T) {
 			want: []string{"Document", "Struct", "Identifier"},
 		},
 		{
+			name: "field type",
+			args: args{
+				root: doc,
+				pos: Position{
+					Line: 2,
+					Col:  13,
+				},
+			},
+			want: []string{"Document", "Struct", "Field", "FieldType", "TypeName"},
+		},
+		{
 			name: "struct field value",
 			args: args{
 				root: doc,
@@ -46,6 +64,50 @@ func TestSearchNodePath(t *testing.T) {
 				},
 			},
 			want: []string{"Document", "Struct", "Field", "ConstValue"},
+		},
+		{
+			name: "function type",
+			args: args{
+				root: doc,
+				pos: Position{
+					Line: 6,
+					Col:  3,
+				},
+			},
+			want: []string{"Document", "Service", "Function", "FieldType", "TypeName"},
+		},
+		{
+			name: "function type",
+			args: args{
+				root: doc,
+				pos: Position{
+					Line: 6,
+					Col:  8,
+				},
+			},
+			want: []string{"Document", "Service", "Function", "FieldType", "TypeName"},
+		},
+		{
+			name: "function argument",
+			args: args{
+				root: doc,
+				pos: Position{
+					Line: 6,
+					Col:  24,
+				},
+			},
+			want: []string{"Document", "Service", "Function", "Field", "FieldType", "TypeName"},
+		},
+		{
+			name: "function throws",
+			args: args{
+				root: doc,
+				pos: Position{
+					Line: 6,
+					Col:  70,
+				},
+			},
+			want: []string{"Document", "Service", "Function", "Field", "FieldType", "TypeName"},
 		},
 	}
 	for _, tt := range tests {

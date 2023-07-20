@@ -1,5 +1,9 @@
 package parser
 
+import (
+	"github.com/joyme123/thrift-ls/utils"
+)
+
 func SearchNodePath(root Node, pos Position) []Node {
 	path := make([]Node, 0)
 	searchNodePath(root, pos, &path)
@@ -8,6 +12,9 @@ func SearchNodePath(root Node, pos Position) []Node {
 }
 
 func searchNodePath(root Node, pos Position, path *[]Node) {
+	if utils.IsNil(root) {
+		return
+	}
 	if !root.Contains(pos) {
 		return
 	}

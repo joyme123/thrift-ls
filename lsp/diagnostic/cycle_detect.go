@@ -3,8 +3,6 @@ package diagnostic
 import (
 	"context"
 	"fmt"
-	"path/filepath"
-	"strings"
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/lsputils"
@@ -96,11 +94,11 @@ func getIncludes(ctx context.Context, ss *cache.Snapshot, file uri.URI, includes
 			continue
 		}
 		(*includesMap)[file] = append((*includesMap)[file], Include{
-			file:    toURI(file, includes[i].Path.Value),
+			file:    lsputils.IncludeURI(file, includes[i].Path.Value),
 			include: includes[i],
 		})
 
-		includeURI := toURI(file, includes[i].Path.Value)
+		includeURI := lsputils.IncludeURI(file, includes[i].Path.Value)
 		if _, ok := (*includesMap)[includeURI]; ok {
 			continue
 		}
@@ -108,14 +106,4 @@ func getIncludes(ctx context.Context, ss *cache.Snapshot, file uri.URI, includes
 	}
 
 	return nil
-}
-
-func toURI(cur uri.URI, includePath string) uri.URI {
-	filePath := cur.Filename()
-	items := strings.Split(filePath, "/")
-	basePath := strings.TrimSuffix(filePath, items[len(items)-1])
-
-	path := filepath.Join(basePath, includePath)
-
-	return uri.File(path)
 }

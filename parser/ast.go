@@ -623,6 +623,7 @@ func (i *Identifier) ToFieldType() *FieldType {
 			Name:     i.Name,
 			Location: i.Location,
 		},
+		Location: i.Location,
 	}
 
 	return t
@@ -786,7 +787,7 @@ type TypeName struct {
 	// TypeName can be:
 	// container type: map, set, list
 	// base type: bool, byte, i8, i16, i32, i64, double, string, binary
-	// struct
+	// struct, enum, union, exception
 	Name string
 	Location
 }
@@ -866,33 +867,36 @@ func NewBadLiteral(v string, loc Location) *Literal {
 }
 
 type Location struct {
-	start Position
-	end   Position
+	StartPos Position
+	EndPos   Position
 }
 
 func (l Location) MoveStartInLine(n int) Location {
 	newL := l
-	newL.start.Col += n
-	newL.start.Offset += n
+	newL.StartPos.Col += n
+	newL.StartPos.Offset += n
 
 	return newL
 }
 
 func (l *Location) Pos() Position {
-	return l.start
+	return l.StartPos
 }
 
 // end col and offset is excluded
 func (l *Location) End() Position {
-	return l.end
+	return l.EndPos
 }
 
 func (l *Location) Contains(pos Position) bool {
-	return (l.start.Less(pos) || l.start.Equal(pos)) && l.end.Greater(pos)
+	if l == nil {
+		return false
+	}
+	return (l.StartPos.Less(pos) || l.StartPos.Equal(pos)) && l.EndPos.Greater(pos)
 }
 
 func NewLocationFromPos(start, end Position) Location {
-	return Location{start: start, end: end}
+	return Location{StartPos: start, EndPos: end}
 }
 
 func NewLocationFromCurrent(c *current) Location {
@@ -919,8 +923,8 @@ func NewLocation(startPos position, text string) Location {
 	}
 
 	return Location{
-		start: start,
-		end:   end,
+		StartPos: start,
+		EndPos:   end,
 	}
 }
 
