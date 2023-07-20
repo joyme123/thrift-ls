@@ -103,6 +103,21 @@ func GetEnumValueIdentifierNode(ast *parser.Document, name string) *parser.Ident
 	return nil
 }
 
+func GetConstIdentifierNode(ast *parser.Document, name string) *parser.Identifier {
+	if ast == nil {
+		return nil
+	}
+
+	for _, cst := range ast.Consts {
+		if cst.BadNode || cst.Name == nil || cst.Name.Name != name {
+			continue
+		}
+		return cst.Name
+	}
+
+	return nil
+}
+
 func GetTypedefNode(ast *parser.Document, name string) *parser.Typedef {
 	if ast == nil {
 		return nil
