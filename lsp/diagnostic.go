@@ -29,6 +29,9 @@ func (s *Server) diagnostic(ctx context.Context, ss *cache.Snapshot, changeFile 
 
 	var errs []error
 	for file, res := range diagRes {
+		if len(res) == 0 {
+			continue
+		}
 		params := &protocol.PublishDiagnosticsParams{
 			URI:         file,
 			Diagnostics: res,

@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -157,6 +158,16 @@ func (p *ParsedFile) AggregatedError() error {
 		return nil
 	}
 	return fmt.Errorf("aggregated error: %v", p.errs)
+}
+
+// DumpAST is for debug
+func (p *ParsedFile) DumpAST() {
+	if p.ast == nil {
+		return
+	}
+
+	data, _ := json.MarshalIndent(p.ast, "", "  ")
+	fmt.Println(string(data))
 }
 
 // TODO(jpf): use promise

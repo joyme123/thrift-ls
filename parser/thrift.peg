@@ -306,6 +306,7 @@ Function  <- comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:
 	} else {
 		ftype = ft.(*FieldType) 
 	}
+
 	var throwsFields []*Field
 	if throws != nil {
 		throwsFields = throws.([]*Field)

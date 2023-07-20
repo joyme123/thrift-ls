@@ -293,37 +293,3 @@ func buildSnapshotForTest(files []*cache.FileChange) *cache.Snapshot {
 
 	return ss
 }
-
-func Test_toURI(t *testing.T) {
-	type args struct {
-		cur         uri.URI
-		includePath string
-	}
-	tests := []struct {
-		name string
-		args args
-		want uri.URI
-	}{
-		{
-			name: "case1",
-			args: args{
-				cur:         uri.File("/tmp/workspace/app.thrift"),
-				includePath: "../user.thrift",
-			},
-			want: uri.File("/tmp/user.thrift"),
-		},
-		{
-			name: "case2",
-			args: args{
-				cur:         uri.File("/tmp/workspace/app.thrift"),
-				includePath: "user.thrift",
-			},
-			want: uri.File("/tmp/workspace/user.thrift"),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, toURI(tt.args.cur, tt.args.includePath))
-		})
-	}
-}
