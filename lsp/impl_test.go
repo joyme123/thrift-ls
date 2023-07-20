@@ -3,6 +3,8 @@ package lsp
 import (
 	"context"
 	"fmt"
+	"io/fs"
+	"path/filepath"
 	"testing"
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
@@ -188,4 +190,15 @@ struct Test {
 	assert.Equal(t, len(expectCompletionList.Items), len(completionList.Items))
 	assert.Equal(t, expectCompletionList.Items[0].TextEdit, completionList.Items[0].TextEdit)
 	assert.Equal(t, expectCompletionList, completionList)
+}
+
+func Test_WalkDir(t *testing.T) {
+	filepath.WalkDir("/Users/jiang/projects/bytedance/vke-guosen/pkg/server/idl", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			fmt.Println("dir: ", path)
+		} else {
+			fmt.Println("file: ", path)
+		}
+		return nil
+	})
 }

@@ -191,7 +191,10 @@ func Parse(fh FileHandle) (*ParsedFile, error) {
 		}
 	}
 	pf.ast = ast
-	log.Debugf("peg parsed err: %v", errs)
+
+	if len(errs) > 0 {
+		log.Debugf("peg parsed err: %v", errs)
+	}
 
 	mp := mapper.NewMapper(fh.URI(), content)
 	pf.mapper = mp

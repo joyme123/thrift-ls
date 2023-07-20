@@ -28,18 +28,35 @@ func (s *Server) didOpen(ctx context.Context, params *protocol.DidOpenTextDocume
 		From:    cache.FileChangeTypeDidOpen,
 	}
 
-	if err := s.session.UpdateOverlayFS(ctx, []*cache.FileChange{change}); err != nil {
-		return err
+	s.session.Initialize(func() {
+		file := change.URI
+		dirPos := strings.LastIndexByte(string(file), '/')
+		if dirPos == -1 {
+			return
+		}
+		dir := file[0:dirPos]
+		log.Debugln("walk dir:", dir)
+		s.walkFoldersThriftFile(dir)
+	})
+
+	return s.openFile(ctx, change)
+}
+
+func (s *Server) openFile(ctx context.Context, change *cache.FileChange) error {
+	if change.From != cache.FileChangeTypeInitialize {
+		if err := s.session.UpdateOverlayFS(ctx, []*cache.FileChange{change}); err != nil {
+			return err
+		}
 	}
 
-	if _, err := s.session.ViewOf(fileURI); err != nil {
+	if _, err := s.session.ViewOf(change.URI); err != nil {
 		// create view for this folder
-		filename := fileURI.Filename()
+		filename := change.URI.Filename()
 		dir := uri.New(path.Dir(filename))
 		s.session.CreateView(dir)
 	}
 
-	view, _ := s.session.ViewOf(fileURI)
+	view, _ := s.session.ViewOf(change.URI)
 	view.FileChange(ctx, []*cache.FileChange{change}, func() {
 		ss, release := view.Snapshot()
 		defer release()
