@@ -174,9 +174,10 @@ func (m *FilesMap) Destroy() {
 type FileChangeType string
 
 const (
-	FileChangeTypeDidOpen   FileChangeType = "DidOpen"
-	FileChangeTypeDidChange FileChangeType = "DidChange"
-	FileChangeTypeDidSave   FileChangeType = "DidSave"
+	FileChangeTypeInitialize FileChangeType = "Initialize"
+	FileChangeTypeDidOpen    FileChangeType = "DidOpen"
+	FileChangeTypeDidChange  FileChangeType = "DidChange"
+	FileChangeTypeDidSave    FileChangeType = "DidSave"
 )
 
 type FileChange struct {

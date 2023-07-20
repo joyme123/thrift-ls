@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"encoding/json"
 	"math/rand"
 	"strings"
 	"sync"
@@ -134,13 +133,10 @@ func (v *View) FileChange(ctx context.Context, changes []*FileChange, postFns ..
 	}
 	for uri := range uris {
 		v.snapshotMu.Lock()
-		pf, err := v.snapshot.Parse(ctx, uri)
+		_, err := v.snapshot.Parse(ctx, uri)
 		v.snapshotMu.Unlock()
 		if err != nil {
 			log.Errorf("parse error: %v", err)
-		} else {
-			ast, _ := json.MarshalIndent(pf.ast, "", "  ")
-			log.Debugln("parsed ast: ", string(ast))
 		}
 	}
 

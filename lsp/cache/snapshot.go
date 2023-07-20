@@ -89,8 +89,8 @@ func (s *Snapshot) Parse(ctx context.Context, uri uri.URI) (*ParsedFile, error) 
 	}
 
 	// DEBUG
-	content, _ := fh.Content()
-	log.Debugln("parse content:", string(content))
+	// content, _ := fh.Content()
+	// log.Debugln("parse content:", string(content))
 
 	pf, err := Parse(fh)
 	if err != nil {
