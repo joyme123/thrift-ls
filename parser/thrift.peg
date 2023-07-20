@@ -203,7 +203,7 @@ Definition = comments:ReservedComments Skip v:(Const / Typedef / Enum / Service 
 	return x.([]any)[3], nil
 } //{errConst} ErrConst //{errTypedef} ErrTypedef //{errEnum} ErrEnum //{errService} ErrService //{errStruct} ErrStruct //{errUnion} ErrUnion //{errException} ErrException
 
-Const <- CONST t:FieldType name:Identifier EQUAL v:ConstValue ListSeparator? {
+Const = CONST t:FieldType name:Identifier EQUAL v:ConstValue ListSeparator? {
 	return NewConst(name.(*Identifier), t.(*FieldType), v.(*ConstValue), "", NewLocationFromCurrent(c)), nil
 } / x:(&(CONST .*)) %{errConst} {
 	return x.([]any)[1], nil

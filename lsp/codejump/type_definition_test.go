@@ -5,13 +5,12 @@ import (
 	"testing"
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
-	"github.com/joyme123/thrift-ls/lsp/memoize"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 
-func TestDefinition(t *testing.T) {
+func TestTypeDefinition(t *testing.T) {
 	file1 := `struct Test {
   1: required string name,
   2: required string email,
@@ -45,7 +44,11 @@ const string DefaultName="nickname"`
 service Demo {
   user.Test Api(1:user.Test2 arg1, 2:user.Test3 arg2) throws (1:user.Error1 err)
   list<user.UserType> UserTypes(1:user.Test3 arg1=user.Test3.TWO, 2:string arg2=user.DefaultName)
-}`
+}
+
+typedef user.UserType UserKind
+const user.UserType usermale = "male"
+`
 
 	ss := buildSnapshotForTest([]*cache.FileChange{
 		{
@@ -75,7 +78,7 @@ service Demo {
 		assertion assert.ErrorAssertionFunc
 	}{
 		{
-			name: "case struct",
+			name: "case struct", // user.Test
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
@@ -103,7 +106,35 @@ service Demo {
 			assertion: assert.NoError,
 		},
 		{
-			name: "case union",
+			name: "case struct 2", // Api
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/api.thrift",
+				pos: protocol.Position{
+					Line:      2,
+					Character: 12,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/user.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      0,
+							Character: 7,
+						},
+						End: protocol.Position{
+							Line:      0,
+							Character: 11,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "case union", // user.Test2
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
@@ -131,7 +162,35 @@ service Demo {
 			assertion: assert.NoError,
 		},
 		{
-			name: "case enum",
+			name: "case union 2", // arg1
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/api.thrift",
+				pos: protocol.Position{
+					Line:      2,
+					Character: 29,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/user.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      7,
+							Character: 6,
+						},
+						End: protocol.Position{
+							Line:      7,
+							Character: 11,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "case enum", // user.Test3
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
@@ -159,7 +218,35 @@ service Demo {
 			assertion: assert.NoError,
 		},
 		{
-			name: "case exceptions",
+			name: "case enum 2", // arg2
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/api.thrift",
+				pos: protocol.Position{
+					Line:      2,
+					Character: 48,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/user.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      14,
+							Character: 5,
+						},
+						End: protocol.Position{
+							Line:      14,
+							Character: 10,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "case exceptions", // user.Error1
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
@@ -187,7 +274,35 @@ service Demo {
 			assertion: assert.NoError,
 		},
 		{
-			name: "case typedef",
+			name: "case exceptions 2", // err
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/api.thrift",
+				pos: protocol.Position{
+					Line:      2,
+					Character: 76,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/user.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      19,
+							Character: 10,
+						},
+						End: protocol.Position{
+							Line:      19,
+							Character: 16,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "case typedef", // user.UserType
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
@@ -270,24 +385,68 @@ service Demo {
 			},
 			assertion: assert.NoError,
 		},
+		{
+			name: "case typedef 2", // UserKind
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/api.thrift",
+				pos: protocol.Position{
+					Line:      6,
+					Character: 17,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/user.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      26,
+							Character: 15,
+						},
+						End: protocol.Position{
+							Line:      26,
+							Character: 23,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "case const 2", // usermale
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/api.thrift",
+				pos: protocol.Position{
+					Line:      7,
+					Character: 20,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/user.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      26,
+							Character: 15,
+						},
+						End: protocol.Position{
+							Line:      26,
+							Character: 23,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Definition(tt.args.ctx, tt.args.ss, tt.args.file, tt.args.pos)
+			got, err := TypeDefinition(tt.args.ctx, tt.args.ss, tt.args.file, tt.args.pos)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
 		})
 	}
-}
-
-func buildSnapshotForTest(files []*cache.FileChange) *cache.Snapshot {
-	store := &memoize.Store{}
-	c := cache.New(store)
-	fs := cache.NewOverlayFS(c)
-	fs.Update(context.TODO(), files)
-
-	view := cache.NewView("test", "file:///tmp", fs, store)
-	ss := cache.NewSnapshot(view, store)
-
-	return ss
 }

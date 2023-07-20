@@ -24,5 +24,13 @@ func (s *Server) references(ctx context.Context, params *protocol.ReferenceParam
 }
 
 func (s *Server) typeDefinition(ctx context.Context, params *protocol.TypeDefinitionParams) (result []protocol.Location, err error) {
-	return nil, nil
+	file := params.TextDocument.URI
+	view, err := s.session.ViewOf(file)
+	if err != nil {
+		return nil, err
+	}
+	ss, release := view.Snapshot()
+	defer release()
+
+	return codejump.TypeDefinition(ctx, ss, params.TextDocument.URI, params.Position)
 }

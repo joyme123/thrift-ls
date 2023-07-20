@@ -137,11 +137,6 @@ func constValueTypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.
 		}
 	}
 
-	// check if identifier is enum value
-	if !strings.Contains(identifier, ".") {
-		return res, nil
-	}
-
 	// now we can find destinate definition in `dstAst` by `identifier`
 	dstAst, err := ss.Parse(ctx, astFile)
 	if err != nil {
@@ -151,6 +146,11 @@ func constValueTypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.
 	dstEnumValueIdentifier := GetEnumValueIdentifierNode(dstAst.AST(), identifier)
 	if dstEnumValueIdentifier != nil {
 		res = append(res, jump(astFile, dstEnumValueIdentifier))
+	}
+
+	constIdentifier := GetConstIdentifierNode(dstAst.AST(), identifier)
+	if constIdentifier != nil {
+		res = append(res, jump(astFile, constIdentifier))
 	}
 
 	return res, nil
