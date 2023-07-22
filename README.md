@@ -1,3 +1,9 @@
+# thrift language server
+
+[![Language grade: Go](https://img.shields.io/lgtm/grade/go/g/joyme123/thrift-ls.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/joyme123/thrift-ls/context:go)
+
+![Go](https://github.com/joyme123/thrift-ls/workflows/Go/badge.svg?branch=main)
+
 ## 调试
 
 这里以 neovim 为例，在配置文件里用 lua 进行设置：
