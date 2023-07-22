@@ -1,11 +1,8 @@
 package lsputils
 
 import (
-	"context"
 	"testing"
 
-	"github.com/joyme123/thrift-ls/lsp/cache"
-	"github.com/joyme123/thrift-ls/lsp/memoize"
 	"github.com/joyme123/thrift-ls/parser"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/uri"
@@ -78,14 +75,33 @@ service Demo {
 	}
 }
 
-func buildSnapshotForTest(files []*cache.FileChange) *cache.Snapshot {
-	store := &memoize.Store{}
-	c := cache.New(store)
-	fs := cache.NewOverlayFS(c)
-	fs.Update(context.TODO(), files)
-
-	view := cache.NewView("test", "file:///tmp", fs, store)
-	ss := cache.NewSnapshot(view, store)
-
-	return ss
+func TestGetIncludeName(t *testing.T) {
+	type args struct {
+		file uri.URI
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "file name",
+			args: args{
+				file: uri.New("base.thrift"),
+			},
+			want: "base",
+		},
+		{
+			name: "file name with dir",
+			args: args{
+				file: uri.New("/tmp/base.thrift"),
+			},
+			want: "base",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, GetIncludeName(tt.args.file))
+		})
+	}
 }

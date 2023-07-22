@@ -24,6 +24,7 @@ type Snapshot struct {
 
 	store *memoize.Store
 
+	graph       *IncludeGraph
 	parsedCache *ParseCaches
 }
 
@@ -34,6 +35,7 @@ func NewSnapshot(view *View, store *memoize.Store) *Snapshot {
 		store:       store,
 		ctx:         context.Background(),
 		refCount:    sync.WaitGroup{},
+		graph:       NewIncludeGraph(),
 		parsedCache: NewParseCaches(),
 		files: &FilesMap{
 			files:    make(map[uri.URI]FileHandle),
@@ -51,6 +53,10 @@ func (s *Snapshot) Acquire() func() {
 
 func (s *Snapshot) Initialize(ctx context.Context) {
 
+}
+
+func (s *Snapshot) Graph() *IncludeGraph {
+	return s.graph
 }
 
 func (s *Snapshot) ReadFile(ctx context.Context, uri uri.URI) (FileHandle, error) {
@@ -75,6 +81,7 @@ func (s *Snapshot) ReadFile(ctx context.Context, uri uri.URI) (FileHandle, error
 // it remove file cache and parsed cache
 func (s *Snapshot) ForgetFile(uri uri.URI) {
 	s.files.Forget(uri)
+	s.graph.Remove(uri)
 	s.parsedCache.Forget(uri)
 }
 
@@ -98,6 +105,9 @@ func (s *Snapshot) Parse(ctx context.Context, uri uri.URI) (*ParsedFile, error) 
 		return nil, err
 	}
 
+	if pf.AST() != nil {
+		s.graph.Set(uri, pf.AST().Includes)
+	}
 	s.parsedCache.Set(uri, pf)
 
 	return pf, nil
@@ -118,8 +128,21 @@ func (s *Snapshot) clone() (*Snapshot, func()) {
 		// 	files:    make(map[uri.URI]FileHandle),
 		// 	overlays: make(map[uri.URI]*Overlay),
 		// },
+		graph:       s.graph.Clone(),
 		parsedCache: s.parsedCache.Clone(),
 	}
 
 	return snap, snap.Acquire()
+}
+
+func BuildSnapshotForTest(files []*FileChange) *Snapshot {
+	store := &memoize.Store{}
+	c := New(store)
+	fs := NewOverlayFS(c)
+	fs.Update(context.TODO(), files)
+
+	view := NewView("test", "file:///tmp", fs, store)
+	ss := NewSnapshot(view, store)
+
+	return ss
 }

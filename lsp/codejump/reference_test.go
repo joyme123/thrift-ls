@@ -10,7 +10,7 @@ import (
 	"go.lsp.dev/uri"
 )
 
-func TestTypeDefinition(t *testing.T) {
+func TestReference(t *testing.T) {
 	file1 := `struct Test {
   1: required string name,
   2: required string email,
@@ -48,6 +48,7 @@ service Demo {
 
 typedef user.UserType UserKind
 const user.UserType usermale = "male"
+const UserKind kind = "1"
 `
 
 	ss := cache.BuildSnapshotForTest([]*cache.FileChange{
@@ -102,30 +103,43 @@ const user.UserType usermale = "male"
 						},
 					},
 				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      2,
+							Character: 2,
+						},
+						End: protocol.Position{
+							Line:      2,
+							Character: 11,
+						},
+					},
+				},
 			},
 			assertion: assert.NoError,
 		},
 		{
-			name: "case struct 2", // Api
+			name: "case struct 2", // Test
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
-				file: "file:///tmp/api.thrift",
+				file: "file:///tmp/user.thrift",
 				pos: protocol.Position{
-					Line:      2,
-					Character: 12,
+					Line:      0,
+					Character: 7,
 				},
 			},
 			want: []protocol.Location{
 				{
-					URI: "file:///tmp/user.thrift",
+					URI: "file:///tmp/api.thrift",
 					Range: protocol.Range{
 						Start: protocol.Position{
-							Line:      0,
-							Character: 7,
+							Line:      2,
+							Character: 2,
 						},
 						End: protocol.Position{
-							Line:      0,
+							Line:      2,
 							Character: 11,
 						},
 					},
@@ -158,31 +172,44 @@ const user.UserType usermale = "male"
 						},
 					},
 				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      2,
+							Character: 18,
+						},
+						End: protocol.Position{
+							Line:      2,
+							Character: 28,
+						},
+					},
+				},
 			},
 			assertion: assert.NoError,
 		},
 		{
-			name: "case union 2", // arg1
+			name: "case union 2", // Test2
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
-				file: "file:///tmp/api.thrift",
+				file: "file:///tmp/user.thrift",
 				pos: protocol.Position{
-					Line:      2,
-					Character: 29,
+					Line:      7,
+					Character: 6,
 				},
 			},
 			want: []protocol.Location{
 				{
-					URI: "file:///tmp/user.thrift",
+					URI: "file:///tmp/api.thrift",
 					Range: protocol.Range{
 						Start: protocol.Position{
-							Line:      7,
-							Character: 6,
+							Line:      2,
+							Character: 18,
 						},
 						End: protocol.Position{
-							Line:      7,
-							Character: 11,
+							Line:      2,
+							Character: 28,
 						},
 					},
 				},
@@ -214,31 +241,70 @@ const user.UserType usermale = "male"
 						},
 					},
 				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      2,
+							Character: 37,
+						},
+						End: protocol.Position{
+							Line:      2,
+							Character: 47,
+						},
+					},
+				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      3,
+							Character: 34,
+						},
+						End: protocol.Position{
+							Line:      3,
+							Character: 44,
+						},
+					},
+				},
 			},
 			assertion: assert.NoError,
 		},
 		{
-			name: "case enum 2", // arg2
+			name: "case enum 2", // Test3
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
-				file: "file:///tmp/api.thrift",
+				file: "file:///tmp/user.thrift",
 				pos: protocol.Position{
-					Line:      2,
-					Character: 48,
+					Line:      14,
+					Character: 5,
 				},
 			},
 			want: []protocol.Location{
 				{
-					URI: "file:///tmp/user.thrift",
+					URI: "file:///tmp/api.thrift",
 					Range: protocol.Range{
 						Start: protocol.Position{
-							Line:      14,
-							Character: 5,
+							Line:      2,
+							Character: 37,
 						},
 						End: protocol.Position{
-							Line:      14,
-							Character: 10,
+							Line:      2,
+							Character: 47,
+						},
+					},
+				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      3,
+							Character: 34,
+						},
+						End: protocol.Position{
+							Line:      3,
+							Character: 44,
 						},
 					},
 				},
@@ -270,31 +336,44 @@ const user.UserType usermale = "male"
 						},
 					},
 				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      2,
+							Character: 64,
+						},
+						End: protocol.Position{
+							Line:      2,
+							Character: 75,
+						},
+					},
+				},
 			},
 			assertion: assert.NoError,
 		},
 		{
-			name: "case exceptions 2", // err
+			name: "case exceptions 2", // Error1
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
-				file: "file:///tmp/api.thrift",
+				file: "file:///tmp/user.thrift",
 				pos: protocol.Position{
-					Line:      2,
-					Character: 76,
+					Line:      19,
+					Character: 10,
 				},
 			},
 			want: []protocol.Location{
 				{
-					URI: "file:///tmp/user.thrift",
+					URI: "file:///tmp/api.thrift",
 					Range: protocol.Range{
 						Start: protocol.Position{
-							Line:      19,
-							Character: 10,
+							Line:      2,
+							Character: 64,
 						},
 						End: protocol.Position{
-							Line:      19,
-							Character: 16,
+							Line:      2,
+							Character: 75,
 						},
 					},
 				},
@@ -326,11 +405,104 @@ const user.UserType usermale = "male"
 						},
 					},
 				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      3,
+							Character: 7,
+						},
+						End: protocol.Position{
+							Line:      3,
+							Character: 20,
+						},
+					},
+				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      6,
+							Character: 8,
+						},
+						End: protocol.Position{
+							Line:      6,
+							Character: 21,
+						},
+					},
+				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      7,
+							Character: 6,
+						},
+						End: protocol.Position{
+							Line:      7,
+							Character: 19,
+						},
+					},
+				},
 			},
 			assertion: assert.NoError,
 		},
 		{
-			name: "case enumvalue",
+			name: "case typedef 2", // UserType
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/user.thrift",
+				pos: protocol.Position{
+					Line:      26,
+					Character: 15,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      3,
+							Character: 7,
+						},
+						End: protocol.Position{
+							Line:      3,
+							Character: 20,
+						},
+					},
+				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      6,
+							Character: 8,
+						},
+						End: protocol.Position{
+							Line:      6,
+							Character: 21,
+						},
+					},
+				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      7,
+							Character: 6,
+						},
+						End: protocol.Position{
+							Line:      7,
+							Character: 19,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "case enumvalue", // user.Test3.TWO
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
@@ -354,11 +526,52 @@ const user.UserType usermale = "male"
 						},
 					},
 				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      3,
+							Character: 50,
+						},
+						End: protocol.Position{
+							Line:      3,
+							Character: 64,
+						},
+					},
+				},
 			},
 			assertion: assert.NoError,
 		},
 		{
-			name: "case const",
+			name: "case enumvalue 2", // TWO
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/user.thrift",
+				pos: protocol.Position{
+					Line:      16,
+					Character: 2,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      3,
+							Character: 50,
+						},
+						End: protocol.Position{
+							Line:      3,
+							Character: 64,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "case const", // user.DefaultName
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
@@ -382,31 +595,16 @@ const user.UserType usermale = "male"
 						},
 					},
 				},
-			},
-			assertion: assert.NoError,
-		},
-		{
-			name: "case typedef 2", // UserKind
-			args: args{
-				ctx:  context.TODO(),
-				ss:   ss,
-				file: "file:///tmp/api.thrift",
-				pos: protocol.Position{
-					Line:      6,
-					Character: 17,
-				},
-			},
-			want: []protocol.Location{
 				{
-					URI: "file:///tmp/user.thrift",
+					URI: "file:///tmp/api.thrift",
 					Range: protocol.Range{
 						Start: protocol.Position{
-							Line:      26,
-							Character: 15,
+							Line:      3,
+							Character: 80,
 						},
 						End: protocol.Position{
-							Line:      26,
-							Character: 23,
+							Line:      3,
+							Character: 96,
 						},
 					},
 				},
@@ -414,27 +612,68 @@ const user.UserType usermale = "male"
 			assertion: assert.NoError,
 		},
 		{
-			name: "case const 2", // usermale
+			name: "case const 2", // DefaultName
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/user.thrift",
+				pos: protocol.Position{
+					Line:      27,
+					Character: 13,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      3,
+							Character: 80,
+						},
+						End: protocol.Position{
+							Line:      3,
+							Character: 96,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "type in same file", // UserKind
 			args: args{
 				ctx:  context.TODO(),
 				ss:   ss,
 				file: "file:///tmp/api.thrift",
 				pos: protocol.Position{
-					Line:      7,
-					Character: 20,
+					Line:      8,
+					Character: 6,
 				},
 			},
 			want: []protocol.Location{
 				{
-					URI: "file:///tmp/user.thrift",
+					URI: "file:///tmp/api.thrift",
 					Range: protocol.Range{
 						Start: protocol.Position{
-							Line:      26,
-							Character: 15,
+							Line:      6,
+							Character: 22,
 						},
 						End: protocol.Position{
-							Line:      26,
-							Character: 23,
+							Line:      6,
+							Character: 30,
+						},
+					},
+				},
+				{
+					URI: "file:///tmp/api.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      8,
+							Character: 6,
+						},
+						End: protocol.Position{
+							Line:      8,
+							Character: 14,
 						},
 					},
 				},
@@ -444,7 +683,7 @@ const user.UserType usermale = "male"
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := TypeDefinition(tt.args.ctx, tt.args.ss, tt.args.file, tt.args.pos)
+			got, err := Reference(tt.args.ctx, tt.args.ss, tt.args.file, tt.args.pos)
 			tt.assertion(t, err)
 			assert.Equal(t, tt.want, got)
 		})

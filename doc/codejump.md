@@ -9,7 +9,7 @@ codejump 这里指代一切设计到代码跳转的特性。LSP 中支持的有:
 4. Find References: 查找引用。在 thrift 中主要用来做 struct/union/enum/exception/typedef 的引用查找，可以进行 references 查找的情况有:
    1. typename: 找到 type definition 以及引用的地方
    2. identifier: struct/union/enum/enum value/exception/typedef/const
-   3. constvalue
+   3. constvalue: 查找 enum value/struct/union/exception/const/function arguments 的默认值。以及在 const/enum value 中的定义
 
 
 

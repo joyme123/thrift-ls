@@ -49,7 +49,7 @@ func Definition(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos proto
 
 	switch targetNode.Type() {
 	case "TypeName":
-		return fieldTypeDefinition(ctx, ss, file, pf.AST(), nodePath, targetNode)
+		return typeNameDefinition(ctx, ss, file, pf.AST(), nodePath, targetNode)
 	case "ConstValue":
 		return constValueTypeDefinition(ctx, ss, file, pf.AST(), targetNode)
 	}
@@ -57,13 +57,24 @@ func Definition(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos proto
 	return
 }
 
-func fieldTypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, nodePath []parser.Node, targetNode parser.Node) ([]protocol.Location, error) {
+func typeNameDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, nodePath []parser.Node, targetNode parser.Node) ([]protocol.Location, error) {
 	res := make([]protocol.Location, 0)
+	astFile, id, _, err := typeNameDefinitionIdentifier(ctx, ss, file, ast, nodePath, targetNode)
+	if err != nil {
+		return res, err
+	}
+	if id != nil {
+		res = append(res, jump(astFile, id))
+	}
 
+	return res, nil
+}
+
+func typeNameDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, nodePath []parser.Node, targetNode parser.Node) (uri.URI, *parser.Identifier, string, error) {
 	typeName := targetNode.(*parser.TypeName)
 	typeV := typeName.Name
 	if _, ok := baseType[typeV]; ok {
-		return res, nil
+		return "", nil, "", nil
 	}
 
 	include, identifier, found := strings.Cut(typeV, ".")
@@ -75,7 +86,7 @@ func fieldTypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, 
 	} else {
 		path := lsputils.GetIncludePath(ast, include)
 		if path == "" { // doesn't match any include path
-			return nil, nil
+			return "", nil, "", nil
 		}
 		astFile = lsputils.IncludeURI(file, path)
 	}
@@ -83,41 +94,53 @@ func fieldTypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, 
 	// now we can find destinate definition in `dstAst` by `identifier`
 	dstAst, err := ss.Parse(ctx, astFile)
 	if err != nil {
-		return nil, err
+		return astFile, nil, "", err
 	}
 
 	// struct, exception, enum or union
 	dstException := GetExceptionNode(dstAst.AST(), identifier)
 	if dstException != nil {
-		res = append(res, jump(astFile, dstException.Name))
+		return astFile, dstException.Name, "Exception", nil
 	}
 	dstStruct := GetStructNode(dstAst.AST(), identifier)
 	if dstStruct != nil {
-		res = append(res, jump(astFile, dstStruct.Identifier))
+		return astFile, dstStruct.Identifier, "Struct", nil
 	}
 	dstEnum := GetEnumNode(dstAst.AST(), identifier)
 	if dstEnum != nil {
-		res = append(res, jump(astFile, dstEnum.Name))
+		return astFile, dstEnum.Name, "Enum", nil
 	}
 	dstUnion := GetUnionNode(dstAst.AST(), identifier)
 	if dstUnion != nil {
-		res = append(res, jump(astFile, dstUnion.Name))
+		return astFile, dstUnion.Name, "Union", nil
 	}
 	dstTypedef := GetTypedefNode(dstAst.AST(), identifier)
 	if dstTypedef != nil {
-		res = append(res, jump(astFile, dstTypedef.Alias))
+		return astFile, dstTypedef.Alias, "Typedef", nil
 	}
 
-	return res, nil
+	return astFile, nil, "", nil
 }
 
 // search enum
 func constValueTypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) ([]protocol.Location, error) {
 	res := make([]protocol.Location, 0)
+	astFile, id, err := constValueTypeDefinitionIdentifier(ctx, ss, file, ast, targetNode)
+	if err != nil {
+		return res, err
+	}
 
+	if id != nil {
+		res = append(res, jump(astFile, id))
+	}
+
+	return res, nil
+}
+
+func constValueTypeDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) (uri.URI, *parser.Identifier, error) {
 	constValue := targetNode.(*parser.ConstValue)
 	if constValue.TypeName != "identifier" {
-		return res, nil
+		return "", nil, nil
 	}
 
 	include, identifier, found := strings.Cut(constValue.Value.(string), ".")
@@ -140,18 +163,18 @@ func constValueTypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.
 	// now we can find destinate definition in `dstAst` by `identifier`
 	dstAst, err := ss.Parse(ctx, astFile)
 	if err != nil {
-		return nil, err
+		return astFile, nil, err
 	}
 
 	dstEnumValueIdentifier := GetEnumValueIdentifierNode(dstAst.AST(), identifier)
 	if dstEnumValueIdentifier != nil {
-		res = append(res, jump(astFile, dstEnumValueIdentifier))
+		return astFile, dstEnumValueIdentifier, nil
 	}
 
 	constIdentifier := GetConstIdentifierNode(dstAst.AST(), identifier)
 	if constIdentifier != nil {
-		res = append(res, jump(astFile, constIdentifier))
+		return astFile, constIdentifier, nil
 	}
 
-	return res, nil
+	return astFile, nil, nil
 }
