@@ -131,19 +131,44 @@ func toFunctionSlice(fns any) []*Function {
 
 Document = headers:Header*  defs:Definition* Skip !. {
 	return NewDocument(toHeaderSlice(headers), toDefinitionSlice(defs), NewLocationFromCurrent(c)), nil
-}
+} //{errHeader} ErrHeader //{errDefinition} ErrDefinition
 
 Header <- Skip v:(Include / CppInclude / Namespace) SkipLine {
+	c.globalStore["parse"] = "header"
 	return v, nil
-}
+} / x:(!(Definition) Skip &(.+) &{
+	/* fmt.Println("header predict:", c.pos, "text:", string(c.text)) */
+	if state, ok := c.globalStore["parse"]; (!ok || ok && state.(string) == "header") {
+		return true, nil
+	}
+	return false, nil
+} %{errHeader}) {
+	/* fmt.Println("header return:", c.pos, "text:", string(c.text)) */
+	badHeader := x.([]any)[4].(*BadHeader)
+	return badHeader, nil
+} //{errInclude} ErrInclude //{errCppInclude} ErrorCppInclude //{errNamespace} ErrorNamespace
 
 Include <- INCLUDE include:Literal {
-	return NewInclude(include.(string), NewLocationFromCurrent(c)), nil
+	includeV, ok := include.(*Literal)
+	if !ok {
+		includeV = include.([]interface{})[0].(*Literal)
+	}
+	return NewInclude(includeV, NewLocationFromCurrent(c)), nil
+} / x:(&(INCLUDE .*) %{errInclude}) {
+	return x.([]any)[1], nil
 }
 
+
 CppInclude <- CPPINCLUDE include:Literal {
-	return NewCPPInclude(include.(string), NewLocationFromCurrent(c)), nil
+	includeV, ok := include.(*Literal)
+	if !ok {
+		includeV = include.([]interface{})[0].(*Literal)
+	}
+	return NewCPPInclude(includeV, NewLocationFromCurrent(c)), nil
+} / x:(&(CPPINCLUDE .*) %{errCppInclude}) {
+	return x.([]any)[1], nil
 }
+
 
 Namespace <- NAMESPACE language:NamespaceScope name:Identifier Annotations? {
 	var lang string
@@ -154,6 +179,8 @@ Namespace <- NAMESPACE language:NamespaceScope name:Identifier Annotations? {
 		lang = "*"
 	}
 	return NewNamespace(lang, name.(*Identifier).Name, NewLocationFromCurrent(c)), nil
+} / x:(&(NAMESPACE .*) %{errNamespace}) {
+	return x.([]any)[1], nil
 }
 
 NamespaceScope <- Skip
@@ -161,32 +188,54 @@ NamespaceScope <- Skip
     / Identifier
 
 Definition = comments:ReservedComments Skip v:(Const / Typedef / Enum / Service / Struct / Union / Exception) Annotations? SkipLine {
+	c.globalStore["parse"] = "definition"
 	def := v.(Definition)
 	def.SetComments(comments.(string))
 	return def, nil
-}
+} / x:(Skip &(.+) &{
+	/* fmt.Println("definition predict:", c.pos, "text:", string(c.text)) */
+	if state, ok := c.globalStore["parse"]; ok && state.(string) == "definition" {
+		return true, nil
+	}
+	return false, nil
+} %{errDefinition}) {
+	/* fmt.Println("definition return:", c.pos, "text:", string(c.text)) */
+	return x.([]any)[3], nil
+} //{errConst} ErrConst //{errTypedef} ErrTypedef //{errEnum} ErrEnum //{errService} ErrService //{errStruct} ErrStruct //{errUnion} ErrUnion //{errException} ErrException
 
-Const <- CONST t:FieldType name:Identifier EQUAL v:ConstValue ListSeparator? {
+Const = CONST t:FieldType name:Identifier EQUAL v:ConstValue ListSeparator? {
 	return NewConst(name.(*Identifier), t.(*FieldType), v.(*ConstValue), "", NewLocationFromCurrent(c)), nil
+} / x:(&(CONST .*)) %{errConst} {
+	return x.([]any)[1], nil
 }
 
 Typedef <- TYPEDEF t:FieldType alias:Identifier {
 	return NewTypedef(t.(*FieldType), alias.(*Identifier), NewLocationFromCurrent(c)), nil
+} / x:(&(TYPEDEF .*) %{errTypedef}) {
+	return x.([]any)[1], nil
 }
 
-Enum  <- ENUM name:Identifier LCUR v:EnumValue* RCUR {
+Enum  <- ENUM name:Identifier LCUR v:EnumValueLine* RCUR {
 	values := toEnumValueSlice(v)
 	return NewEnum(name.(*Identifier), values, NewLocationFromCurrent(c)), nil
+} / x:(&(ENUM .*) %{errEnum}) {
+	return x.([]any)[1], nil
 }
 
-EnumValue = comments:ReservedComments name:Identifier value:(EQUAL IntConstant)? Annotations? ListSeparator? SkipLine {
+EnumValueLine = comments:ReservedComments v:EnumValue SkipLine {
+        v.(*EnumValue).Comments = comments.(string)
+	return v, nil
+}
+
+EnumValue =  name:Identifier value:(EQUAL IntConstant)? Annotations? ListSeparator? {
 	var valueNode *ConstValue
 	intV := int64(-1)
 	if value != nil {
 		valueNode = value.([]any)[1].(*ConstValue)
 		intV = value.([]any)[1].(*ConstValue).Value.(int64)
 	}
-	return NewEnumValue(name.(*Identifier), valueNode, intV, comments.(string), NewLocationFromCurrent(c)), nil
+
+	return NewEnumValue(name.(*Identifier), valueNode, intV, "", NewLocationFromCurrent(c)), nil
 }
 
 Service <- SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Function* RCUR {
@@ -196,22 +245,32 @@ Service <- SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Func
 	}
 	fnsVal := toFunctionSlice(fns)
 	return NewService(name.(*Identifier), extendsVal, fnsVal, NewLocationFromCurrent(c)), nil
+} / x:(&(SERVICE .*) %{errService}) {
+	return x.([]any)[1], nil
 }
 
 Struct = STRUCT id:StructIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewStruct(id.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
+} / x:(&(STRUCT .*) %{errStruct}) {
+	return x.([]any)[1], nil
 } //{errIdentifier} ErrStructIdentifier //{errRCUR} ErrStructRCUR  //{errField} ErrField
 
 Union <- UNION name:Identifier LCUR fields:Field* RCUR {
 	return NewUnion(name.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
+} / x:(&(UNION .*) %{errUnion}) {
+	return x.([]any)[1], nil
 }
+
 
 Exception <- EXCEPTION name:Identifier LCUR fields:Field* RCUR {
 	return NewException(name.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
+} / x:(&(EXCEPTION .*) %{errException}) {
+	return x.([]any)[1], nil
 }
 
-FieldWithThrow = Field / x:( !((Skip '}' Indent*) / STRUCT / CONST / TYPEDEF / ENUM / SERVICE / UNION / EXCEPTION) %{errField} ) {
-	return x.([]any)[1], nil
+
+FieldWithThrow = Field / x:( Skip !(( '}' Indent*) / STRUCT / CONST / TYPEDEF / ENUM / SERVICE / UNION / EXCEPTION) %{errField} ) {
+	return x.([]any)[2], nil
 }
 
 Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldType:FieldType id:Identifier value:(EQUAL ConstValue)? Annotations? ListSeparator? lineComments:ReservedEndLineComments SkipLine {
@@ -224,13 +283,14 @@ Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldTyp
 		requiredV = required.(*Required)
 	}
 
-	return NewField(comments.(string), lineComments.(string), int(index.(int64)), requiredV, fieldType.(*FieldType), id.(*Identifier), constV, NewLocationFromCurrent(c)), nil
+	return NewField(comments.(string), lineComments.(string), index.(*FieldIndex), requiredV, fieldType.(*FieldType), id.(*Identifier), constV, NewLocationFromCurrent(c)), nil
 }
 
 
 FieldId = Skip i:FieldIndex COLON Indent* {
 	return i, nil
-} 
+} //{errFieldIndex} ErrFieldIndex
+
 FieldReq = Skip r:IsRequired Indent* {
 	if r == nil {
 		return nil, nil
@@ -252,6 +312,7 @@ Function  <- comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:
 	} else {
 		ftype = ft.(*FieldType) 
 	}
+
 	var throwsFields []*Field
 	if throws != nil {
 		throwsFields = throws.([]*Field)
@@ -296,8 +357,8 @@ ListType = t:LIST LPOINT key:FieldType RPOINT CppType? {
 CppType = CPPTYPE Literal
 
 ConstValue = v:(DoubleConstant / IntConstant / Literal / IdentifierConst / ConstMap / ConstList ) {
-	if str, ok := v.(string); ok {
-		return NewConstValue("string", str, NewLocationFromCurrent(c)), nil
+	if str, ok := v.(*Literal); ok {
+		return NewConstValue("string", str.Value, NewLocationFromCurrent(c)), nil
 	}
 	return v.(*ConstValue), nil
 }
@@ -340,8 +401,10 @@ FieldIndex = Digit+ {
 	if err != nil {
 		return nil, err
 	}
-	return v, nil
-} / %{errFieldIndex}
+	return NewFieldIndex(int(v), NewLocationFromCurrent(c)), nil
+} / x:(Skip &([a-zA-Z]+ COLON) %{errFieldIndex}) {
+	return x.([]any)[2], nil
+}
 
 DoubleConstant  = Skip ('+' / '-')? v:(
         Digit* '.' Digit+  Exponent?
@@ -382,15 +445,20 @@ EscapeLiteralChar = '\\' ["'] {
 
 Literal = l:(Literal1 / Literal2) {
 	return l, nil
-}
+} //{errLiteral1MissingRight} ErrLiteral1MissingRight //{errLiteral1} ErrLiteral1 //{errLiteral2MissingRight} ErrLiteral2MissingRight //{errLiteral2} ErrLiteral2
 
 Literal1 = Skip '"' t:(EscapeLiteralChar / !'"' .)* '"' Indent* {
 	strs := toStringSlice(t)
-	return strings.Join(strs, ""), nil
+	return NewLiteral(strings.Join(strs, ""), NewLocationFromCurrent(c)), nil
+} / x:(&(Skip '"' t:(EscapeLiteralChar / !'"' .)* Indent*) %{errLiteral1MissingRight}) {
+	 return x.([]any)[1], nil 
 }
+
 Literal2 = Skip "'" t:(EscapeLiteralChar / !"'" .)* "'" Indent* {
 	strs := toStringSlice(t)
-	return strings.Join(strs, ""), nil
+	return NewLiteral(strings.Join(strs, ""), NewLocationFromCurrent(c)), nil
+} / x:(&(Skip "'" t:(EscapeLiteralChar / !"'" .)* Indent*) %{errLiteral2MissingRight}) {
+	 return x.([]any)[1], nil 
 }
 
 StructIdentifier = id:Identifier {
@@ -643,7 +711,13 @@ DefinitionStart = "struct"
 ErrField = #{
 	return InvalidStructFieldError
 } ( !(Field / (Skip '}' Indent*) / STRUCT ) . )* {
-	return NewField("", "", 0, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
+	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
+}
+
+ErrFieldIndex = #{
+	return InvalidFieldIndexError
+} (!([:\r\n]) .)* { // 消费到冒号或本行结束
+	return NewBadFieldIndex(NewLocationFromCurrent(c)), nil
 }
 
 ErrStructIdentifier = #{
@@ -665,4 +739,101 @@ ErrStructLCUR = #{
 	return InvalidStructBlockLCURError
 } ( !'}' .)* { // 缺少 '{'，消费异常字符直到出现下一个 Field 或者 '}'
 	return "?", nil
+}
+
+ErrLiteral1MissingRight = #{
+	return InvalidLiteral1MissingRightError
+} ( ![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+}
+
+
+ErrLiteral1 = #{
+	return InvalidLiteral1Error
+} ( ![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+}
+
+ErrLiteral2MissingRight = #{
+	return InvalidLiteral2MissingRightError
+} ( ![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+}
+
+ErrLiteral2 = #{
+	return InvalidLiteral2Error
+} ( ![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+}
+
+ErrConst = #{
+	return InvalidConstError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadConst(NewLocationFromCurrent(c)), nil
+}
+
+ErrTypedef = #{
+	return InvalidTypedefError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadTypedef(NewLocationFromCurrent(c)), nil
+} 
+
+ErrEnum = #{
+	return InvalidEnumError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadEnum(NewLocationFromCurrent(c)), nil
+} 
+
+ErrService = #{
+	return InvalidServiceError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadService(NewLocationFromCurrent(c)), nil
+} 
+
+ErrStruct = #{
+	return InvalidStructError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadStruct(NewLocationFromCurrent(c)), nil
+} 
+
+ErrUnion = #{
+	return InvalidUnionError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadUnion(NewLocationFromCurrent(c)), nil
+} 
+
+ErrException = #{
+	return InvalidExceptionError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadException(NewLocationFromCurrent(c)), nil
+} 
+
+ErrDefinition = #{
+	return InvalidDefinitionError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadDefinition(NewLocationFromCurrent(c)), nil
+}
+
+ErrInclude = #{
+	return InvalidIncludeError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadInclude(NewLocationFromCurrent(c)), nil
+}
+
+ErrCppInclude = #{
+	return InvalidCppIncludeError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadCPPInclude(NewLocationFromCurrent(c)), nil
+}
+
+ErrNamespace = #{
+	return InvalidNamespaceError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadNamespace(NewLocationFromCurrent(c)), nil
+}
+
+ErrHeader = #{
+	return InvalidHeaderError
+} (![\r\n] .)* { // 消费异常字符直到这行结束
+	return NewBadHeader(NewLocationFromCurrent(c)), nil
 }
