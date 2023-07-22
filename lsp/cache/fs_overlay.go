@@ -17,7 +17,7 @@ type overlayFS struct {
 	overlays map[uri.URI]*Overlay
 }
 
-func newOverlayFS(delegate FileSource) *overlayFS {
+func NewOverlayFS(delegate FileSource) *overlayFS {
 	return &overlayFS{
 		delegate: delegate,
 		overlays: make(map[uri.URI]*Overlay),

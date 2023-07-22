@@ -24,7 +24,26 @@ type Snapshot struct {
 
 	store *memoize.Store
 
+	graph       *IncludeGraph
 	parsedCache *ParseCaches
+}
+
+func NewSnapshot(view *View, store *memoize.Store) *Snapshot {
+	snapshot := &Snapshot{
+		id:          rand.Int63(),
+		view:        view,
+		store:       store,
+		ctx:         context.Background(),
+		refCount:    sync.WaitGroup{},
+		graph:       NewIncludeGraph(),
+		parsedCache: NewParseCaches(),
+		files: &FilesMap{
+			files:    make(map[uri.URI]FileHandle),
+			overlays: make(map[uri.URI]*Overlay),
+		},
+	}
+
+	return snapshot
 }
 
 func (s *Snapshot) Acquire() func() {
@@ -34,6 +53,10 @@ func (s *Snapshot) Acquire() func() {
 
 func (s *Snapshot) Initialize(ctx context.Context) {
 
+}
+
+func (s *Snapshot) Graph() *IncludeGraph {
+	return s.graph
 }
 
 func (s *Snapshot) ReadFile(ctx context.Context, uri uri.URI) (FileHandle, error) {
@@ -54,32 +77,44 @@ func (s *Snapshot) ReadFile(ctx context.Context, uri uri.URI) (FileHandle, error
 	return fh, nil
 }
 
-func (s *Snapshot) Parse(ctx context.Context, uri uri.URI) error {
+// ForgetFile is called when file changed or removed
+// it remove file cache and parsed cache
+func (s *Snapshot) ForgetFile(uri uri.URI) {
+	s.files.Forget(uri)
+	s.graph.Remove(uri)
+	s.parsedCache.Forget(uri)
+}
+
+func (s *Snapshot) Parse(ctx context.Context, uri uri.URI) (*ParsedFile, error) {
+	if parsedFile := s.parsedCache.Get(uri); parsedFile != nil {
+		return parsedFile, nil
+	}
+
 	fh, err := s.ReadFile(ctx, uri)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// DEBUG
-	content, _ := fh.Content()
-	log.Debugln("parse content:", string(content))
+	// content, _ := fh.Content()
+	// log.Debugln("parse content:", string(content))
 
 	pf, err := Parse(fh)
 	if err != nil {
-		return err
+		log.Debugf("snapshot parse err: %v", err)
+		return nil, err
 	}
 
+	if pf.AST() != nil {
+		s.graph.Set(uri, pf.AST().Includes)
+	}
 	s.parsedCache.Set(uri, pf)
 
-	return nil
+	return pf, nil
 }
 
 func (s *Snapshot) Tokens() map[string]struct{} {
 	return s.parsedCache.Tokens()
-}
-
-func (s *Snapshot) GetParsedFile(uri uri.URI) *ParsedFile {
-	return s.parsedCache.Get(uri)
 }
 
 func (s *Snapshot) clone() (*Snapshot, func()) {
@@ -88,13 +123,26 @@ func (s *Snapshot) clone() (*Snapshot, func()) {
 		view: s.view,
 		ctx:  context.Background(),
 		// TODO(jpf): file change 没有更新，导致读到旧的缓存
-		// files:       s.files.Clone(),
-		files: &FilesMap{
-			files:    make(map[uri.URI]FileHandle),
-			overlays: make(map[uri.URI]*Overlay),
-		},
+		files: s.files.Clone(),
+		// files: &FilesMap{
+		// 	files:    make(map[uri.URI]FileHandle),
+		// 	overlays: make(map[uri.URI]*Overlay),
+		// },
+		graph:       s.graph.Clone(),
 		parsedCache: s.parsedCache.Clone(),
 	}
 
 	return snap, snap.Acquire()
+}
+
+func BuildSnapshotForTest(files []*FileChange) *Snapshot {
+	store := &memoize.Store{}
+	c := New(store)
+	fs := NewOverlayFS(c)
+	fs.Update(context.TODO(), files)
+
+	view := NewView("test", "file:///tmp", fs, store)
+	ss := NewSnapshot(view, store)
+
+	return ss
 }

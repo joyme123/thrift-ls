@@ -22,17 +22,19 @@ type Node interface {
 type Document struct {
 	Filename string
 
+	BadHeaders  []*BadHeader
 	Includes    []*Include
 	CPPIncludes []*CPPInclude
 	Namespaces  []*Namespace
 
-	Consts     []*Const
-	Typedefs   []*Typedef
-	Enums      []*Enum
-	Services   []*Service
-	Structs    []*Struct
-	Unions     []*Union
-	Exceptions []*Exception
+	Consts         []*Const
+	Typedefs       []*Typedef
+	Enums          []*Enum
+	Services       []*Service
+	Structs        []*Struct
+	Unions         []*Union
+	Exceptions     []*Exception
+	BadDefinitions []*BadDefinition
 
 	Nodes []Node
 
@@ -52,6 +54,8 @@ func NewDocument(headers []Header, defs []Definition, loc Location) *Document {
 			doc.CPPIncludes = append(doc.CPPIncludes, header.(*CPPInclude))
 		case "Namespace":
 			doc.Namespaces = append(doc.Namespaces, header.(*Namespace))
+		case "BadHeader":
+			doc.BadHeaders = append(doc.BadHeaders, header.(*BadHeader))
 		}
 		doc.Nodes = append(doc.Nodes, header)
 	}
@@ -72,6 +76,8 @@ func NewDocument(headers []Header, defs []Definition, loc Location) *Document {
 			doc.Unions = append(doc.Unions, def.(*Union))
 		case "Exception":
 			doc.Exceptions = append(doc.Exceptions, def.(*Exception))
+		case "BadDefinition":
+			doc.BadDefinitions = append(doc.BadDefinitions, def.(*BadDefinition))
 		}
 		doc.Nodes = append(doc.Nodes, def)
 	}
@@ -91,17 +97,44 @@ type Header interface {
 	Node
 }
 
-type Include struct {
-	Path    string
+type BadHeader struct {
 	BadNode bool
 	Location
 }
 
-func NewInclude(path string, loc Location) *Include {
+func NewBadHeader(loc Location) *BadHeader {
+	return &BadHeader{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
+func (h *BadHeader) Type() string {
+	return "BadHeader"
+}
+
+func (h *BadHeader) Children() []Node {
+	return nil
+}
+
+type Include struct {
+	Path *Literal
+
+	BadNode bool
+	Location
+}
+
+func NewInclude(path *Literal, loc Location) *Include {
 	return &Include{
 		Location: loc,
 		Path:     path,
-		BadNode:  path == "",
+	}
+}
+
+func NewBadInclude(loc Location) *Include {
+	return &Include{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -110,7 +143,7 @@ func (i *Include) Type() string {
 }
 
 func (i *Include) Name() string {
-	_, file := path.Split(i.Path)
+	_, file := path.Split(i.Path.Value)
 	name := strings.TrimRight(file, path.Ext(file))
 	return name
 }
@@ -120,14 +153,23 @@ func (i *Include) Children() []Node {
 }
 
 type CPPInclude struct {
-	Path string
+	Path *Literal
+
+	BadNode bool
 	Location
 }
 
-func NewCPPInclude(path string, loc Location) *CPPInclude {
+func NewCPPInclude(path *Literal, loc Location) *CPPInclude {
 	return &CPPInclude{
 		Location: loc,
 		Path:     path,
+	}
+}
+
+func NewBadCPPInclude(loc Location) *CPPInclude {
+	return &CPPInclude{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -142,6 +184,8 @@ func (i *CPPInclude) Children() []Node {
 type Namespace struct {
 	Language string
 	Name     string
+
+	BadNode bool
 	Location
 }
 
@@ -149,6 +193,13 @@ func NewNamespace(language, name string, loc Location) *Namespace {
 	return &Namespace{
 		Language: language,
 		Name:     name,
+		Location: loc,
+	}
+}
+
+func NewBadNamespace(loc Location) *Namespace {
+	return &Namespace{
+		BadNode:  true,
 		Location: loc,
 	}
 }
@@ -167,10 +218,35 @@ type Definition interface {
 	SetComments(comments string)
 }
 
+type BadDefinition struct {
+	BadNode bool
+	Location
+}
+
+func NewBadDefinition(loc Location) *BadDefinition {
+	return &BadDefinition{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
+func (d *BadDefinition) Type() string {
+	return "Definition"
+}
+
+func (d *BadDefinition) Children() []Node {
+	return nil
+}
+
+func (d *BadDefinition) SetComments(string) {
+}
+
 type Struct struct {
 	Identifier *Identifier
 	Fields     []*Field
 	Comments   string
+
+	BadNode bool
 	Location
 }
 
@@ -179,6 +255,13 @@ func NewStruct(identifier *Identifier, fields []*Field, loc Location) *Struct {
 		Identifier: identifier,
 		Fields:     fields,
 		Location:   loc,
+	}
+}
+
+func NewBadStruct(loc Location) *Struct {
+	return &Struct{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -204,6 +287,8 @@ type Const struct {
 	ConstType *FieldType
 	Value     *ConstValue
 	Comments  string
+
+	BadNode bool
 	Location
 }
 
@@ -214,6 +299,13 @@ func NewConst(name *Identifier, t *FieldType, v *ConstValue, comments string, lo
 		Value:     v,
 		Comments:  comments,
 		Location:  loc,
+	}
+}
+
+func NewBadConst(loc Location) *Const {
+	return &Const{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -233,6 +325,7 @@ type Typedef struct {
 	T        *FieldType
 	Alias    *Identifier
 	Comments string
+	BadNode  bool
 
 	Location
 }
@@ -241,6 +334,13 @@ func NewTypedef(t *FieldType, alias *Identifier, loc Location) *Typedef {
 	return &Typedef{
 		T:        t,
 		Alias:    alias,
+		Location: loc,
+	}
+}
+
+func NewBadTypedef(loc Location) *Typedef {
+	return &Typedef{
+		BadNode:  true,
 		Location: loc,
 	}
 }
@@ -262,6 +362,7 @@ type Enum struct {
 	Values   []*EnumValue
 	Comments string
 
+	BadNode bool
 	Location
 }
 
@@ -269,6 +370,13 @@ func NewEnum(name *Identifier, values []*EnumValue, loc Location) *Enum {
 	return &Enum{
 		Name:     name,
 		Values:   values,
+		Location: loc,
+	}
+}
+
+func NewBadEnum(loc Location) *Enum {
+	return &Enum{
+		BadNode:  true,
 		Location: loc,
 	}
 }
@@ -326,6 +434,8 @@ type Service struct {
 	Extends   *Identifier
 	Functions []*Function
 	Comments  string
+
+	BadNode bool
 	Location
 }
 
@@ -335,6 +445,13 @@ func NewService(name *Identifier, extends *Identifier, fns []*Function, loc Loca
 		Extends:   extends,
 		Functions: fns,
 		Location:  loc,
+	}
+}
+
+func NewBadService(loc Location) *Service {
+	return &Service{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -363,6 +480,8 @@ type Function struct {
 	Arguments    []*Field
 	Throws       []*Field
 	Comments     string
+
+	BadNode bool
 	Location
 }
 
@@ -376,6 +495,13 @@ func NewFunction(name *Identifier, oneway bool, void bool, ft *FieldType, args [
 		Throws:       throws,
 		Comments:     comments,
 		Location:     loc,
+	}
+}
+
+func NewBadFunc(loc Location) *Function {
+	return &Function{
+		BadNode:  true,
+		Location: loc,
 	}
 }
 
@@ -399,6 +525,8 @@ type Union struct {
 	Name     *Identifier
 	Fields   []*Field
 	Comments string
+
+	BadNode bool
 	Location
 }
 
@@ -406,6 +534,13 @@ func NewUnion(name *Identifier, fields []*Field, loc Location) *Union {
 	return &Union{
 		Name:     name,
 		Fields:   fields,
+		Location: loc,
+	}
+}
+
+func NewBadUnion(loc Location) *Union {
+	return &Union{
+		BadNode:  true,
 		Location: loc,
 	}
 }
@@ -430,6 +565,8 @@ type Exception struct {
 	Name     *Identifier
 	Fields   []*Field
 	Comments string
+
+	BadNode bool
 	Location
 }
 
@@ -437,6 +574,13 @@ func NewException(name *Identifier, fields []*Field, loc Location) *Exception {
 	return &Exception{
 		Name:     name,
 		Fields:   fields,
+		Location: loc,
+	}
+}
+
+func NewBadException(loc Location) *Exception {
+	return &Exception{
+		BadNode:  true,
 		Location: loc,
 	}
 }
@@ -479,6 +623,7 @@ func (i *Identifier) ToFieldType() *FieldType {
 			Name:     i.Name,
 			Location: i.Location,
 		},
+		Location: i.Location,
 	}
 
 	return t
@@ -503,7 +648,7 @@ func ConvertPosition(pos position) Position {
 type Field struct {
 	Comments     string
 	LineComments string
-	Index        int
+	Index        *FieldIndex
 	Required     *Required
 	FieldType    *FieldType
 	Identifier   *Identifier
@@ -513,7 +658,7 @@ type Field struct {
 	Location
 }
 
-func NewField(comments string, lineComments string, index int, required *Required, fieldType *FieldType, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
+func NewField(comments string, lineComments string, index *FieldIndex, required *Required, fieldType *FieldType, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
 	field := &Field{
 		Comments:     comments,
 		LineComments: lineComments,
@@ -534,6 +679,35 @@ func (f *Field) Children() []Node {
 
 func (f *Field) Type() string {
 	return "Field"
+}
+
+type FieldIndex struct {
+	Value int
+
+	BadNode bool
+	Location
+}
+
+func NewFieldIndex(v int, loc Location) *FieldIndex {
+	return &FieldIndex{
+		Value:    v,
+		Location: loc,
+	}
+}
+
+func NewBadFieldIndex(loc Location) *FieldIndex {
+	return &FieldIndex{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
+func (f *FieldIndex) Children() []Node {
+	return nil
+}
+
+func (f *FieldIndex) Type() string {
+	return "FieldIndex"
 }
 
 type Required struct {
@@ -613,7 +787,7 @@ type TypeName struct {
 	// TypeName can be:
 	// container type: map, set, list
 	// base type: bool, byte, i8, i16, i32, i64, double, string, binary
-	// struct
+	// struct, enum, union, exception identifier
 	Name string
 	Location
 }
@@ -636,8 +810,10 @@ func (t *TypeName) Type() string {
 }
 
 type ConstValue struct {
+	// TypeName can be: list, set, map, string, identifier, i64, double
 	TypeName string
-	Value    any
+	// Value is the actual value or identifier name
+	Value any
 
 	// only exist when TypeName is map
 	Key any
@@ -671,26 +847,58 @@ func (c *ConstValue) Type() string {
 	return "ConstValue"
 }
 
+type Literal struct {
+	Value   string
+	BadNode bool
+
+	Location
+}
+
+func NewLiteral(v string, loc Location) *Literal {
+	return &Literal{
+		Value:    v,
+		Location: loc,
+	}
+}
+
+func NewBadLiteral(v string, loc Location) *Literal {
+	return &Literal{
+		Location: loc,
+		BadNode:  true,
+	}
+}
+
 type Location struct {
-	start Position
-	end   Position
+	StartPos Position
+	EndPos   Position
+}
+
+func (l Location) MoveStartInLine(n int) Location {
+	newL := l
+	newL.StartPos.Col += n
+	newL.StartPos.Offset += n
+
+	return newL
 }
 
 func (l *Location) Pos() Position {
-	return l.start
+	return l.StartPos
 }
 
 // end col and offset is excluded
 func (l *Location) End() Position {
-	return l.end
+	return l.EndPos
 }
 
 func (l *Location) Contains(pos Position) bool {
-	return (l.start.Less(pos) || l.start.Equal(pos)) && l.end.Greater(pos)
+	if l == nil {
+		return false
+	}
+	return (l.StartPos.Less(pos) || l.StartPos.Equal(pos)) && l.EndPos.Greater(pos)
 }
 
 func NewLocationFromPos(start, end Position) Location {
-	return Location{start: start, end: end}
+	return Location{StartPos: start, EndPos: end}
 }
 
 func NewLocationFromCurrent(c *current) Location {
@@ -717,8 +925,8 @@ func NewLocation(startPos position, text string) Location {
 	}
 
 	return Location{
-		start: start,
-		end:   end,
+		StartPos: start,
+		EndPos:   end,
 	}
 }
 

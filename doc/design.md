@@ -65,6 +65,14 @@ promise 提供了一种缓存机制，防止对同一个方法进行重复的调
 😀a
 ```
 
-
 因此需要 有一个 Mapper 负责：根据不同的 Position 和编码定义，在两边实现灵活的转换。
 
+## thrift 解析范围
+
+thrift 文件很多情况都作为一个项目下的子文件夹进行管理，因此在初始化项目文件时，很难确定 thrift 文件存放的具体位置范围，从而很难在不全量扫描的前提下解析所有的 thrift 文件。
+
+但是解析所有 thrift 文件是一件必须要做的事情。像代码补全，代码跳转中的 find reference 功能，都需要有全量的视图来获取所有的 thrift 解析信息。因此需要在 LSP 的 Initialize 时，根据请求参数中的 `RootPath` 或 `RootURI` 或 `WorkspaceFolders` 去获取项目目录，并做全量扫描，获取所有的 .thrift 后缀文件并解析。
+
+这个过程的耗时由项目文件数量 以及 thrift 文件的数量和大小决定。
+
+在实际的测试中发现，以 neovim 为例，打开项目下的 thrift 文件后触发 Initialize 请求，但是上述的目录参数都不会有。 因此作为 fallback 的方案，会解析首次打开的文件所有目录以及以下的所有 thrift 文件

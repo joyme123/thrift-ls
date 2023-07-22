@@ -1,16 +1,18 @@
 package cache
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 
 	"github.com/joyme123/thrift-ls/lsp/mapper"
 	"github.com/joyme123/thrift-ls/parser"
+	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/uri"
 )
 
 type ParseCaches struct {
-	mu     sync.Mutex
+	mu     sync.RWMutex
 	caches map[uri.URI]*ParsedFile
 	tokens map[string]struct{}
 }
@@ -29,12 +31,23 @@ func (c *ParseCaches) Set(filePath uri.URI, res *ParsedFile) {
 }
 
 func (c *ParseCaches) Get(filePath uri.URI) *ParsedFile {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.caches[filePath]
 }
 
+func (c *ParseCaches) Forget(filePath uri.URI) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	delete(c.caches, filePath)
+	c.tokens = nil
+}
+
 func (c *ParseCaches) Clone() *ParseCaches {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
 	clone := make(map[uri.URI]*ParsedFile)
 	for i := range c.caches {
 		clone[i] = c.caches[i]
@@ -56,7 +69,7 @@ func (c *ParseCaches) Tokens() map[string]struct{} {
 			continue
 		}
 		for _, item := range parsed.ast.Includes {
-			if item.BadNode {
+			if item.Path == nil || item.Path.BadNode {
 				continue
 			}
 			tokens[item.Name()] = struct{}{}
@@ -125,11 +138,36 @@ type ParsedFile struct {
 	mapper *mapper.Mapper
 
 	// errs hold all ast parsing errors
-	errs []error
+	errs []parser.ParserError
 }
 
 func (p *ParsedFile) Mapper() *mapper.Mapper {
 	return p.mapper
+}
+
+func (p *ParsedFile) AST() *parser.Document {
+	return p.ast
+}
+
+func (p *ParsedFile) Errors() []parser.ParserError {
+	return p.errs
+}
+
+func (p *ParsedFile) AggregatedError() error {
+	if len(p.errs) == 0 {
+		return nil
+	}
+	return fmt.Errorf("aggregated error: %v", p.errs)
+}
+
+// DumpAST is for debug
+func (p *ParsedFile) DumpAST() {
+	if p.ast == nil {
+		return
+	}
+
+	data, _ := json.MarshalIndent(p.ast, "", "  ")
+	fmt.Println(string(data))
 }
 
 // TODO(jpf): use promise
@@ -146,8 +184,17 @@ func Parse(fh FileHandle) (*ParsedFile, error) {
 	psr := &parser.PEGParser{}
 
 	ast, errs := psr.Parse(fh.URI().Filename(), content)
-	pf.errs = errs
+	for i := range errs {
+		parserErr, ok := errs[i].(parser.ParserError)
+		if ok {
+			pf.errs = append(pf.errs, parserErr)
+		}
+	}
 	pf.ast = ast
+
+	if len(errs) > 0 {
+		log.Debugf("peg parsed err: %v", errs)
+	}
 
 	mp := mapper.NewMapper(fh.URI(), content)
 	pf.mapper = mp
@@ -155,19 +202,19 @@ func Parse(fh FileHandle) (*ParsedFile, error) {
 	return pf, nil
 }
 
-type ParseError struct {
-	Pos Position
-	Msg string
-}
-
-func (e *ParseError) Error() string {
-	if e.Pos.Filename != "" || e.Pos.IsValid() {
-		// don't print "<unknown position>"
-		// TODO(gri) reconsider the semantics of Position.IsValid
-		return e.Pos.String() + ": " + e.Msg
-	}
-	return e.Msg
-}
+// type ParseError struct {
+// 	Pos Position
+// 	Msg string
+// }
+//
+// func (e *ParseError) Error() string {
+// 	if e.Pos.Filename != "" || e.Pos.IsValid() {
+// 		// don't print "<unknown position>"
+// 		// TODO(gri) reconsider the semantics of Position.IsValid
+// 		return e.Pos.String() + ": " + e.Msg
+// 	}
+// 	return e.Msg
+// }
 
 type Position struct {
 	Filename string // filename, if any

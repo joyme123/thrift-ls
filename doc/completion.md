@@ -31,12 +31,11 @@ completion 要求在用户输入时实时的提供补全的候选项。lsp clien
 
 ## fault tolerate parser
 
-https://eyalkalderon.com/blog/nom-error-recovery/
-https://github.com/ebkalderon/example-fault-tolerant-parser
-https://arxiv.org/pdf/1806.11150.pdf
-https://github.com/mna/pigeon
-https://github.com/mna/pigeon/wiki
-
-pigeon 实现的 thrift parser: https://github.com/samuel/go-thrift/blob/master/parser/grammar.peg
-写 parser 的教程: https://tiarkrompf.github.io/notes/?/just-write-the-parser/
-生成好的语法错误信息提示：https://research.swtch.com/yyerror
+1. https://eyalkalderon.com/blog/nom-error-recovery/
+2. https://github.com/ebkalderon/example-fault-tolerant-parser
+3. https://arxiv.org/pdf/1806.11150.pdf
+4. https://github.com/mna/pigeon
+5. https://github.com/mna/pigeon/wiki
+6. pigeon 实现的 thrift parser: https://github.com/samuel/go-thrift/blob/master/parser/grammar.peg
+7. 写 parser 的教程: https://tiarkrompf.github.io/notes/?/just-write-the-parser/
+8. 生成好的语法错误信息提示：https://research.swtch.com/yyerror
