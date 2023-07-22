@@ -22,7 +22,24 @@ func ASTNodeToRange(node parser.Node) protocol.Range {
 	}
 }
 
-// includeName: base.User. base is the includeName. returns ../../base.thrift
+// GetIncludeName return include name by file uri
+// for example: file uri is file:///base.thrift, then `base` is include name
+func GetIncludeName(file uri.URI) string {
+	fileName := file.Filename()
+	index := strings.LastIndexByte(fileName, '/')
+	if index == -1 {
+		return fileName
+	}
+	fileName = string(fileName[index+1:])
+
+	index = strings.LastIndexByte(fileName, '.')
+	if index == -1 {
+		return fileName
+	}
+	return string(fileName[0:index])
+}
+
+// includeName: base.User. `base` is the includeName. returns ../../base.thrift
 // if doesn't match, return empty string
 func GetIncludePath(ast *parser.Document, includeName string) string {
 	for _, include := range ast.Includes {

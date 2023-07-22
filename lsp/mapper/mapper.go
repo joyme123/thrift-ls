@@ -48,8 +48,8 @@ func (m *Mapper) initLineStart() {
 func (m *Mapper) LSPPosToParserPosition(pos types.Position) (parser.Position, error) {
 	m.initLineStart()
 	line := int(pos.Line) + 1
-	if line >= len(m.lineStart) {
-		return parser.InvalidPosition, fmt.Errorf("invalid position line, completion line: %d, total line: %d", line, len(m.lineStart))
+	if line > len(m.lineStart) {
+		return parser.InvalidPosition, fmt.Errorf("invalid position line, request line: %d, total line: %d", line, len(m.lineStart))
 	}
 
 	if !m.nonASCII {
@@ -58,7 +58,12 @@ func (m *Mapper) LSPPosToParserPosition(pos types.Position) (parser.Position, er
 		if offset >= len(m.content) {
 			return parser.InvalidPosition, fmt.Errorf("invalid position offset: %d, total content: %d, %s", offset, len(m.content), string(m.content))
 		}
-		lineLength := m.lineStart[pos.Line+1] - m.lineStart[pos.Line]
+		var lineLength int
+		if int(pos.Line+1) >= len(m.lineStart) {
+			lineLength = len(m.content) - m.lineStart[pos.Line]
+		} else {
+			lineLength = m.lineStart[pos.Line+1] - m.lineStart[pos.Line]
+		}
 		if col > lineLength {
 			return parser.InvalidPosition, fmt.Errorf("invalid position column: %d, line length: %d, %s", col, lineLength, string(m.content))
 		}

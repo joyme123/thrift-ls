@@ -215,21 +215,27 @@ Typedef <- TYPEDEF t:FieldType alias:Identifier {
 	return x.([]any)[1], nil
 }
 
-Enum  <- ENUM name:Identifier LCUR v:EnumValue* RCUR {
+Enum  <- ENUM name:Identifier LCUR v:EnumValueLine* RCUR {
 	values := toEnumValueSlice(v)
 	return NewEnum(name.(*Identifier), values, NewLocationFromCurrent(c)), nil
 } / x:(&(ENUM .*) %{errEnum}) {
 	return x.([]any)[1], nil
 }
 
-EnumValue = comments:ReservedComments name:Identifier value:(EQUAL IntConstant)? Annotations? ListSeparator? SkipLine {
+EnumValueLine = comments:ReservedComments v:EnumValue SkipLine {
+        v.(*EnumValue).Comments = comments.(string)
+	return v, nil
+}
+
+EnumValue =  name:Identifier value:(EQUAL IntConstant)? Annotations? ListSeparator? {
 	var valueNode *ConstValue
 	intV := int64(-1)
 	if value != nil {
 		valueNode = value.([]any)[1].(*ConstValue)
 		intV = value.([]any)[1].(*ConstValue).Value.(int64)
 	}
-	return NewEnumValue(name.(*Identifier), valueNode, intV, comments.(string), NewLocationFromCurrent(c)), nil
+
+	return NewEnumValue(name.(*Identifier), valueNode, intV, "", NewLocationFromCurrent(c)), nil
 }
 
 Service <- SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Function* RCUR {

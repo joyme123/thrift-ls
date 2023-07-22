@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
-	"github.com/joyme123/thrift-ls/lsp/memoize"
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
@@ -47,7 +46,7 @@ service Demo {
   list<user.UserType> UserTypes(1:user.Test3 arg1=user.Test3.TWO, 2:string arg2=user.DefaultName)
 }`
 
-	ss := buildSnapshotForTest([]*cache.FileChange{
+	ss := cache.BuildSnapshotForTest([]*cache.FileChange{
 		{
 			URI:     "file:///tmp/user.thrift",
 			Version: 0,
@@ -278,16 +277,4 @@ service Demo {
 			assert.Equal(t, tt.want, got)
 		})
 	}
-}
-
-func buildSnapshotForTest(files []*cache.FileChange) *cache.Snapshot {
-	store := &memoize.Store{}
-	c := cache.New(store)
-	fs := cache.NewOverlayFS(c)
-	fs.Update(context.TODO(), files)
-
-	view := cache.NewView("test", "file:///tmp", fs, store)
-	ss := cache.NewSnapshot(view, store)
-
-	return ss
 }

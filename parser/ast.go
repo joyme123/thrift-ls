@@ -787,7 +787,7 @@ type TypeName struct {
 	// TypeName can be:
 	// container type: map, set, list
 	// base type: bool, byte, i8, i16, i32, i64, double, string, binary
-	// struct, enum, union, exception
+	// struct, enum, union, exception identifier
 	Name string
 	Location
 }
@@ -810,8 +810,10 @@ func (t *TypeName) Type() string {
 }
 
 type ConstValue struct {
+	// TypeName can be: list, set, map, string, identifier, i64, double
 	TypeName string
-	Value    any
+	// Value is the actual value or identifier name
+	Value any
 
 	// only exist when TypeName is map
 	Key any

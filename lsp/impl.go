@@ -35,7 +35,6 @@ func (s *Server) didOpen(ctx context.Context, params *protocol.DidOpenTextDocume
 			return
 		}
 		dir := file[0:dirPos]
-		log.Debugln("walk dir:", dir)
 		s.walkFoldersThriftFile(dir)
 	})
 

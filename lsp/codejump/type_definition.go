@@ -32,7 +32,7 @@ func TypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos p
 
 	switch targetNode.Type() {
 	case "TypeName":
-		return fieldTypeDefinition(ctx, ss, file, pf.AST(), nodePath, targetNode)
+		return typeNameDefinition(ctx, ss, file, pf.AST(), nodePath, targetNode)
 	case "Identifier":
 		// no parent
 		if len(nodePath) == 1 {
@@ -55,7 +55,7 @@ func TypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos p
 			fieldType = cst.ConstType
 		}
 		if fieldType != nil && !fieldType.BadNode && fieldType.TypeName != nil {
-			return fieldTypeDefinition(ctx, ss, file, pf.AST(), nodePath[0:len(nodePath)-1], fieldType.TypeName)
+			return typeNameDefinition(ctx, ss, file, pf.AST(), nodePath[0:len(nodePath)-1], fieldType.TypeName)
 		}
 	case "ConstValue":
 		return constValueTypeDefinition(ctx, ss, file, pf.AST(), targetNode)

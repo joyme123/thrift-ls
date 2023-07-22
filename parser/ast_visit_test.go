@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/joyme123/thrift-ls/utils"
@@ -14,7 +15,13 @@ func TestSearchNodePath(t *testing.T) {
 
 service Demo {
   user.Test Api(1:user.Test2 arg1, 2:user.Test3 arg2) throws (1:user.Error1 err)
-}`
+}
+
+enum Test {
+  ONE
+  TWO = 2
+}
+`
 
 	ast, err := Parse("test.thrift", []byte(demoContent))
 	assert.NoError(t, err)
@@ -109,9 +116,34 @@ service Demo {
 			},
 			want: []string{"Document", "Service", "Function", "Field", "FieldType", "TypeName"},
 		},
+		{
+			name: "enum value",
+			args: args{
+				root: doc,
+				pos: Position{
+					Line: 11,
+					Col:  3,
+				},
+			},
+			want: []string{"Document", "Enum", "EnumValue", "Identifier"},
+		},
+		{
+			name: "enum value const value",
+			args: args{
+				root: doc,
+				pos: Position{
+					Line: 11,
+					Col:  9,
+				},
+			},
+			want: []string{"Document", "Enum", "EnumValue", "ConstValue"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.name == "enum value" {
+				fmt.Println()
+			}
 			path := SearchNodePath(tt.args.root, tt.args.pos)
 			pathStr := make([]string, 0, len(path))
 			for i := range path {
