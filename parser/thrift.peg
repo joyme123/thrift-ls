@@ -209,36 +209,37 @@ Const = CONST t:FieldType name:Identifier EQUAL v:ConstValue ListSeparator? {
 	return x.([]any)[1], nil
 }
 
-Typedef <- TYPEDEF t:FieldType alias:Identifier {
+Typedef = TYPEDEF t:FieldType alias:Identifier {
 	return NewTypedef(t.(*FieldType), alias.(*Identifier), NewLocationFromCurrent(c)), nil
 } / x:(&(TYPEDEF .*) %{errTypedef}) {
 	return x.([]any)[1], nil
 }
 
-Enum  <- ENUM name:Identifier LCUR v:EnumValueLine* RCUR {
+Enum = ENUM name:DefinitionIdentifier LCUR v:EnumValueLine* RCUR {
 	values := toEnumValueSlice(v)
 	return NewEnum(name.(*Identifier), values, NewLocationFromCurrent(c)), nil
 } / x:(&(ENUM .*) %{errEnum}) {
 	return x.([]any)[1], nil
-}
+} //{errIdentifier} ErrEnumIdentifier //{errRCUR} ErrEnumRCUR //{errEnumValue} ErrEnumValue
 
 EnumValueLine = comments:ReservedComments v:EnumValue SkipLine {
         v.(*EnumValue).Comments = comments.(string)
 	return v, nil
 }
 
-EnumValue =  name:Identifier value:(EQUAL IntConstant)? Annotations? ListSeparator? {
+EnumValue =  name:Identifier value:(EnumValueIntConstant)? Annotations? ListSeparator? {
 	var valueNode *ConstValue
 	intV := int64(-1)
 	if value != nil {
-		valueNode = value.([]any)[1].(*ConstValue)
-		intV = value.([]any)[1].(*ConstValue).Value.(int64)
+		//fmt.Println(value.(Node).Type(), value)
+		valueNode = value.(*ConstValue)
+		intV = value.(*ConstValue).Value.(int64)
 	}
 
 	return NewEnumValue(name.(*Identifier), valueNode, intV, "", NewLocationFromCurrent(c)), nil
-}
+} //{errIntConstant} ErrEnumValueIntConstant
 
-Service <- SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Function* RCUR {
+Service = SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Function* RCUR {
 	var extendsVal *Identifier
 	if extends != nil {
 		extendsVal = extends.(*Identifier)
@@ -367,8 +368,16 @@ IdentifierConst = id:Identifier {
 	return NewConstValue("identifier", id.(*Identifier).Name, NewLocationFromCurrent(c)), nil
 }
 
+EnumValueIntConstant = EQUAL v:IntConstant {
+	return v, nil
+} / x:(EQUAL Skip %{errIntConstant} Indent*) {
+	return x.([]any)[2], nil
+}
+
 IntConstant = Skip  v:(HexIntConstant / OctIntConstant / NormalIntConstant)  Indent* {
 	return v.(*ConstValue), nil
+} / x:(Skip &("0x" / "0o" / (('+' / '-')? Digit)) %{errIntConstant}) {
+	return x.([]any)[2], nil
 }
 
 HexIntConstant = "0x" ([0-9] / [A-Z] / [a-z])+ {
@@ -708,16 +717,18 @@ COLON       = Skip ":"     Indent* {
 
 DefinitionStart = STRUCT / UNION / EXCEPTION / ENUM / SERVICE / CONST / TYPEDEF
 
-ErrStructField = #{
-	return InvalidStructFieldError
-} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
-	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
-}
-
 ErrFieldIndex = #{
 	return InvalidFieldIndexError
 } (!([:\r\n]) .)* { // 消费到冒号或本行结束
 	return NewBadFieldIndex(NewLocationFromCurrent(c)), nil
+}
+
+// struct
+
+ErrStructField = #{
+	return InvalidStructFieldError
+} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
 
 ErrStructIdentifier = #{
@@ -728,7 +739,6 @@ ErrStructIdentifier = #{
 
 	return t, nil
 } // 构造 identifier 的 badnode
-
 
 ErrStructRCUR = #{
 	return InvalidStructBlockRCURError
@@ -742,9 +752,11 @@ ErrStructLCUR = #{
 	return "?", nil
 }
 
+// union
+
 ErrUnionIdentifier = #{
 	return InvalidUnionIdentifierError
-} ( !'{' .)* { // struct identifier 异常，consume 掉异常字符直到出现 '{' 为止
+} ( !'{' .)* { // identifier 异常，consume 掉异常字符直到出现 '{' 为止
 	t := NewIdentifier("", c.pos)
 	t.BadNode = true
 
@@ -769,9 +781,11 @@ ErrUnionField = #{
 	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
 
+// exception
+
 ErrExceptionIdentifier = #{
 	return InvalidExceptionIdentifierError
-} ( !'{' .)* { // struct identifier 异常，consume 掉异常字符直到出现 '{' 为止
+} ( !'{' .)* { // identifier 异常，consume 掉异常字符直到出现 '{' 为止
 	t := NewIdentifier("", c.pos)
 	t.BadNode = true
 
@@ -796,12 +810,48 @@ ErrExceptionField = #{
 	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
 
+// enum
+
+ErrEnumIdentifier = #{
+	return InvalidEnumIdentifierError
+} ( !'{' .)* { // enum identifier 异常，consume 掉异常字符直到出现 '{' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+ErrEnumRCUR = #{
+	return InvalidEnumBlockRCURError
+} ( !DefinitionStart .)* {
+	return "?", nil
+}
+
+ErrEnumLCUR = #{
+	return InvalidEnumBlockLCURError
+} ( !'}' .)* { // 缺少 '{'，消费异常字符直到出现下一个 Field 或者 '}'
+	return "?", nil
+}
+
+ErrEnumValue = #{
+	return InvalidEnumValueError
+} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+	return NewBadEnumValue(NewLocationFromCurrent(c)), nil
+}
+
+ErrEnumValueIntConstant = #{
+	return InvalidEnumValueIntConstantError
+} ( !(CarriageReturnLineFeed ) . )* {
+	return  NewBadIntConstValue(NewLocationFromCurrent(c)), nil
+}
+
+// common error
+
 ErrLiteral1MissingRight = #{
 	return InvalidLiteral1MissingRightError
 } ( ![\r\n] .)* { // 消费异常字符直到这行结束
 	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
 }
-
 
 ErrLiteral1 = #{
 	return InvalidLiteral1Error

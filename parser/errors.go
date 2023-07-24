@@ -54,6 +54,12 @@ var (
 	InvalidExceptionBlockRCURError  error = errors.New("expecting a ending '}' of exception block")
 	InvalidExceptionFieldError      error = errors.New("expecting a valid exception field")
 
+	InvalidEnumIdentifierError       error = errors.New("expecting a valid enum identifier")
+	InvalidEnumBlockLCURError        error = errors.New("expecting a starting '{' of enum block")
+	InvalidEnumBlockRCURError        error = errors.New("expecting a ending '}' of enum block")
+	InvalidEnumValueError            error = errors.New("expecting a valid enum field")
+	InvalidEnumValueIntConstantError error = errors.New("expecting a valid int contant")
+
 	InvalidIdentifierError error = errors.New("expecting a valid identifier")
 
 	InvalidLiteral1MissingRightError error = errors.New("expecting a right \" ")

@@ -34,6 +34,8 @@ completion 要求在用户输入时实时的提供补全的候选项。lsp clien
 2. Document -> Header -> Literal: 对 Path 进行补全
 3. Document -> BadDefinition: 对输入进行 struct/union/exception/servcie/Enum/Const/Typedef snippet 的补全
 4. Document -> Definition -> Struct/Union/Exception -> Bad Field: 对 required/optional 以及基础/自定义类型进行补全
+5. Document -> Definition -> Struct/Union/Exception -> Field -> Identifier: 根据已有的 Identifier 进行补全
+6. Document -> Definition -> Service -> 
 
 
 ## fault tolerate parser
