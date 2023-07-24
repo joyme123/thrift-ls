@@ -203,17 +203,25 @@ Definition = comments:ReservedComments Skip v:(Const / Typedef / Enum / Service 
 	return x.([]any)[3], nil
 } //{errConst} ErrConst //{errTypedef} ErrTypedef //{errEnum} ErrEnum //{errService} ErrService //{errStruct} ErrStruct //{errUnion} ErrUnion //{errException} ErrException
 
-Const = CONST t:FieldType name:Identifier EQUAL v:ConstValue ListSeparator? {
+Const = CONST t:FieldType name:DefinitionIdentifier v:ConstEqualValue ListSeparator? {
 	return NewConst(name.(*Identifier), t.(*FieldType), v.(*ConstValue), "", NewLocationFromCurrent(c)), nil
-} / x:(&(CONST .*)) %{errConst} {
+} / x:(&(CONST .*) %{errConst}) {
+	return x.([]any)[1], nil
+} //{errIdentifier} ErrConstIdentifier //{errConstMissingValue} ErrConstMissingValue //{errConstConstValue} ErrConstConstValue
+
+ConstEqualValue = EQUAL v:ConstValue {
+	return v, nil
+} / x:(!EQUAL %{errConstMissingValue}) {
+	return x.([]any)[1], nil
+} / x:(EQUAL %{errConstConstValue}) {
 	return x.([]any)[1], nil
 }
 
-Typedef = TYPEDEF t:FieldType alias:Identifier {
+Typedef = TYPEDEF t:FieldType alias:DefinitionIdentifier {
 	return NewTypedef(t.(*FieldType), alias.(*Identifier), NewLocationFromCurrent(c)), nil
 } / x:(&(TYPEDEF .*) %{errTypedef}) {
 	return x.([]any)[1], nil
-}
+} //{errIdentifier} ErrTypedefIdentifier
 
 Enum = ENUM name:DefinitionIdentifier LCUR v:EnumValueLine* RCUR {
 	values := toEnumValueSlice(v)
@@ -327,7 +335,7 @@ Throws <- THROWS LPAR fields:Field* RPAR {
 	return toFieldSlice(fields), nil
 }
 
-FieldType  = v:(ContainerType / BaseType / IdentifierType) Annotations? {
+FieldType = v:(ContainerType / BaseType / IdentifierType) Annotations? {
 	return v.(*FieldType), nil
 }
 
@@ -374,7 +382,7 @@ EnumValueIntConstant = EQUAL v:IntConstant {
 	return x.([]any)[2], nil
 }
 
-IntConstant = Skip  v:(HexIntConstant / OctIntConstant / NormalIntConstant)  Indent* {
+IntConstant = Skip  v:(HexIntConstant / OctIntConstant / NormalIntConstant) ![a-zA-Z]  Indent* {
 	return v.(*ConstValue), nil
 } / x:(Skip &("0x" / "0o" / (('+' / '-')? Digit)) %{errIntConstant}) {
 	return x.([]any)[2], nil
@@ -456,14 +464,14 @@ Literal = l:(Literal1 / Literal2) {
 	return l, nil
 } //{errLiteral1MissingRight} ErrLiteral1MissingRight //{errLiteral1} ErrLiteral1 //{errLiteral2MissingRight} ErrLiteral2MissingRight //{errLiteral2} ErrLiteral2
 
-Literal1 = Skip '"' t:(EscapeLiteralChar / !'"' .)* '"' Indent* {
+Literal1 = Skip '"' t:(EscapeLiteralChar / !["\r\n] .)* '"' Indent* {
 	strs := toStringSlice(t)
 	return NewLiteral(strings.Join(strs, ""), NewLocationFromCurrent(c)), nil
 } / x:(&(Skip '"' t:(EscapeLiteralChar / !'"' .)* Indent*) %{errLiteral1MissingRight}) {
 	 return x.([]any)[1], nil 
 }
 
-Literal2 = Skip "'" t:(EscapeLiteralChar / !"'" .)* "'" Indent* {
+Literal2 = Skip "'" t:(EscapeLiteralChar / !['\r\n] .)* "'" Indent* {
 	strs := toStringSlice(t)
 	return NewLiteral(strings.Join(strs, ""), NewLocationFromCurrent(c)), nil
 } / x:(&(Skip "'" t:(EscapeLiteralChar / !"'" .)* Indent*) %{errLiteral2MissingRight}) {
@@ -693,7 +701,7 @@ LCURToken = "{" {
 RCURToken = "}" {
 	return string(c.text), nil
 } / %{errRCUR}
-EQUAL       = Skip "="     Indent* {
+EQUAL = Skip "="     Indent* {
 	return "=", nil
 }
 LPOINT      = Skip "<"     Indent* {
@@ -845,6 +853,40 @@ ErrEnumValueIntConstant = #{
 	return  NewBadIntConstValue(NewLocationFromCurrent(c)), nil
 }
 
+// typedef
+
+ErrTypedefIdentifier = #{
+	return InvalidTypedefIdentifierError
+} ( !(CarriageReturnLineFeed) .)* {
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+// const
+
+ErrConstIdentifier = #{
+	return InvalidConstIdentifierError
+} (!EQUAL .)* {
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+ErrConstMissingValue = #{
+	return InvalidConstMissingValueError
+} (![\r\n] .)* {
+	return NewBadConstValue(NewLocationFromCurrent(c)), nil
+}
+
+ErrConstConstValue = #{
+	return InvalidConstConstValueError
+} (![\r\n] .)* {
+	return NewBadConstValue(NewLocationFromCurrent(c)), nil
+}
+
 // common error
 
 ErrLiteral1MissingRight = #{
@@ -880,6 +922,7 @@ ErrConst = #{
 ErrTypedef = #{
 	return InvalidTypedefError
 } (![\r\n] .)* { // 消费异常字符直到这行结束
+	fmt.Println("text: ", string(c.text))
 	return NewBadTypedef(NewLocationFromCurrent(c)), nil
 } 
 

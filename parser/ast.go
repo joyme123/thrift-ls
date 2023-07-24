@@ -838,6 +838,13 @@ func NewConstValue(typeName string, value any, loc Location) *ConstValue {
 	}
 }
 
+func NewBadConstValue(loc Location) *ConstValue {
+	return &ConstValue{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
 func NewBadIntConstValue(loc Location) *ConstValue {
 	return &ConstValue{
 		TypeName: "i64",
