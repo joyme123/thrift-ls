@@ -7,18 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_ParseUnionIdentifierError(t *testing.T) {
+func Test_ParseExceptionIdentifierError(t *testing.T) {
 
-	demoContent := `union {  // err1, line 1, col 7
+	demoContent := `exception {  // err1, line 1, col 11
   // Name is demo name
   1: required string Name;
   2: optional boo Required = true;
 }
 
-union 123Demos {  // err3, line 7, col 7
+exception 123Demos {  // err2, line 7, col 11
 }
 
-union Demos{
+exception Demos{
 }
 `
 
@@ -28,9 +28,9 @@ union Demos{
 		errList, ok := err.(parser.ErrorLister)
 		assert.True(t, ok)
 
-		errPos := []string{"1:7", "7:7"}
+		errPos := []string{"1:11", "7:11"}
 		assert.Len(t, errList.Errors(), len(errPos))
-		assert.True(t, containsError(errList.Errors(), parser.InvalidUnionIdentifierError))
+		assert.True(t, containsError(errList.Errors(), parser.InvalidExceptionIdentifierError))
 
 		for i, err := range errList.Errors() {
 			assert.Contains(t, err.Error(), errPos[i])
@@ -41,16 +41,16 @@ union Demos{
 	assert.NotNil(t, ast)
 }
 
-func Test_ParseUnionBlockRCURError(t *testing.T) {
+func Test_ParseExceptionBlockRCURError(t *testing.T) {
 
-	demoContent := `union Demo {
+	demoContent := `exception Demo {
   // Name is demo name
 
   2: optional boo Required = true; // err1, line 6, col 1
 
-struct Demos{}
-struct Demos{ // err2, line 8, col 1
-struct Demos{}
+exception Demos{}
+exception Demos{ // err2, line 8, col 1
+exception Demos{}
 `
 
 	ast, err := parser.Parse("test.thrift", []byte(demoContent))
@@ -60,7 +60,7 @@ struct Demos{}
 		assert.True(t, ok)
 		errPos := []string{"6:1", "8:1"}
 		assert.Len(t, errList.Errors(), len(errPos))
-		assert.True(t, containsError(errList.Errors(), parser.InvalidUnionBlockRCURError))
+		assert.True(t, containsError(errList.Errors(), parser.InvalidExceptionBlockRCURError))
 
 		for i, err := range errList.Errors() {
 			assert.Contains(t, err.Error(), errPos[i])
@@ -71,8 +71,8 @@ struct Demos{}
 	assert.NotNil(t, ast)
 }
 
-func Test_ParseUnionFieldError(t *testing.T) {
-	demoContent := `union Demo {
+func Test_ParseExceptionFieldError(t *testing.T) {
+	demoContent := `exception Demo {
   1: optional i64 count
   a: optional boo Required = true; // err1, line 3, col 3
   2: required i32 test4;
@@ -90,7 +90,7 @@ func Test_ParseUnionFieldError(t *testing.T) {
 		assert.True(t, ok)
 		errPos := []string{"3:3", "5:3", "7:3", "9:3"}
 		assert.Len(t, errList.Errors(), len(errPos))
-		assert.True(t, containsError(errList.Errors(), parser.InvalidUnionFieldError))
+		assert.True(t, containsError(errList.Errors(), parser.InvalidExceptionFieldError))
 		assert.True(t, containsError(errList.Errors(), parser.InvalidFieldIndexError))
 
 		for i, err := range errList.Errors() {
@@ -102,8 +102,8 @@ func Test_ParseUnionFieldError(t *testing.T) {
 	assert.NotNil(t, ast)
 }
 
-func Test_ParseUnionFieldDefault(t *testing.T) {
-	demoContent := `union Demo {
+func Test_ParseExceptionFieldDefault(t *testing.T) {
+	demoContent := `exception Demo {
 1: optional set<string> with_default = [ "test", "aaa" ]
 2: optional set<binary> bin_set = {}
 3: optional map<binary,i32> bin_map = {}
@@ -115,8 +115,8 @@ func Test_ParseUnionFieldDefault(t *testing.T) {
 	assert.NotNil(t, ast)
 }
 
-func Test_ParseUnionLocation(t *testing.T) {
-	demoContent := `union Demo {
+func Test_ParseExceptionLocation(t *testing.T) {
+	demoContent := `exception Demo {
 1: optional set<string> with_default = [ "😀", "aaa" ]
 }`
 	ast, err := parser.Parse("test.thrift", []byte(demoContent))
@@ -134,18 +134,18 @@ func Test_ParseUnionLocation(t *testing.T) {
 	// doc end
 	assert.Equal(t, 3, docEnd.Line)
 	assert.Equal(t, 3, docEnd.Col)
-	assert.Equal(t, 71, docEnd.Offset)
+	assert.Equal(t, 75, docEnd.Offset)
 
-	assert.Len(t, doc.Unions, 1)
-	unionNamePos := doc.Unions[0].Name.Pos()
-	unionNameEnd := doc.Unions[0].Name.End()
+	assert.Len(t, doc.Exceptions, 1)
+	namePos := doc.Exceptions[0].Name.Pos()
+	nameEnd := doc.Exceptions[0].Name.End()
 
-	// union pos
-	assert.Equal(t, 1, unionNamePos.Line)
-	assert.Equal(t, 7, unionNamePos.Col)
-	assert.Equal(t, 6, unionNamePos.Offset)
-	// union end
-	assert.Equal(t, 1, unionNameEnd.Line)
-	assert.Equal(t, 11, unionNameEnd.Col)
-	assert.Equal(t, 10, unionNameEnd.Offset)
+	// pos
+	assert.Equal(t, 1, namePos.Line)
+	assert.Equal(t, 11, namePos.Col)
+	assert.Equal(t, 10, namePos.Offset)
+	// end
+	assert.Equal(t, 1, nameEnd.Line)
+	assert.Equal(t, 15, nameEnd.Col)
+	assert.Equal(t, 14, nameEnd.Offset)
 }

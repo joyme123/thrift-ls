@@ -49,6 +49,11 @@ var (
 	InvalidUnionBlockRCURError  error = errors.New("expecting a ending '}' of union block")
 	InvalidUnionFieldError      error = errors.New("expecting a valid union field")
 
+	InvalidExceptionIdentifierError error = errors.New("expecting a valid exception identifier")
+	InvalidExceptionBlockLCURError  error = errors.New("expecting a starting '{' of exception block")
+	InvalidExceptionBlockRCURError  error = errors.New("expecting a ending '}' of exception block")
+	InvalidExceptionFieldError      error = errors.New("expecting a valid exception field")
+
 	InvalidIdentifierError error = errors.New("expecting a valid identifier")
 
 	InvalidLiteral1MissingRightError error = errors.New("expecting a right \" ")

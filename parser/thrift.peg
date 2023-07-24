@@ -249,24 +249,24 @@ Service <- SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Func
 	return x.([]any)[1], nil
 }
 
-Struct = STRUCT id:StructIdentifier LCUR fields:FieldWithThrow* RCUR {
+Struct = STRUCT id:DefinitionIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewStruct(id.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 } / x:(&(STRUCT .*) %{errStruct}) {
 	return x.([]any)[1], nil
-} //{errStructIdentifier} ErrStructIdentifier //{errRCUR} ErrStructRCUR  //{errField} ErrStructField
+} //{errIdentifier} ErrStructIdentifier //{errRCUR} ErrStructRCUR  //{errField} ErrStructField
 
-Union <- UNION name:UnionIdentifier LCUR fields:FieldWithThrow* RCUR {
+Union <- UNION name:DefinitionIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewUnion(name.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 } / x:(&(UNION .*) %{errUnion}) {
 	return x.([]any)[1], nil
-} //{errUnionIdentifier} ErrUnionIdentifier //{errRCUR} ErrUnionRCUR //{errField} ErrUnionField
+} //{errIdentifier} ErrUnionIdentifier //{errRCUR} ErrUnionRCUR //{errField} ErrUnionField
 
 
-Exception <- EXCEPTION name:Identifier LCUR fields:Field* RCUR {
+Exception <- EXCEPTION name:DefinitionIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewException(name.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 } / x:(&(EXCEPTION .*) %{errException}) {
 	return x.([]any)[1], nil
-}
+} //{errIdentifier} ErrExceptionIdentifier //{errRCUR} ErrExceptionRCUR //{errField} ErrExceptionField
 
 
 FieldWithThrow = Field / x:( Skip !(( '}' Indent*) / DefinitionStart ) %{errField} ) {
@@ -461,13 +461,9 @@ Literal2 = Skip "'" t:(EscapeLiteralChar / !"'" .)* "'" Indent* {
 	 return x.([]any)[1], nil 
 }
 
-StructIdentifier = id:Identifier {
+DefinitionIdentifier = id:Identifier {
 	return id.(*Identifier), nil
-} / %{errStructIdentifier}
-
-UnionIdentifier = id:Identifier {
-	return id.(*Identifier), nil
-} / %{errUnionIdentifier}
+} / %{errIdentifier}
 
 Identifier = Skip id:IdentifierToken Indent* {
 	return id.(*Identifier), nil
@@ -769,6 +765,33 @@ ErrUnionLCUR = #{
 
 ErrUnionField = #{
 	return InvalidUnionFieldError
+} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
+}
+
+ErrExceptionIdentifier = #{
+	return InvalidExceptionIdentifierError
+} ( !'{' .)* { // struct identifier 异常，consume 掉异常字符直到出现 '{' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+ErrExceptionRCUR = #{
+	return InvalidExceptionBlockRCURError
+} ( !DefinitionStart .)* {
+	return "?", nil
+}
+
+ErrExceptionLCUR = #{
+	return InvalidExceptionBlockLCURError
+} ( !'}' .)* { // 缺少 '{'，消费异常字符直到出现下一个 Field 或者 '}'
+	return "?", nil
+}
+
+ErrExceptionField = #{
+	return InvalidExceptionFieldError
 } ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
 	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
