@@ -42,7 +42,12 @@ var (
 	InvalidStructIdentifierError error = errors.New("expecting a valid struct identifier")
 	InvalidStructBlockLCURError  error = errors.New("expecting a starting '{' of struct block")
 	InvalidStructBlockRCURError  error = errors.New("expecting an ending '}' of struct block")
-	InvalidStructFieldError      error = errors.New("expecting a valid field")
+	InvalidStructFieldError      error = errors.New("expecting a valid struct field")
+
+	InvalidUnionIdentifierError error = errors.New("expecting a valid union identifier")
+	InvalidUnionBlockLCURError  error = errors.New("expecting a starting '{' of union block")
+	InvalidUnionBlockRCURError  error = errors.New("expecting a ending '}' of union block")
+	InvalidUnionFieldError      error = errors.New("expecting a valid union field")
 
 	InvalidIdentifierError error = errors.New("expecting a valid identifier")
 

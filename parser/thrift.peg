@@ -253,13 +253,13 @@ Struct = STRUCT id:StructIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewStruct(id.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 } / x:(&(STRUCT .*) %{errStruct}) {
 	return x.([]any)[1], nil
-} //{errIdentifier} ErrStructIdentifier //{errRCUR} ErrStructRCUR  //{errField} ErrField
+} //{errStructIdentifier} ErrStructIdentifier //{errRCUR} ErrStructRCUR  //{errField} ErrStructField
 
-Union <- UNION name:Identifier LCUR fields:Field* RCUR {
+Union <- UNION name:UnionIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewUnion(name.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 } / x:(&(UNION .*) %{errUnion}) {
 	return x.([]any)[1], nil
-}
+} //{errUnionIdentifier} ErrUnionIdentifier //{errRCUR} ErrUnionRCUR //{errField} ErrUnionField
 
 
 Exception <- EXCEPTION name:Identifier LCUR fields:Field* RCUR {
@@ -269,7 +269,7 @@ Exception <- EXCEPTION name:Identifier LCUR fields:Field* RCUR {
 }
 
 
-FieldWithThrow = Field / x:( Skip !(( '}' Indent*) / STRUCT / CONST / TYPEDEF / ENUM / SERVICE / UNION / EXCEPTION) %{errField} ) {
+FieldWithThrow = Field / x:( Skip !(( '}' Indent*) / DefinitionStart ) %{errField} ) {
 	return x.([]any)[2], nil
 }
 
@@ -304,7 +304,7 @@ IsRequired = v:("required" / "optional") {
 	return NewRequired(string(v.([]byte)) == "required", c.pos), nil
 }
 
-Function  <- comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:Identifier LPAR args:Field* RPAR throws:Throws? Annotations? ListSeparator? SkipLine {
+Function = comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:Identifier LPAR args:Field* RPAR throws:Throws? Annotations? ListSeparator? SkipLine {
 	void := false
 	var ftype *FieldType
 	if str, ok := ft.(string); ok && str == "void" {
@@ -463,7 +463,11 @@ Literal2 = Skip "'" t:(EscapeLiteralChar / !"'" .)* "'" Indent* {
 
 StructIdentifier = id:Identifier {
 	return id.(*Identifier), nil
-} / %{errIdentifier}
+} / %{errStructIdentifier}
+
+UnionIdentifier = id:Identifier {
+	return id.(*Identifier), nil
+} / %{errUnionIdentifier}
 
 Identifier = Skip id:IdentifierToken Indent* {
 	return id.(*Identifier), nil
@@ -706,11 +710,11 @@ COLON       = Skip ":"     Indent* {
 	return ":", nil
 }
 
-DefinitionStart = "struct"
+DefinitionStart = STRUCT / UNION / EXCEPTION / ENUM / SERVICE / CONST / TYPEDEF
 
-ErrField = #{
+ErrStructField = #{
 	return InvalidStructFieldError
-} ( !(Field / (Skip '}' Indent*) / STRUCT ) . )* {
+} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
 	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
 
@@ -729,9 +733,10 @@ ErrStructIdentifier = #{
 	return t, nil
 } // 构造 identifier 的 badnode
 
+
 ErrStructRCUR = #{
 	return InvalidStructBlockRCURError
-} ( !STRUCT .)* { // 缺少 '}'，消费异常字符直到出现下一个 struct。TODO(jpf): 后面会加入 typedef 等定义，需要扩展补充
+} ( !DefinitionStart .)* { // 缺少 '}'，消费异常字符直到出现下一个 definition。TODO(jpf): 后面会加入 typedef 等定义，需要扩展补充
 	return "?", nil
 }
 
@@ -739,6 +744,33 @@ ErrStructLCUR = #{
 	return InvalidStructBlockLCURError
 } ( !'}' .)* { // 缺少 '{'，消费异常字符直到出现下一个 Field 或者 '}'
 	return "?", nil
+}
+
+ErrUnionIdentifier = #{
+	return InvalidUnionIdentifierError
+} ( !'{' .)* { // struct identifier 异常，consume 掉异常字符直到出现 '{' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+ErrUnionRCUR = #{
+	return InvalidUnionBlockRCURError
+} ( !DefinitionStart .)* {
+	return "?", nil
+}
+
+ErrUnionLCUR = #{
+	return InvalidUnionBlockLCURError
+} ( !'}' .)* { // 缺少 '{'，消费异常字符直到出现下一个 Field 或者 '}'
+	return "?", nil
+}
+
+ErrUnionField = #{
+	return InvalidUnionFieldError
+} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
 
 ErrLiteral1MissingRight = #{
