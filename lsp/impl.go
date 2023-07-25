@@ -142,7 +142,7 @@ func toLspCompletionList(items []*completion.CompletionItem, rng protocol.Range)
 				Range:   rng,
 			},
 			FilterText:       strings.TrimLeft(items[i].InsertText, "&*"),
-			InsertTextFormat: protocol.InsertTextFormatPlainText,
+			InsertTextFormat: items[i].InsertTextFormat,
 			SortText:         fmt.Sprintf("%05d", i),
 			Preselect:        i == 0,
 			Deprecated:       items[i].Deprecated,

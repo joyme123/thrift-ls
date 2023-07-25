@@ -38,14 +38,15 @@ func (c *SemanticBasedCompletion) Completion(ctx context.Context, ss *cache.Snap
 	}, nil
 }
 
-func BuildCompletionItem(text string) *CompletionItem {
+func BuildCompletionItem(candidate Candidate) *CompletionItem {
 	return &CompletionItem{
-		Label:         text,
-		Detail:        text,
-		InsertText:    text,
-		Kind:          protocol.CompletionItemKindText,
-		Deprecated:    false,
-		Score:         90,
-		Documentation: "",
+		Label:            candidate.text,
+		Detail:           candidate.text,
+		InsertText:       candidate.text,
+		InsertTextFormat: candidate.format,
+		Kind:             protocol.CompletionItemKindText,
+		Deprecated:       false,
+		Score:            90,
+		Documentation:    "",
 	}
 }

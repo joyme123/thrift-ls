@@ -22,7 +22,8 @@ type CompletionItem struct {
 
 	// InsertText holds the text to insert when user selects this completion.
 	// It may be same with Label
-	InsertText string
+	InsertText       string
+	InsertTextFormat protocol.InsertTextFormat
 
 	Kind       protocol.CompletionItemKind
 	Deprecated bool

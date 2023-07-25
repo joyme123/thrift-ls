@@ -79,6 +79,12 @@ func (c *ParseCaches) Tokens() map[string]struct{} {
 				continue
 			}
 			tokens[item.Name.Name] = struct{}{}
+			for i := range item.Values {
+				if item.Values[i].BadNode || item.Values[i].Name == nil {
+					continue
+				}
+				tokens[item.Name.Name] = struct{}{}
+			}
 		}
 		for _, item := range parsed.ast.Consts {
 			if item.Name == nil || item.Name.BadNode {
@@ -103,6 +109,12 @@ func (c *ParseCaches) Tokens() map[string]struct{} {
 				continue
 			}
 			tokens[item.Name.Name] = struct{}{}
+			for i := range item.Fields {
+				if item.Fields[i].BadNode || item.Fields[i].Identifier == nil {
+					continue
+				}
+				tokens[item.Fields[i].Identifier.Name] = struct{}{}
+			}
 		}
 		for _, item := range parsed.ast.Structs {
 			if item.Identifier == nil || item.Identifier.BadNode {
@@ -122,6 +134,12 @@ func (c *ParseCaches) Tokens() map[string]struct{} {
 				continue
 			}
 			tokens[item.Name.Name] = struct{}{}
+			for i := range item.Fields {
+				if item.Fields[i].BadNode || item.Fields[i].Identifier == nil {
+					continue
+				}
+				tokens[item.Fields[i].Identifier.Name] = struct{}{}
+			}
 		}
 	}
 	c.tokens = tokens
