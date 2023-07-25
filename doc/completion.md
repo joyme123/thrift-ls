@@ -28,6 +28,17 @@ completion 要求在用户输入时实时的提供补全的候选项。lsp clien
    2. 再根据 AST 中的位置信息，找到 Location 对应的 AST node 以及路径。这里的路径指的是从 root node 到当前的 AST node 所有的 node。
    3. 根据 AST node 和 path 信息，进行补全推荐。
 
+基于语义的实现方式，对 parser 的要求较高，parser 需要在语法错误的情况下知道当前的输入位置的 node 属性。因此目前使用的是基于 token 的补全方案。
+
+### 补全清单
+
+1. Document -> BadHeader: 对输入进行 include snippet 补全
+2. Document -> Header -> Literal: 对 Path 进行补全
+3. Document -> BadDefinition: 对输入进行 struct/union/exception/servcie/Enum/Const/Typedef snippet 的补全
+4. Document -> Definition -> Struct/Union/Exception -> Bad Field: 对 required/optional 以及基础/自定义类型进行补全
+5. Document -> Definition -> Struct/Union/Exception -> Field -> Identifier: 根据已有的 Identifier 进行补全
+6. Document -> Definition -> Service -> 
+
 
 ## fault tolerate parser
 

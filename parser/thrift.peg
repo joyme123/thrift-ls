@@ -203,73 +203,82 @@ Definition = comments:ReservedComments Skip v:(Const / Typedef / Enum / Service 
 	return x.([]any)[3], nil
 } //{errConst} ErrConst //{errTypedef} ErrTypedef //{errEnum} ErrEnum //{errService} ErrService //{errStruct} ErrStruct //{errUnion} ErrUnion //{errException} ErrException
 
-Const = CONST t:FieldType name:Identifier EQUAL v:ConstValue ListSeparator? {
+Const = CONST t:FieldType name:DefinitionIdentifier v:ConstEqualValue ListSeparator? {
 	return NewConst(name.(*Identifier), t.(*FieldType), v.(*ConstValue), "", NewLocationFromCurrent(c)), nil
-} / x:(&(CONST .*)) %{errConst} {
+} / x:(&(CONST .*) %{errConst}) {
+	return x.([]any)[1], nil
+} //{errIdentifier} ErrConstIdentifier //{errConstMissingValue} ErrConstMissingValue //{errConstConstValue} ErrConstConstValue
+
+ConstEqualValue = EQUAL v:ConstValue {
+	return v, nil
+} / x:(!EQUAL %{errConstMissingValue}) {
+	return x.([]any)[1], nil
+} / x:(EQUAL %{errConstConstValue}) {
 	return x.([]any)[1], nil
 }
 
-Typedef <- TYPEDEF t:FieldType alias:Identifier {
+Typedef = TYPEDEF t:FieldType alias:DefinitionIdentifier {
 	return NewTypedef(t.(*FieldType), alias.(*Identifier), NewLocationFromCurrent(c)), nil
 } / x:(&(TYPEDEF .*) %{errTypedef}) {
 	return x.([]any)[1], nil
-}
+} //{errIdentifier} ErrTypedefIdentifier
 
-Enum  <- ENUM name:Identifier LCUR v:EnumValueLine* RCUR {
+Enum = ENUM name:DefinitionIdentifier LCUR v:EnumValueLine* RCUR {
 	values := toEnumValueSlice(v)
 	return NewEnum(name.(*Identifier), values, NewLocationFromCurrent(c)), nil
 } / x:(&(ENUM .*) %{errEnum}) {
 	return x.([]any)[1], nil
-}
+} //{errIdentifier} ErrEnumIdentifier //{errRCUR} ErrEnumRCUR //{errEnumValue} ErrEnumValue
 
 EnumValueLine = comments:ReservedComments v:EnumValue SkipLine {
         v.(*EnumValue).Comments = comments.(string)
 	return v, nil
 }
 
-EnumValue =  name:Identifier value:(EQUAL IntConstant)? Annotations? ListSeparator? {
+EnumValue =  name:Identifier value:(EnumValueIntConstant)? Annotations? ListSeparator? {
 	var valueNode *ConstValue
 	intV := int64(-1)
 	if value != nil {
-		valueNode = value.([]any)[1].(*ConstValue)
-		intV = value.([]any)[1].(*ConstValue).Value.(int64)
+		//fmt.Println(value.(Node).Type(), value)
+		valueNode = value.(*ConstValue)
+		intV = value.(*ConstValue).Value.(int64)
 	}
 
 	return NewEnumValue(name.(*Identifier), valueNode, intV, "", NewLocationFromCurrent(c)), nil
-}
+} //{errIntConstant} ErrEnumValueIntConstant
 
-Service <- SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Function* RCUR {
+Service = SERVICE name:DefinitionIdentifier extends:( EXTENDS Identifier )? LCUR fns:Function* RCUR {
 	var extendsVal *Identifier
 	if extends != nil {
-		extendsVal = extends.(*Identifier)
+		extendsVal = extends.([]any)[1].(*Identifier)
 	}
 	fnsVal := toFunctionSlice(fns)
 	return NewService(name.(*Identifier), extendsVal, fnsVal, NewLocationFromCurrent(c)), nil
 } / x:(&(SERVICE .*) %{errService}) {
 	return x.([]any)[1], nil
-}
+} //{errIdentifier} ErrServiceIdentifier //{errRCUR} ErrServiceRCUR //{errFunction} ErrServiceFunction 
 
-Struct = STRUCT id:StructIdentifier LCUR fields:FieldWithThrow* RCUR {
+Struct = STRUCT id:DefinitionIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewStruct(id.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 } / x:(&(STRUCT .*) %{errStruct}) {
 	return x.([]any)[1], nil
-} //{errIdentifier} ErrStructIdentifier //{errRCUR} ErrStructRCUR  //{errField} ErrField
+} //{errIdentifier} ErrStructIdentifier //{errRCUR} ErrStructRCUR  //{errField} ErrStructField
 
-Union <- UNION name:Identifier LCUR fields:Field* RCUR {
+Union <- UNION name:DefinitionIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewUnion(name.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 } / x:(&(UNION .*) %{errUnion}) {
 	return x.([]any)[1], nil
-}
+} //{errIdentifier} ErrUnionIdentifier //{errRCUR} ErrUnionRCUR //{errField} ErrUnionField
 
 
-Exception <- EXCEPTION name:Identifier LCUR fields:Field* RCUR {
+Exception <- EXCEPTION name:DefinitionIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewException(name.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
 } / x:(&(EXCEPTION .*) %{errException}) {
 	return x.([]any)[1], nil
-}
+} //{errIdentifier} ErrExceptionIdentifier //{errRCUR} ErrExceptionRCUR //{errField} ErrExceptionField
 
 
-FieldWithThrow = Field / x:( Skip !(( '}' Indent*) / STRUCT / CONST / TYPEDEF / ENUM / SERVICE / UNION / EXCEPTION) %{errField} ) {
+FieldWithThrow = Field / x:( Skip !(( '}' Indent*) / DefinitionStart ) %{errField} ) {
 	return x.([]any)[2], nil
 }
 
@@ -304,7 +313,7 @@ IsRequired = v:("required" / "optional") {
 	return NewRequired(string(v.([]byte)) == "required", c.pos), nil
 }
 
-Function  <- comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:Identifier LPAR args:Field* RPAR throws:Throws? Annotations? ListSeparator? SkipLine {
+Function = comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:DefinitionIdentifier LPAR args:FunctionFieldWithThrow* RPAR throws:Throws? Annotations? ListSeparator? SkipLine {
 	void := false
 	var ftype *FieldType
 	if str, ok := ft.(string); ok && str == "void" {
@@ -318,7 +327,16 @@ Function  <- comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:
 		throwsFields = throws.([]*Field)
 	}
 	return NewFunction(name.(*Identifier), oneway != nil, void, ftype, toFieldSlice(args), throwsFields, comments.(string), NewLocationFromCurrent(c)), nil
+} / x:(ReservedComments Skip &(oneway:ONEWAY? ft:FunctionType) %{errFunction}) {
+	return x.([]any)[3], nil
+} //{errIdentifier} ErrFunctionIdentifier //{errField} ErrFunctionArgument
+
+FunctionFieldWithThrow = v:Field {
+	return v, nil
+} /  x:(comments:ReservedComments Skip &(index:FieldId required:FieldReq? fieldType:FieldType) %{errField})  {
+	return x.([]any)[3], nil
 }
+
 
 FunctionType  <- VOID / FieldType
 
@@ -326,7 +344,7 @@ Throws <- THROWS LPAR fields:Field* RPAR {
 	return toFieldSlice(fields), nil
 }
 
-FieldType  = v:(ContainerType / BaseType / IdentifierType) Annotations? {
+FieldType = v:(ContainerType / BaseType / IdentifierType) Annotations? {
 	return v.(*FieldType), nil
 }
 
@@ -367,8 +385,16 @@ IdentifierConst = id:Identifier {
 	return NewConstValue("identifier", id.(*Identifier).Name, NewLocationFromCurrent(c)), nil
 }
 
-IntConstant = Skip  v:(HexIntConstant / OctIntConstant / NormalIntConstant)  Indent* {
+EnumValueIntConstant = EQUAL v:IntConstant {
+	return v, nil
+} / x:(EQUAL Skip %{errIntConstant} Indent*) {
+	return x.([]any)[2], nil
+}
+
+IntConstant = Skip  v:(HexIntConstant / OctIntConstant / NormalIntConstant) ![a-zA-Z]  Indent* {
 	return v.(*ConstValue), nil
+} / x:(Skip &("0x" / "0o" / (('+' / '-')? Digit)) %{errIntConstant}) {
+	return x.([]any)[2], nil
 }
 
 HexIntConstant = "0x" ([0-9] / [A-Z] / [a-z])+ {
@@ -447,21 +473,21 @@ Literal = l:(Literal1 / Literal2) {
 	return l, nil
 } //{errLiteral1MissingRight} ErrLiteral1MissingRight //{errLiteral1} ErrLiteral1 //{errLiteral2MissingRight} ErrLiteral2MissingRight //{errLiteral2} ErrLiteral2
 
-Literal1 = Skip '"' t:(EscapeLiteralChar / !'"' .)* '"' Indent* {
+Literal1 = Skip '"' t:(EscapeLiteralChar / !["\r\n] .)* '"' Indent* {
 	strs := toStringSlice(t)
 	return NewLiteral(strings.Join(strs, ""), NewLocationFromCurrent(c)), nil
 } / x:(&(Skip '"' t:(EscapeLiteralChar / !'"' .)* Indent*) %{errLiteral1MissingRight}) {
 	 return x.([]any)[1], nil 
 }
 
-Literal2 = Skip "'" t:(EscapeLiteralChar / !"'" .)* "'" Indent* {
+Literal2 = Skip "'" t:(EscapeLiteralChar / !['\r\n] .)* "'" Indent* {
 	strs := toStringSlice(t)
 	return NewLiteral(strings.Join(strs, ""), NewLocationFromCurrent(c)), nil
 } / x:(&(Skip "'" t:(EscapeLiteralChar / !"'" .)* Indent*) %{errLiteral2MissingRight}) {
 	 return x.([]any)[1], nil 
 }
 
-StructIdentifier = id:Identifier {
+DefinitionIdentifier = id:Identifier {
 	return id.(*Identifier), nil
 } / %{errIdentifier}
 
@@ -684,7 +710,7 @@ LCURToken = "{" {
 RCURToken = "}" {
 	return string(c.text), nil
 } / %{errRCUR}
-EQUAL       = Skip "="     Indent* {
+EQUAL = Skip "="     Indent* {
 	return "=", nil
 }
 LPOINT      = Skip "<"     Indent* {
@@ -706,18 +732,20 @@ COLON       = Skip ":"     Indent* {
 	return ":", nil
 }
 
-DefinitionStart = "struct"
-
-ErrField = #{
-	return InvalidStructFieldError
-} ( !(Field / (Skip '}' Indent*) / STRUCT ) . )* {
-	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
-}
+DefinitionStart = STRUCT / UNION / EXCEPTION / ENUM / SERVICE / CONST / TYPEDEF
 
 ErrFieldIndex = #{
 	return InvalidFieldIndexError
 } (!([:\r\n]) .)* { // 消费到冒号或本行结束
 	return NewBadFieldIndex(NewLocationFromCurrent(c)), nil
+}
+
+// struct
+
+ErrStructField = #{
+	return InvalidStructFieldError
+} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
 
 ErrStructIdentifier = #{
@@ -731,7 +759,7 @@ ErrStructIdentifier = #{
 
 ErrStructRCUR = #{
 	return InvalidStructBlockRCURError
-} ( !STRUCT .)* { // 缺少 '}'，消费异常字符直到出现下一个 struct。TODO(jpf): 后面会加入 typedef 等定义，需要扩展补充
+} ( !DefinitionStart .)* { // 缺少 '}'，消费异常字符直到出现下一个 definition。TODO(jpf): 后面会加入 typedef 等定义，需要扩展补充
 	return "?", nil
 }
 
@@ -741,12 +769,180 @@ ErrStructLCUR = #{
 	return "?", nil
 }
 
+// union
+
+ErrUnionIdentifier = #{
+	return InvalidUnionIdentifierError
+} ( !'{' .)* { // identifier 异常，consume 掉异常字符直到出现 '{' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+ErrUnionRCUR = #{
+	return InvalidUnionBlockRCURError
+} ( !DefinitionStart .)* {
+	return "?", nil
+}
+
+ErrUnionLCUR = #{
+	return InvalidUnionBlockLCURError
+} ( !'}' .)* { // 缺少 '{'，消费异常字符直到出现下一个 Field 或者 '}'
+	return "?", nil
+}
+
+ErrUnionField = #{
+	return InvalidUnionFieldError
+} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
+}
+
+// exception
+
+ErrExceptionIdentifier = #{
+	return InvalidExceptionIdentifierError
+} ( !'{' .)* { // identifier 异常，consume 掉异常字符直到出现 '{' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+ErrExceptionRCUR = #{
+	return InvalidExceptionBlockRCURError
+} ( !DefinitionStart .)* {
+	return "?", nil
+}
+
+ErrExceptionLCUR = #{
+	return InvalidExceptionBlockLCURError
+} ( !'}' .)* { // 缺少 '{'，消费异常字符直到出现下一个 Field 或者 '}'
+	return "?", nil
+}
+
+ErrExceptionField = #{
+	return InvalidExceptionFieldError
+} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
+}
+
+// enum
+
+ErrEnumIdentifier = #{
+	return InvalidEnumIdentifierError
+} ( !'{' .)* { // enum identifier 异常，consume 掉异常字符直到出现 '{' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+ErrEnumRCUR = #{
+	return InvalidEnumBlockRCURError
+} ( !DefinitionStart .)* {
+	return "?", nil
+}
+
+ErrEnumLCUR = #{
+	return InvalidEnumBlockLCURError
+} ( !'}' .)* { // 缺少 '{'，消费异常字符直到出现下一个 Field 或者 '}'
+	return "?", nil
+}
+
+ErrEnumValue = #{
+	return InvalidEnumValueError
+} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+	return NewBadEnumValue(NewLocationFromCurrent(c)), nil
+}
+
+ErrEnumValueIntConstant = #{
+	return InvalidEnumValueIntConstantError
+} ( !(CarriageReturnLineFeed ) . )* {
+	return  NewBadIntConstValue(NewLocationFromCurrent(c)), nil
+}
+
+// typedef
+
+ErrTypedefIdentifier = #{
+	return InvalidTypedefIdentifierError
+} ( !(CarriageReturnLineFeed) .)* {
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+// const
+
+ErrConstIdentifier = #{
+	return InvalidConstIdentifierError
+} (!EQUAL .)* {
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+ErrConstMissingValue = #{
+	return InvalidConstMissingValueError
+} (![\r\n] .)* {
+	return NewBadConstValue(NewLocationFromCurrent(c)), nil
+}
+
+ErrConstConstValue = #{
+	return InvalidConstConstValueError
+} (![\r\n] .)* {
+	return NewBadConstValue(NewLocationFromCurrent(c)), nil
+}
+
+// service
+
+ErrServiceIdentifier = #{
+	return InvalidServiceIdentifierError
+} ( !'{' .)* { // identifier 异常，consume 掉异常字符直到出现 '{' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+ErrServiceRCUR = #{
+	return InvalidServiceBlockRCURError
+} ( !DefinitionStart .)* {
+	return "?", nil
+}
+
+ErrServiceFunction  = #{
+	return InvalidServiceFunctionError
+} ( ![\r\n] .)* {
+	return NewBadFunction(NewLocationFromCurrent(c)), nil
+}
+
+// function
+ErrFunctionIdentifier = #{
+	return InvalidFunctionIdentifierError
+} ( !'(' .)* { // identifier 异常，consume 掉异常字符直到出现 '(' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+} // 构造 identifier 的 badnode
+
+ErrFunctionArgument = #{
+	return InvalidFunctionArgumentError
+} ( ![,;)\r\n] . )* {
+	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
+}
+
+
+// common error
+
 ErrLiteral1MissingRight = #{
 	return InvalidLiteral1MissingRightError
 } ( ![\r\n] .)* { // 消费异常字符直到这行结束
 	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
 }
-
 
 ErrLiteral1 = #{
 	return InvalidLiteral1Error
@@ -775,6 +971,7 @@ ErrConst = #{
 ErrTypedef = #{
 	return InvalidTypedefError
 } (![\r\n] .)* { // 消费异常字符直到这行结束
+	fmt.Println("text: ", string(c.text))
 	return NewBadTypedef(NewLocationFromCurrent(c)), nil
 } 
 

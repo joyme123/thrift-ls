@@ -11,7 +11,11 @@ type Interface interface {
 	Completion(ctx context.Context, ss *cache.Snapshot, cmp *CompletionRequest) ([]*CompletionItem, error)
 }
 
-func Completion(ctx context.Context, ss *cache.Snapshot, cmp *CompletionRequest) ([]*CompletionItem, error) {
+// SemanticBasedCompletion generates completion list based on semantic. It is more precisely than token based completion
+type SemanticBasedCompletion struct {
+}
+
+func (c *SemanticBasedCompletion) Completion(ctx context.Context, ss *cache.Snapshot, cmp *CompletionRequest) ([]*CompletionItem, error) {
 	return []*CompletionItem{
 		{
 			Label:         "test",
@@ -34,14 +38,15 @@ func Completion(ctx context.Context, ss *cache.Snapshot, cmp *CompletionRequest)
 	}, nil
 }
 
-func BuildCompletionItem(text string) *CompletionItem {
+func BuildCompletionItem(candidate Candidate) *CompletionItem {
 	return &CompletionItem{
-		Label:         text,
-		Detail:        text,
-		InsertText:    text,
-		Kind:          protocol.CompletionItemKindText,
-		Deprecated:    false,
-		Score:         90,
-		Documentation: "",
+		Label:            candidate.text,
+		Detail:           candidate.text,
+		InsertText:       candidate.text,
+		InsertTextFormat: candidate.format,
+		Kind:             protocol.CompletionItemKindText,
+		Deprecated:       false,
+		Score:            90,
+		Documentation:    "",
 	}
 }

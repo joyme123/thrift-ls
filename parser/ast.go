@@ -403,7 +403,15 @@ type EnumValue struct {
 	Value     int64 // Value only record enum value. it is not a ast node
 	Comments  string
 
+	BadNode bool
 	Location
+}
+
+func NewBadEnumValue(loc Location) *EnumValue {
+	return &EnumValue{
+		BadNode:  true,
+		Location: loc,
+	}
 }
 
 func NewEnumValue(name *Identifier, valueNode *ConstValue, value int64, comments string, loc Location) *EnumValue {
@@ -498,7 +506,7 @@ func NewFunction(name *Identifier, oneway bool, void bool, ft *FieldType, args [
 	}
 }
 
-func NewBadFunc(loc Location) *Function {
+func NewBadFunction(loc Location) *Function {
 	return &Function{
 		BadNode:  true,
 		Location: loc,
@@ -818,6 +826,7 @@ type ConstValue struct {
 	// only exist when TypeName is map
 	Key any
 
+	BadNode bool
 	Location
 }
 
@@ -825,6 +834,22 @@ func NewConstValue(typeName string, value any, loc Location) *ConstValue {
 	return &ConstValue{
 		TypeName: typeName,
 		Value:    value,
+		Location: loc,
+	}
+}
+
+func NewBadConstValue(loc Location) *ConstValue {
+	return &ConstValue{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
+func NewBadIntConstValue(loc Location) *ConstValue {
+	return &ConstValue{
+		TypeName: "i64",
+		BadNode:  true,
+		Value:    int64(0),
 		Location: loc,
 	}
 }

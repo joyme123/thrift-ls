@@ -11,3 +11,16 @@ func containsError(errs []error, target error) bool {
 	}
 	return false
 }
+
+func equalErrors(errs []error, target []error) bool {
+	if len(errs) != len(target) {
+		return false
+	}
+	for i, err := range errs {
+		err = err.(parser.ParserError).InnerError()
+		if err != target[i] {
+			return false
+		}
+	}
+	return true
+}
