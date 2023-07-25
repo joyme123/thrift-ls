@@ -10,4 +10,4 @@ hover 用来展示代码的一些属性。比如某个 identifier 的类型，�
 
 hover 的实现:
    1. 找到 definition： 复用 goto definition 的查找实现
-   2. 展示 definition: 复用 format 的实现
+   2. 展示 definition: 复用 format 的实现。对指定的 definition ast node 进行 format 后展示即可
