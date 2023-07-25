@@ -14,7 +14,7 @@ import (
 
 func Test_DidOpen(t *testing.T) {
 	ctx := context.TODO()
-	fileURI, err := uri.Parse("file:///opt/file.thrift")
+	fileURI, err := uri.Parse("file:///tmp/file.thrift")
 	assert.NoError(t, err)
 	fileContent := `
 include "base.thrift"
@@ -50,7 +50,7 @@ struct Test {
 
 func Test_DidChange(t *testing.T) {
 	ctx := context.TODO()
-	fileURI, err := uri.Parse("file:///opt/file.thrift")
+	fileURI, err := uri.Parse("file:///tmp/file.thrift")
 	assert.NoError(t, err)
 	fileContentInit := `
 include "base.thrift"
@@ -109,7 +109,7 @@ struct Test {
 
 func Test_Completion(t *testing.T) {
 	ctx := context.TODO()
-	fileURI, err := uri.Parse("file:///opt/file.thrift")
+	fileURI, err := uri.Parse("file:///tmp/file.thrift")
 	assert.NoError(t, err)
 	fileContent := `include "base.thrift"
 

@@ -72,6 +72,13 @@ var (
 	InvalidConstMissingValueError error = errors.New("expecting a const value")
 	InvalidConstIdentifierError   error = errors.New("expecting a valid const identifier")
 
+	InvalidServiceIdentifierError error = errors.New("expecting a valid service identifier")
+	InvalidServiceBlockRCURError  error = errors.New("expecting a ending '}' of service block")
+	InvalidServiceFunctionError   error = errors.New("expecting a valid service function")
+
+	InvalidFunctionIdentifierError error = errors.New("expecting a valid function identifier")
+	InvalidFunctionArgumentError   error = errors.New("expecting a valid function argument")
+
 	InvalidIdentifierError error = errors.New("expecting a valid identifier")
 
 	InvalidLiteral1MissingRightError error = errors.New("expecting a right \" ")

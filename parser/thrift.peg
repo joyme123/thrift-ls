@@ -247,16 +247,16 @@ EnumValue =  name:Identifier value:(EnumValueIntConstant)? Annotations? ListSepa
 	return NewEnumValue(name.(*Identifier), valueNode, intV, "", NewLocationFromCurrent(c)), nil
 } //{errIntConstant} ErrEnumValueIntConstant
 
-Service = SERVICE name:Identifier extends:( EXTENDS Identifier )? LCUR fns:Function* RCUR {
+Service = SERVICE name:DefinitionIdentifier extends:( EXTENDS Identifier )? LCUR fns:Function* RCUR {
 	var extendsVal *Identifier
 	if extends != nil {
-		extendsVal = extends.(*Identifier)
+		extendsVal = extends.([]any)[1].(*Identifier)
 	}
 	fnsVal := toFunctionSlice(fns)
 	return NewService(name.(*Identifier), extendsVal, fnsVal, NewLocationFromCurrent(c)), nil
 } / x:(&(SERVICE .*) %{errService}) {
 	return x.([]any)[1], nil
-}
+} //{errIdentifier} ErrServiceIdentifier //{errRCUR} ErrServiceRCUR //{errFunction} ErrServiceFunction 
 
 Struct = STRUCT id:DefinitionIdentifier LCUR fields:FieldWithThrow* RCUR {
 	return NewStruct(id.(*Identifier), toFieldSlice(fields), NewLocationFromCurrent(c)), nil
@@ -313,7 +313,7 @@ IsRequired = v:("required" / "optional") {
 	return NewRequired(string(v.([]byte)) == "required", c.pos), nil
 }
 
-Function = comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:Identifier LPAR args:Field* RPAR throws:Throws? Annotations? ListSeparator? SkipLine {
+Function = comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:DefinitionIdentifier LPAR args:FunctionFieldWithThrow* RPAR throws:Throws? Annotations? ListSeparator? SkipLine {
 	void := false
 	var ftype *FieldType
 	if str, ok := ft.(string); ok && str == "void" {
@@ -327,7 +327,16 @@ Function = comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:Id
 		throwsFields = throws.([]*Field)
 	}
 	return NewFunction(name.(*Identifier), oneway != nil, void, ftype, toFieldSlice(args), throwsFields, comments.(string), NewLocationFromCurrent(c)), nil
+} / x:(ReservedComments Skip &(oneway:ONEWAY? ft:FunctionType) %{errFunction}) {
+	return x.([]any)[3], nil
+} //{errIdentifier} ErrFunctionIdentifier //{errField} ErrFunctionArgument
+
+FunctionFieldWithThrow = v:Field {
+	return v, nil
+} /  x:(comments:ReservedComments Skip &(index:FieldId required:FieldReq? fieldType:FieldType) %{errField})  {
+	return x.([]any)[3], nil
 }
+
 
 FunctionType  <- VOID / FieldType
 
@@ -886,6 +895,46 @@ ErrConstConstValue = #{
 } (![\r\n] .)* {
 	return NewBadConstValue(NewLocationFromCurrent(c)), nil
 }
+
+// service
+
+ErrServiceIdentifier = #{
+	return InvalidServiceIdentifierError
+} ( !'{' .)* { // identifier 异常，consume 掉异常字符直到出现 '{' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+}
+
+ErrServiceRCUR = #{
+	return InvalidServiceBlockRCURError
+} ( !DefinitionStart .)* {
+	return "?", nil
+}
+
+ErrServiceFunction  = #{
+	return InvalidServiceFunctionError
+} ( ![\r\n] .)* {
+	return NewBadFunction(NewLocationFromCurrent(c)), nil
+}
+
+// function
+ErrFunctionIdentifier = #{
+	return InvalidFunctionIdentifierError
+} ( !'(' .)* { // identifier 异常，consume 掉异常字符直到出现 '(' 为止
+	t := NewIdentifier("", c.pos)
+	t.BadNode = true
+
+	return t, nil
+} // 构造 identifier 的 badnode
+
+ErrFunctionArgument = #{
+	return InvalidFunctionArgumentError
+} ( ![,;)\r\n] . )* {
+	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
+}
+
 
 // common error
 

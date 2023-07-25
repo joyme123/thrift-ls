@@ -506,7 +506,7 @@ func NewFunction(name *Identifier, oneway bool, void bool, ft *FieldType, args [
 	}
 }
 
-func NewBadFunc(loc Location) *Function {
+func NewBadFunction(loc Location) *Function {
 	return &Function{
 		BadNode:  true,
 		Location: loc,
