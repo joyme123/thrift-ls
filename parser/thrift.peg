@@ -70,6 +70,19 @@ func toString(text any) string {
 	return ret.String()
 }
 
+func toAnnotationSlice(annos any) []*Annotation {
+	if annos == nil {
+		return nil
+	}
+	items := annos.([]any)
+	ret := make([]*Annotation, 0, len(items))
+	for i := range items {
+		ret = append(ret, items[i].(*Annotation))
+	}
+
+	return ret
+}
+
 func toHeaderSlice(headers any) []Header {
 	if headers == nil {
 		return nil
@@ -129,14 +142,14 @@ func toFunctionSlice(fns any) []*Function {
 
 }
 
-Document = headers:Header*  defs:Definition* Skip !. {
+Document = headers:Header*  defs:Definition* ReservedComments !. {
 	return NewDocument(toHeaderSlice(headers), toDefinitionSlice(defs), NewLocationFromCurrent(c)), nil
 } //{errHeader} ErrHeader //{errDefinition} ErrDefinition
 
-Header <- Skip v:(Include / CppInclude / Namespace) SkipLine {
+Header = ReservedComments v:(Include / CppInclude / Namespace) ReservedEndLineComments {
 	c.globalStore["parse"] = "header"
 	return v, nil
-} / x:(!(Definition) Skip &(.+) &{
+} / x:(!(Definition) ReservedComments &(.+) &{
 	/* fmt.Println("header predict:", c.pos, "text:", string(c.text)) */
 	if state, ok := c.globalStore["parse"]; (!ok || ok && state.(string) == "header") {
 		return true, nil
@@ -148,7 +161,7 @@ Header <- Skip v:(Include / CppInclude / Namespace) SkipLine {
 	return badHeader, nil
 } //{errInclude} ErrInclude //{errCppInclude} ErrorCppInclude //{errNamespace} ErrorNamespace
 
-Include <- INCLUDE include:Literal {
+Include = INCLUDE include:Literal {
 	includeV, ok := include.(*Literal)
 	if !ok {
 		includeV = include.([]interface{})[0].(*Literal)
@@ -170,7 +183,7 @@ CppInclude <- CPPINCLUDE include:Literal {
 }
 
 
-Namespace <- NAMESPACE language:NamespaceScope name:Identifier Annotations? {
+Namespace <- NAMESPACE language:NamespaceScope name:Identifier annotations:Annotations? {
 	var lang string
 	id, ok := language.(*Identifier)
 	if ok {
@@ -178,21 +191,21 @@ Namespace <- NAMESPACE language:NamespaceScope name:Identifier Annotations? {
 	} else {
 		lang = "*"
 	}
-	return NewNamespace(lang, name.(*Identifier).Name, NewLocationFromCurrent(c)), nil
+	return NewNamespace(lang, name.(*Identifier).Name, toAnnotationSlice(annotations), NewLocationFromCurrent(c)), nil
 } / x:(&(NAMESPACE .*) %{errNamespace}) {
 	return x.([]any)[1], nil
 }
 
-NamespaceScope <- Skip
+NamespaceScope <- ReservedComments
     '*' Indent*
     / Identifier
 
-Definition = comments:ReservedComments Skip v:(Const / Typedef / Enum / Service / Struct / Union / Exception) Annotations? SkipLine {
+Definition = comments:ReservedComments v:(Const / Typedef / Enum / Service / Struct / Union / Exception) Annotations? ReservedEndLineComments {
 	c.globalStore["parse"] = "definition"
 	def := v.(Definition)
 	def.SetComments(comments.(string))
 	return def, nil
-} / x:(Skip &(.+) &{
+} / x:(ReservedComments &(.+) &{
 	/* fmt.Println("definition predict:", c.pos, "text:", string(c.text)) */
 	if state, ok := c.globalStore["parse"]; ok && state.(string) == "definition" {
 		return true, nil
@@ -230,7 +243,7 @@ Enum = ENUM name:DefinitionIdentifier LCUR v:EnumValueLine* RCUR {
 	return x.([]any)[1], nil
 } //{errIdentifier} ErrEnumIdentifier //{errRCUR} ErrEnumRCUR //{errEnumValue} ErrEnumValue
 
-EnumValueLine = comments:ReservedComments v:EnumValue SkipLine {
+EnumValueLine = comments:ReservedComments v:EnumValue ReservedEndLineComments {
         v.(*EnumValue).Comments = comments.(string)
 	return v, nil
 }
@@ -278,11 +291,11 @@ Exception <- EXCEPTION name:DefinitionIdentifier LCUR fields:FieldWithThrow* RCU
 } //{errIdentifier} ErrExceptionIdentifier //{errRCUR} ErrExceptionRCUR //{errField} ErrExceptionField
 
 
-FieldWithThrow = Field / x:( Skip !(( '}' Indent*) / DefinitionStart ) %{errField} ) {
+FieldWithThrow = Field / x:( ReservedComments !(( '}' Indent*) / DefinitionStart ) %{errField} ) {
 	return x.([]any)[2], nil
 }
 
-Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldType:FieldType id:Identifier value:(EQUAL ConstValue)? Annotations? ListSeparator? lineComments:ReservedEndLineComments SkipLine {
+Field = comments:ReservedComments index:FieldId required:FieldReq? fieldType:FieldType id:Identifier value:(EQUAL ConstValue)? Annotations? ListSeparator? lineComments:ReservedEndLineComments {
         var constV *ConstValue
 	if value !=  nil {
 	   constV = value.([]interface{})[1].(*ConstValue)
@@ -296,11 +309,11 @@ Field = comments:ReservedComments Skip index:FieldId required:FieldReq? fieldTyp
 }
 
 
-FieldId = Skip i:FieldIndex COLON Indent* {
+FieldId = ReservedComments i:FieldIndex COLON Indent* {
 	return i, nil
 } //{errFieldIndex} ErrFieldIndex
 
-FieldReq = Skip r:IsRequired Indent* {
+FieldReq = ReservedComments r:IsRequired Indent* {
 	if r == nil {
 		return nil, nil
 	}
@@ -313,7 +326,7 @@ IsRequired = v:("required" / "optional") {
 	return NewRequired(string(v.([]byte)) == "required", c.pos), nil
 }
 
-Function = comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:DefinitionIdentifier LPAR args:FunctionFieldWithThrow* RPAR throws:Throws? Annotations? ListSeparator? SkipLine {
+Function = comments:ReservedComments oneway:ONEWAY? ft:FunctionType name:DefinitionIdentifier LPAR args:FunctionFieldWithThrow* RPAR throws:Throws? Annotations? ListSeparator? ReservedEndLineComments {
 	void := false
 	var ftype *FieldType
 	if str, ok := ft.(string); ok && str == "void" {
@@ -327,14 +340,14 @@ Function = comments:ReservedComments Skip oneway:ONEWAY? ft:FunctionType name:De
 		throwsFields = throws.([]*Field)
 	}
 	return NewFunction(name.(*Identifier), oneway != nil, void, ftype, toFieldSlice(args), throwsFields, comments.(string), NewLocationFromCurrent(c)), nil
-} / x:(ReservedComments Skip &(oneway:ONEWAY? ft:FunctionType) %{errFunction}) {
-	return x.([]any)[3], nil
+} / x:(ReservedComments &(oneway:ONEWAY? ft:FunctionType) %{errFunction}) {
+	return x.([]any)[2], nil
 } //{errIdentifier} ErrFunctionIdentifier //{errField} ErrFunctionArgument
 
 FunctionFieldWithThrow = v:Field {
 	return v, nil
-} /  x:(comments:ReservedComments Skip &(index:FieldId required:FieldReq? fieldType:FieldType) %{errField})  {
-	return x.([]any)[3], nil
+} /  x:(comments:ReservedComments &(index:FieldId required:FieldReq? fieldType:FieldType) %{errField})  {
+	return x.([]any)[2], nil
 }
 
 
@@ -387,13 +400,13 @@ IdentifierConst = id:Identifier {
 
 EnumValueIntConstant = EQUAL v:IntConstant {
 	return v, nil
-} / x:(EQUAL Skip %{errIntConstant} Indent*) {
+} / x:(EQUAL ReservedComments %{errIntConstant} Indent*) {
 	return x.([]any)[2], nil
 }
 
-IntConstant = Skip  v:(HexIntConstant / OctIntConstant / NormalIntConstant) ![a-zA-Z]  Indent* {
+IntConstant = ReservedComments  v:(HexIntConstant / OctIntConstant / NormalIntConstant) ![a-zA-Z]  Indent* {
 	return v.(*ConstValue), nil
-} / x:(Skip &("0x" / "0o" / (('+' / '-')? Digit)) %{errIntConstant}) {
+} / x:(ReservedComments &("0x" / "0o" / (('+' / '-')? Digit)) %{errIntConstant}) {
 	return x.([]any)[2], nil
 }
 
@@ -403,7 +416,10 @@ HexIntConstant = "0x" ([0-9] / [A-Z] / [a-z])+ {
 		return nil, err
 	}
 
-	return NewConstValue("i64", v, NewLocationFromCurrent(c)), nil
+	cv := NewConstValue("i64", v, NewLocationFromCurrent(c))
+	cv.ValueInText = string(c.text)
+
+	return cv, nil
 }
 
 OctIntConstant = "0o" Digit+ {
@@ -411,7 +427,10 @@ OctIntConstant = "0o" Digit+ {
 	if err != nil {
 		return nil, err
 	}
-	return NewConstValue("i64", v, NewLocationFromCurrent(c)), nil
+	cv := NewConstValue("i64", v, NewLocationFromCurrent(c))
+	cv.ValueInText = string(c.text)
+
+	return cv, nil
 }
 
 NormalIntConstant = ('+' / '-')? Digit+ {
@@ -419,7 +438,10 @@ NormalIntConstant = ('+' / '-')? Digit+ {
 	if err != nil {
 		return nil, err
 	}
-	return NewConstValue("i64", v, NewLocationFromCurrent(c)), nil
+	cv := NewConstValue("i64", v, NewLocationFromCurrent(c))
+	cv.ValueInText = string(c.text)
+
+	return cv, nil
 }
 
 FieldIndex = Digit+ {
@@ -428,26 +450,34 @@ FieldIndex = Digit+ {
 		return nil, err
 	}
 	return NewFieldIndex(int(v), NewLocationFromCurrent(c)), nil
-} / x:(Skip &([a-zA-Z]+ COLON) %{errFieldIndex}) {
+} / x:(ReservedComments &([a-zA-Z]+ COLON) %{errFieldIndex}) {
 	return x.([]any)[2], nil
 }
 
-DoubleConstant  = Skip ('+' / '-')? v:(
-        Digit* '.' Digit+  Exponent?
-    /   Digit+ Exponent
-    ) Indent* {
+DoubleConstant  = ReservedComments v:DoubleConstantValue Indent* {
+	return v, nil
+}
+
+DoubleConstantValue = ('+' / '-')? (Digit* '.' Digit+  Exponent? / Digit+ Exponent) {
     	v, err := strconv.ParseFloat(string(c.text), 64)
 	if err != nil {
 		return nil, err
 	}
-    	return NewConstValue("double", v, NewLocationFromCurrent(c)), nil
-    }
+    	cv := NewConstValue("double", v, NewLocationFromCurrent(c))
+	cv.ValueInText = string(c.text)
+
+	return cv, nil
+}
 
 Exponent = ('e' / 'E') IntConstant
 
-Annotations <- LPAR Annotation+ RPAR
+Annotations <- LPAR annos:Annotation+ RPAR {
+	return annos, nil
+}
 
-Annotation <- Identifier EQUAL Literal ListSeparator?
+Annotation <- id:Identifier EQUAL value:Literal ListSeparator? {
+	return NewAnnotation(id.(*Identifier), value.(*Literal), NewLocationFromCurrent(c)), nil
+}
 
 ConstList  = LBRK v:ConstListItem* RBRK {
 	return NewConstValue("list", toConstValueSlice(v), NewLocationFromCurrent(c)), nil
@@ -473,17 +503,17 @@ Literal = l:(Literal1 / Literal2) {
 	return l, nil
 } //{errLiteral1MissingRight} ErrLiteral1MissingRight //{errLiteral1} ErrLiteral1 //{errLiteral2MissingRight} ErrLiteral2MissingRight //{errLiteral2} ErrLiteral2
 
-Literal1 = Skip '"' t:(EscapeLiteralChar / !["\r\n] .)* '"' Indent* {
+Literal1 = ReservedComments '"' t:(EscapeLiteralChar / !["\r\n] .)* '"' Indent* {
 	strs := toStringSlice(t)
 	return NewLiteral(strings.Join(strs, ""), NewLocationFromCurrent(c)), nil
-} / x:(&(Skip '"' t:(EscapeLiteralChar / !'"' .)* Indent*) %{errLiteral1MissingRight}) {
+} / x:(&(ReservedComments '"' t:(EscapeLiteralChar / !'"' .)* Indent*) %{errLiteral1MissingRight}) {
 	 return x.([]any)[1], nil 
 }
 
-Literal2 = Skip "'" t:(EscapeLiteralChar / !['\r\n] .)* "'" Indent* {
+Literal2 = ReservedComments "'" t:(EscapeLiteralChar / !['\r\n] .)* "'" Indent* {
 	strs := toStringSlice(t)
 	return NewLiteral(strings.Join(strs, ""), NewLocationFromCurrent(c)), nil
-} / x:(&(Skip "'" t:(EscapeLiteralChar / !"'" .)* Indent*) %{errLiteral2MissingRight}) {
+} / x:(&(ReservedComments "'" t:(EscapeLiteralChar / !"'" .)* Indent*) %{errLiteral2MissingRight}) {
 	 return x.([]any)[1], nil 
 }
 
@@ -491,7 +521,7 @@ DefinitionIdentifier = id:Identifier {
 	return id.(*Identifier), nil
 } / %{errIdentifier}
 
-Identifier = Skip id:IdentifierToken Indent* {
+Identifier = ReservedComments id:IdentifierToken Indent* {
 	return id.(*Identifier), nil
 }
 
@@ -499,7 +529,7 @@ IdentifierToken = Letter ( Letter / Digit / '.' )* {
 	return NewIdentifier(string(c.text), c.pos), nil
 } 
 
-ListSeparator = Skip (',' / ';') Indent*
+ListSeparator = ReservedComments (',' / ';') Indent*
 
 Letter = [A-Z] / [a-z] / '_' {
 	return string(c.text), nil
@@ -512,13 +542,10 @@ Digit = [0-9] {
 	return string(c.text), nil
 }
 
-ReservedComments = Skip 
-ReservedEndLineComments = SkipLine
-
-Skip = comments:(Space / Comment)* {
+ReservedComments = comments:(Space / Comment)* {
 	return strings.Join(toStringSlice(comments), "\n"), nil
 }
-SkipLine = comments:(Indent / Comment)* {
+ReservedEndLineComments = comments:(Indent / Comment)* {
 	return strings.Join(toStringSlice(comments), "\n"), nil
 }
 
@@ -533,42 +560,42 @@ CarriageReturnLineFeed = [\r\n]
 Comment = v:(LongComment / LineComment / UnixComment) {
 	return v.(string), nil
 }
-LongComment = "/*" comment:LongCommentMatch "*/" {
-	return comment.(string), nil
+LongComment = "/*" LongCommentMatch "*/" {
+	return string(c.text), nil
 }
 LongCommentMatch = (!"*/" .)* {
 	return string(c.text), nil
 }
 
-LineComment = "//" comment:LineCommentMatch {
-	return comment.(string), nil
+LineComment = "//" LineCommentMatch {
+	return string(c.text), nil
 }
 LineCommentMatch = (![\r\n] .)* {
 	return string(c.text), nil
 }
 
-UnixComment = '#' comment:UnixCommentMatch {
-	return comment.(string), nil
+UnixComment = '#' UnixCommentMatch {
+	return string(c.text), nil
 }
 UnixCommentMatch = (![\r\n] .)*  {
 	return string(c.text), nil
 }
 
-BOOL        = Skip t:BOOLToken        !LetterOrDigit  Indent* {
+BOOL        = ReservedComments t:BOOLToken        !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 BOOLToken  = "bool" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-BYTE        = Skip t:BYTEToken        !LetterOrDigit  Indent* {
+BYTE        = ReservedComments t:BYTEToken        !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 BYTEToken = "byte" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-I8          = Skip t:I8Token          !LetterOrDigit  Indent* {
+I8          = ReservedComments t:I8Token          !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 I8Token = "i8" {
@@ -576,132 +603,132 @@ I8Token = "i8" {
 }
 
 
-I16         = Skip t:I16Token         !LetterOrDigit  Indent* {
+I16         = ReservedComments t:I16Token         !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 I16Token = "i16" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-I32         = Skip t:I32Token         !LetterOrDigit  Indent* {
+I32         = ReservedComments t:I32Token         !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 I32Token = "i32" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-I64         = Skip t:I64Token         !LetterOrDigit  Indent* {
+I64         = ReservedComments t:I64Token         !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 I64Token = "i64" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-DOUBLE      = Skip t:DOUBLEToken      !LetterOrDigit  Indent* {
+DOUBLE      = ReservedComments t:DOUBLEToken      !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 DOUBLEToken = "double" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-STRING      = Skip t:STRINGToken      !LetterOrDigit  Indent* {
+STRING      = ReservedComments t:STRINGToken      !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 STRINGToken = "string" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-BINARY      = Skip t:BINARYToken      !LetterOrDigit  Indent* {
+BINARY      = ReservedComments t:BINARYToken      !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 BINARYToken = "binary" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-CONST       = Skip t:CONSTToken         !LetterOrDigit  Indent* {
+CONST       = ReservedComments t:CONSTToken         !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 CONSTToken = "const" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-ONEWAY      = Skip t:ONEWAYToken        !LetterOrDigit  Indent* {
+ONEWAY      = ReservedComments t:ONEWAYToken        !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 ONEWAYToken = "oneway" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-TYPEDEF     = Skip "typedef"       !LetterOrDigit  Indent* {
+TYPEDEF     = ReservedComments "typedef"       !LetterOrDigit  Indent* {
 	return "typedef", nil
 }
-MAP         = Skip t:MAPToken           !LetterOrDigit  Indent* {
+MAP         = ReservedComments t:MAPToken           !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 MAPToken = "map" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-SET         = Skip t:SETToken           !LetterOrDigit  Indent* {
+SET         = ReservedComments t:SETToken           !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 SETToken = "set" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-LIST        = Skip t:ListToken          !LetterOrDigit  Indent* {
+LIST        = ReservedComments t:ListToken          !LetterOrDigit  Indent* {
 	return t.(*TypeName), nil
 }
 ListToken = "list" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 
-VOID        = Skip "void"          !LetterOrDigit  Indent* {
+VOID        = ReservedComments "void"          !LetterOrDigit  Indent* {
 	return "void", nil
 }
-THROWS      = Skip "throws"        !LetterOrDigit  Indent* {
+THROWS      = ReservedComments "throws"        !LetterOrDigit  Indent* {
 	return "throws", nil
 }
-EXCEPTION   = Skip "exception"     !LetterOrDigit  Indent* {
+EXCEPTION   = ReservedComments "exception"     !LetterOrDigit  Indent* {
 	return "exception", nil
 }
-EXTENDS     = Skip "extends"       !LetterOrDigit  Indent* {
+EXTENDS     = ReservedComments "extends"       !LetterOrDigit  Indent* {
 	return "extends", nil
 }
-SERVICE     = Skip "service"       !LetterOrDigit  Indent* {
+SERVICE     = ReservedComments "service"       !LetterOrDigit  Indent* {
 	return "service", nil
 }
-STRUCT      = Skip "struct"        !LetterOrDigit  Indent* {
+STRUCT      = ReservedComments "struct"        !LetterOrDigit  Indent* {
 	return "struct", nil
 }
-UNION       = Skip "union"         !LetterOrDigit  Indent* {
+UNION       = ReservedComments "union"         !LetterOrDigit  Indent* {
 	return "union", nil
 }
-ENUM        = Skip "enum"          !LetterOrDigit  Indent* {
+ENUM        = ReservedComments "enum"          !LetterOrDigit  Indent* {
 	return "enum", nil
 }
-INCLUDE     = Skip "include"       !LetterOrDigit  Indent* {
+INCLUDE     = ReservedComments "include"       !LetterOrDigit  Indent* {
 	return "include", nil
 }
-CPPINCLUDE  = Skip "cpp_include"   !LetterOrDigit  Indent* {
+CPPINCLUDE  = ReservedComments "cpp_include"   !LetterOrDigit  Indent* {
 	return "cpp_include", nil
 }
-NAMESPACE   = Skip "namespace"     !LetterOrDigit  Indent* {
+NAMESPACE   = ReservedComments "namespace"     !LetterOrDigit  Indent* {
 	return "namespace", nil
 }
-CPPTYPE     = Skip "cpp_type"      !LetterOrDigit  Indent* {
+CPPTYPE     = ReservedComments "cpp_type"      !LetterOrDigit  Indent* {
 	return "cpp_type", nil
 }
-LBRK        = Skip "["     Indent* {
+LBRK        = ReservedComments "["     Indent* {
 	return "[", nil
 }
-RBRK        = Skip "]"     Indent* {
+RBRK        = ReservedComments "]"     Indent* {
 	return "]", nil
 }
-LCUR       = Skip t:LCURToken     Indent* {
+LCUR       = ReservedComments t:LCURToken     Indent* {
 	return t.(string), nil
 }
-RCUR       = Skip t:RCURToken     Indent* {
+RCUR       = ReservedComments t:RCURToken     Indent* {
 	return t.(string), nil
 }
 LCURToken = "{" {
@@ -710,25 +737,25 @@ LCURToken = "{" {
 RCURToken = "}" {
 	return string(c.text), nil
 } / %{errRCUR}
-EQUAL = Skip "="     Indent* {
+EQUAL = ReservedComments "="     Indent* {
 	return "=", nil
 }
-LPOINT      = Skip "<"     Indent* {
+LPOINT      = ReservedComments "<"     Indent* {
 	return "<", nil
 }
-RPOINT      = Skip ">"     Indent* {
+RPOINT      = ReservedComments ">"     Indent* {
 	return ">", nil
 }
-COMMA       = Skip ","     Indent* {
+COMMA       = ReservedComments ","     Indent* {
 	return ",", nil
 }
-LPAR        = Skip "("     Indent* {
+LPAR        = ReservedComments "("     Indent* {
 	return "(", nil
 }
-RPAR        = Skip ")"     Indent* {
+RPAR        = ReservedComments ")"     Indent* {
 	return ")", nil
 }
-COLON       = Skip ":"     Indent* {
+COLON       = ReservedComments ":"     Indent* {
 	return ":", nil
 }
 
@@ -744,7 +771,7 @@ ErrFieldIndex = #{
 
 ErrStructField = #{
 	return InvalidStructFieldError
-} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+} ( !(Field / (ReservedComments '}' Indent*) / DefinitionStart ) . )* {
 	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
 
@@ -794,7 +821,7 @@ ErrUnionLCUR = #{
 
 ErrUnionField = #{
 	return InvalidUnionFieldError
-} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+} ( !(Field / (ReservedComments '}' Indent*) / DefinitionStart ) . )* {
 	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
 
@@ -823,7 +850,7 @@ ErrExceptionLCUR = #{
 
 ErrExceptionField = #{
 	return InvalidExceptionFieldError
-} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+} ( !(Field / (ReservedComments '}' Indent*) / DefinitionStart ) . )* {
 	return NewField("", "", nil, nil, nil, nil, nil, NewLocationFromCurrent(c)), nil
 }
 
@@ -852,7 +879,7 @@ ErrEnumLCUR = #{
 
 ErrEnumValue = #{
 	return InvalidEnumValueError
-} ( !(Field / (Skip '}' Indent*) / DefinitionStart ) . )* {
+} ( !(Field / (ReservedComments '}' Indent*) / DefinitionStart ) . )* {
 	return NewBadEnumValue(NewLocationFromCurrent(c)), nil
 }
 

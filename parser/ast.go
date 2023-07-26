@@ -17,6 +17,9 @@ type Node interface {
 	Children() []Node
 
 	Type() string
+
+	IsBadNode() bool
+	ChildrenBadNode() bool
 }
 
 type Document struct {
@@ -92,6 +95,23 @@ func (d *Document) Type() string {
 	return "Document"
 }
 
+func (d *Document) IsBadNode() bool {
+	return false
+}
+
+func (d *Document) ChildrenBadNode() bool {
+	children := d.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type Header interface {
 	Type() string
 	Node
@@ -115,6 +135,14 @@ func (h *BadHeader) Type() string {
 
 func (h *BadHeader) Children() []Node {
 	return nil
+}
+
+func (h *BadHeader) IsBadNode() bool {
+	return true
+}
+
+func (h *BadHeader) ChildrenBadNode() bool {
+	return false
 }
 
 type Include struct {
@@ -149,7 +177,24 @@ func (i *Include) Name() string {
 }
 
 func (i *Include) Children() []Node {
-	return nil
+	return []Node{i.Path}
+}
+
+func (i *Include) IsBadNode() bool {
+	return i.BadNode
+}
+
+func (i *Include) ChildrenBadNode() bool {
+	children := i.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 type CPPInclude struct {
@@ -181,18 +226,39 @@ func (i *CPPInclude) Children() []Node {
 	return nil
 }
 
+func (i *CPPInclude) IsBadNode() bool {
+	return i.BadNode
+}
+
+func (i *CPPInclude) ChildrenBadNode() bool {
+	children := i.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+
+	return false
+}
+
 type Namespace struct {
-	Language string
-	Name     string
+	Language    string
+	Name        string
+	Annotations []*Annotation
 
 	BadNode bool
 	Location
 }
 
-func NewNamespace(language, name string, loc Location) *Namespace {
+func NewNamespace(language, name string, annotations []*Annotation, loc Location) *Namespace {
 	return &Namespace{
-		Language: language,
-		Name:     name,
+		Language:    language,
+		Name:        name,
+		Annotations: annotations,
+
 		Location: loc,
 	}
 }
@@ -209,7 +275,29 @@ func (n *Namespace) Type() string {
 }
 
 func (n *Namespace) Children() []Node {
-	return nil
+	ret := make([]Node, 0, len(n.Annotations))
+	for i := range n.Annotations {
+		ret = append(ret, n.Annotations[i])
+	}
+
+	return ret
+}
+
+func (n *Namespace) IsBadNode() bool {
+	return n.BadNode
+}
+
+func (n *Namespace) ChildrenBadNode() bool {
+	children := n.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 type Definition interface {
@@ -239,6 +327,14 @@ func (d *BadDefinition) Children() []Node {
 }
 
 func (d *BadDefinition) SetComments(string) {
+}
+
+func (d *BadDefinition) IsBadNode() bool {
+	return true
+}
+
+func (d *BadDefinition) ChildrenBadNode() bool {
+	return false
 }
 
 type Struct struct {
@@ -282,6 +378,23 @@ func (s *Struct) Children() []Node {
 	return nodes
 }
 
+func (s *Struct) IsBadNode() bool {
+	return s.BadNode
+}
+
+func (s *Struct) ChildrenBadNode() bool {
+	children := s.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type Const struct {
 	Name      *Identifier
 	ConstType *FieldType
@@ -321,6 +434,23 @@ func (c *Const) Children() []Node {
 	return []Node{c.Name, c.ConstType, c.Value}
 }
 
+func (c *Const) IsBadNode() bool {
+	return c.BadNode
+}
+
+func (c *Const) ChildrenBadNode() bool {
+	children := c.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type Typedef struct {
 	T        *FieldType
 	Alias    *Identifier
@@ -355,6 +485,23 @@ func (t *Typedef) SetComments(comments string) {
 
 func (t *Typedef) Children() []Node {
 	return []Node{t.T, t.Alias}
+}
+
+func (t *Typedef) IsBadNode() bool {
+	return t.BadNode
+}
+
+func (t *Typedef) ChildrenBadNode() bool {
+	children := t.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 type Enum struct {
@@ -397,6 +544,23 @@ func (e *Enum) Children() []Node {
 	return nodes
 }
 
+func (e *Enum) IsBadNode() bool {
+	return e.BadNode
+}
+
+func (e *Enum) ChildrenBadNode() bool {
+	children := e.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type EnumValue struct {
 	Name      *Identifier
 	ValueNode *ConstValue
@@ -437,6 +601,23 @@ func (e *EnumValue) Type() string {
 	return "EnumValue"
 }
 
+func (e *EnumValue) IsBadNode() bool {
+	return e.BadNode
+}
+
+func (e *EnumValue) ChildrenBadNode() bool {
+	children := e.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type Service struct {
 	Name      *Identifier
 	Extends   *Identifier
@@ -472,12 +653,35 @@ func (s *Service) SetComments(comments string) {
 }
 
 func (s *Service) Children() []Node {
-	nodes := []Node{s.Name, s.Extends}
+	var nodes []Node
+	if s.Name != nil {
+		nodes = append(nodes, s.Name)
+	}
+	if s.Extends != nil {
+		nodes = append(nodes, s.Extends)
+	}
 	for i := range s.Functions {
 		nodes = append(nodes, s.Functions[i])
 	}
 
 	return nodes
+}
+
+func (s *Service) IsBadNode() bool {
+	return s.BadNode
+}
+
+func (s *Service) ChildrenBadNode() bool {
+	children := s.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 type Function struct {
@@ -514,7 +718,13 @@ func NewBadFunction(loc Location) *Function {
 }
 
 func (f *Function) Children() []Node {
-	nodes := []Node{f.Name, f.FunctionType}
+	var nodes []Node
+	if f.Name != nil {
+		nodes = append(nodes, f.Name)
+	}
+	if f.FunctionType != nil {
+		nodes = append(nodes, f.FunctionType)
+	}
 	for i := range f.Arguments {
 		nodes = append(nodes, f.Arguments[i])
 	}
@@ -527,6 +737,23 @@ func (f *Function) Children() []Node {
 
 func (f *Function) Type() string {
 	return "Function"
+}
+
+func (f *Function) IsBadNode() bool {
+	return f.BadNode
+}
+
+func (f *Function) ChildrenBadNode() bool {
+	children := f.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 type Union struct {
@@ -569,6 +796,23 @@ func (u *Union) Children() []Node {
 	return nodes
 }
 
+func (u *Union) IsBadNode() bool {
+	return u.BadNode
+}
+
+func (u *Union) ChildrenBadNode() bool {
+	children := u.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type Exception struct {
 	Name     *Identifier
 	Fields   []*Field
@@ -609,6 +853,23 @@ func (e *Exception) Children() []Node {
 	return nodes
 }
 
+func (e *Exception) IsBadNode() bool {
+	return e.BadNode
+}
+
+func (e *Exception) ChildrenBadNode() bool {
+	children := e.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type Identifier struct {
 	Name    string
 	BadNode bool
@@ -643,6 +904,23 @@ func (i *Identifier) Children() []Node {
 
 func (i *Identifier) Type() string {
 	return "Identifier"
+}
+
+func (i *Identifier) IsBadNode() bool {
+	return i.BadNode
+}
+
+func (i *Identifier) ChildrenBadNode() bool {
+	children := i.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 func ConvertPosition(pos position) Position {
@@ -682,11 +960,41 @@ func NewField(comments string, lineComments string, index *FieldIndex, required 
 }
 
 func (f *Field) Children() []Node {
-	return []Node{f.Required, f.FieldType, f.Identifier, f.ConstValue}
+	var res []Node
+	if f.Required != nil {
+		res = append(res, f.Required)
+	}
+	if f.FieldType != nil {
+		res = append(res, f.FieldType)
+	}
+	if f.Identifier != nil {
+		res = append(res, f.Identifier)
+	}
+	if f.ConstValue != nil {
+		res = append(res, f.ConstValue)
+	}
+	return res
 }
 
 func (f *Field) Type() string {
 	return "Field"
+}
+
+func (f *Field) IsBadNode() bool {
+	return f.BadNode
+}
+
+func (f *Field) ChildrenBadNode() bool {
+	children := f.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 type FieldIndex struct {
@@ -716,6 +1024,23 @@ func (f *FieldIndex) Children() []Node {
 
 func (f *FieldIndex) Type() string {
 	return "FieldIndex"
+}
+
+func (f *FieldIndex) IsBadNode() bool {
+	return f.BadNode
+}
+
+func (f *FieldIndex) ChildrenBadNode() bool {
+	children := f.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 type Required struct {
@@ -752,6 +1077,23 @@ func (r *Required) Children() []Node {
 
 func (r *Required) Type() string {
 	return "Required"
+}
+
+func (r *Required) IsBadNode() bool {
+	return r.BadNode
+}
+
+func (r *Required) ChildrenBadNode() bool {
+	children := r.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 type FieldType struct {
@@ -791,12 +1133,31 @@ func (c *FieldType) Type() string {
 	return "FieldType"
 }
 
+func (c *FieldType) IsBadNode() bool {
+	return c.BadNode
+}
+
+func (c *FieldType) ChildrenBadNode() bool {
+	children := c.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type TypeName struct {
 	// TypeName can be:
 	// container type: map, set, list
 	// base type: bool, byte, i8, i16, i32, i64, double, string, binary
 	// struct, enum, union, exception identifier
 	Name string
+
+	BadNode bool
 	Location
 }
 
@@ -817,11 +1178,32 @@ func (t *TypeName) Type() string {
 	return "TypeName"
 }
 
+func (t *TypeName) IsBadNode() bool {
+	return t.BadNode
+}
+
+func (t *TypeName) ChildrenBadNode() bool {
+	children := t.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type ConstValue struct {
-	// TypeName can be: list, set, map, string, identifier, i64, double
+	// TypeName can be: list, map, pair, string, identifier, i64, double
 	TypeName string
 	// Value is the actual value or identifier name
 	Value any
+
+	// ValueInText is the user input value
+	// it is used for i64 and double type value
+	ValueInText string
 
 	// only exist when TypeName is map
 	Key any
@@ -856,7 +1238,7 @@ func NewBadIntConstValue(loc Location) *ConstValue {
 
 func NewMapConstValue(key, value *ConstValue, loc Location) *ConstValue {
 	return &ConstValue{
-		TypeName: "map",
+		TypeName: "pair",
 		Key:      key,
 		Value:    value,
 		Location: loc,
@@ -870,6 +1252,23 @@ func (c *ConstValue) Children() []Node {
 
 func (c *ConstValue) Type() string {
 	return "ConstValue"
+}
+
+func (c *ConstValue) IsBadNode() bool {
+	return c.BadNode
+}
+
+func (c *ConstValue) ChildrenBadNode() bool {
+	children := c.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 type Literal struct {
@@ -891,6 +1290,79 @@ func NewBadLiteral(v string, loc Location) *Literal {
 		Location: loc,
 		BadNode:  true,
 	}
+}
+
+func (l *Literal) Children() []Node {
+	return nil
+}
+
+func (l *Literal) Type() string {
+	return "Literal"
+}
+
+func (l *Literal) IsBadNode() bool {
+	return l.BadNode
+}
+
+func (l *Literal) ChildrenBadNode() bool {
+	children := l.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
+type Annotation struct {
+	Identifier *Identifier
+	Value      *Literal
+
+	BadNode bool
+	Location
+}
+
+func NewAnnotation(id *Identifier, value *Literal, loc Location) *Annotation {
+	return &Annotation{
+		Identifier: id,
+		Value:      value,
+		Location:   loc,
+	}
+}
+
+func NewBadAnnotation(loc Location) *Annotation {
+	return &Annotation{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
+func (a *Annotation) Children() []Node {
+	return []Node{a.Identifier, a.Value}
+}
+
+func (a *Annotation) Type() string {
+	return "Annotation"
+}
+
+func (a *Annotation) IsBadNode() bool {
+	return a.BadNode
+}
+
+func (a *Annotation) ChildrenBadNode() bool {
+	children := a.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
 }
 
 type Location struct {
