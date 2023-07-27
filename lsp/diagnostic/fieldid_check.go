@@ -107,7 +107,9 @@ func (c *FieldIDCheck) diagnostic(ctx context.Context, ss *cache.Snapshot, file 
 	for _, svc := range pf.AST().Services {
 		for _, fn := range svc.Functions {
 			processStructLike(fn.Arguments)
-			processStructLike(fn.Throws)
+			if fn.Throws != nil {
+				processStructLike(fn.Throws.Fields)
+			}
 		}
 	}
 

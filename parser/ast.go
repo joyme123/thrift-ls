@@ -114,6 +114,7 @@ func (d *Document) ChildrenBadNode() bool {
 
 type Header interface {
 	Type() string
+	SetComments(comments []*Comment, endLineComments []*Comment)
 	Node
 }
 
@@ -145,17 +146,99 @@ func (h *BadHeader) ChildrenBadNode() bool {
 	return false
 }
 
-type Include struct {
-	Path *Literal
+func (h *BadHeader) SetComments([]*Comment, []*Comment) {
+
+}
+
+type KeywordLiteral struct {
+	Text    string
+	BadNode bool
+	Location
+}
+
+func NewKeywordLiteral(c *current) *KeywordLiteral {
+	return &KeywordLiteral{
+		Text:     string(c.text),
+		Location: NewLocationFromCurrent(c),
+	}
+}
+
+func NewBadKeywordLiteral(c *current) *KeywordLiteral {
+	return &KeywordLiteral{
+		Text:     string(c.text),
+		BadNode:  true,
+		Location: NewLocationFromCurrent(c),
+	}
+}
+
+func (k *KeywordLiteral) Type() string {
+	return "KeywordLiteral"
+}
+
+func (k *KeywordLiteral) IsBadNode() bool {
+	return k.BadNode
+}
+
+func (k *KeywordLiteral) Children() []Node {
+	return nil
+}
+
+func (k *KeywordLiteral) ChildrenBadNode() bool {
+	return false
+}
+
+type Keyword struct {
+	Comments []*Comment
+	Literal  *KeywordLiteral
 
 	BadNode bool
 	Location
 }
 
-func NewInclude(path *Literal, loc Location) *Include {
-	return &Include{
+func NewKeyword(comments []*Comment, literal *KeywordLiteral, loc Location) Keyword {
+	return Keyword{
+		Literal:  literal,
+		Comments: comments,
 		Location: loc,
-		Path:     path,
+	}
+}
+
+func (i *Keyword) Children() []Node {
+	return nil
+}
+
+func (i *Keyword) IsBadNode() bool {
+	return i.BadNode
+}
+
+func (i *Keyword) ChildrenBadNode() bool {
+	return false
+}
+
+type IncludeKeyword struct {
+	Keyword
+}
+
+func (i *IncludeKeyword) Type() string {
+	return "IncludeKeyword"
+}
+
+type Include struct {
+	IncludeKeyword *IncludeKeyword
+	Path           *Literal
+
+	Comments        []*Comment
+	EndLineComments []*Comment
+
+	BadNode bool
+	Location
+}
+
+func NewInclude(keyword *IncludeKeyword, path *Literal, loc Location) *Include {
+	return &Include{
+		IncludeKeyword: keyword,
+		Location:       loc,
+		Path:           path,
 	}
 }
 
@@ -170,6 +253,11 @@ func (i *Include) Type() string {
 	return "Include"
 }
 
+func (i *Include) SetComments(comments []*Comment, endLineComments []*Comment) {
+	i.Comments = comments
+	i.EndLineComments = comments
+}
+
 func (i *Include) Name() string {
 	_, file := path.Split(i.Path.Value)
 	name := strings.TrimRight(file, path.Ext(file))
@@ -177,7 +265,16 @@ func (i *Include) Name() string {
 }
 
 func (i *Include) Children() []Node {
-	return []Node{i.Path}
+	nodes := []Node{i.IncludeKeyword, i.Path}
+
+	for _, com := range i.Comments {
+		nodes = append(nodes, com)
+	}
+	for _, com := range i.EndLineComments {
+		nodes = append(nodes, com)
+	}
+
+	return nodes
 }
 
 func (i *Include) IsBadNode() bool {
@@ -197,17 +294,30 @@ func (i *Include) ChildrenBadNode() bool {
 	return false
 }
 
+type CPPIncludeKeyword struct {
+	Keyword
+}
+
+func (c *CPPIncludeKeyword) Type() string {
+	return "CPPIncludeKeyword"
+}
+
 type CPPInclude struct {
-	Path *Literal
+	CPPIncludeKeyword *CPPIncludeKeyword
+	Path              *Literal
+
+	Comments        []*Comment
+	EndLintComments []*Comment
 
 	BadNode bool
 	Location
 }
 
-func NewCPPInclude(path *Literal, loc Location) *CPPInclude {
+func NewCPPInclude(keyword *CPPIncludeKeyword, path *Literal, loc Location) *CPPInclude {
 	return &CPPInclude{
-		Location: loc,
-		Path:     path,
+		CPPIncludeKeyword: keyword,
+		Location:          loc,
+		Path:              path,
 	}
 }
 
@@ -222,8 +332,20 @@ func (i *CPPInclude) Type() string {
 	return "CPPInclude"
 }
 
+func (i *CPPInclude) SetComments(comments []*Comment, endLineComments []*Comment) {
+	i.Comments = comments
+	i.EndLintComments = endLineComments
+}
+
 func (i *CPPInclude) Children() []Node {
-	return nil
+	res := []Node{i.CPPIncludeKeyword, i.Path}
+	for _, com := range i.Comments {
+		res = append(res, com)
+	}
+	for _, com := range i.EndLintComments {
+		res = append(res, com)
+	}
+	return res
 }
 
 func (i *CPPInclude) IsBadNode() bool {
@@ -244,20 +366,37 @@ func (i *CPPInclude) ChildrenBadNode() bool {
 	return false
 }
 
+type NamespaceKeyword struct {
+	Keyword
+}
+
+func (n *NamespaceKeyword) Type() string {
+	return "NamespaceKeyword"
+}
+
+type NamespaceScope struct {
+	Identifier
+}
+
 type Namespace struct {
-	Language    string
-	Name        string
-	Annotations []*Annotation
+	NamespaceKeyword *NamespaceKeyword
+	Language         *NamespaceScope
+	Name             *Identifier
+
+	Annotations     *Annotations
+	Comments        []*Comment
+	EndLineComments []*Comment
 
 	BadNode bool
 	Location
 }
 
-func NewNamespace(language, name string, annotations []*Annotation, loc Location) *Namespace {
+func NewNamespace(keyword *NamespaceKeyword, language *NamespaceScope, name *Identifier, annotations *Annotations, loc Location) *Namespace {
 	return &Namespace{
-		Language:    language,
-		Name:        name,
-		Annotations: annotations,
+		NamespaceKeyword: keyword,
+		Language:         language,
+		Name:             name,
+		Annotations:      annotations,
 
 		Location: loc,
 	}
@@ -274,10 +413,23 @@ func (n *Namespace) Type() string {
 	return "Namespace"
 }
 
+func (n *Namespace) SetComments(comments []*Comment, endLineComments []*Comment) {
+	n.Comments = comments
+	n.EndLineComments = endLineComments
+}
+
 func (n *Namespace) Children() []Node {
-	ret := make([]Node, 0, len(n.Annotations))
-	for i := range n.Annotations {
-		ret = append(ret, n.Annotations[i])
+	ret := []Node{n.NamespaceKeyword, n.Language, n.Name}
+
+	for i := range n.Comments {
+		ret = append(ret, n.Comments[i])
+	}
+	for i := range n.EndLineComments {
+		ret = append(ret, n.EndLineComments[i])
+	}
+
+	if n.Annotations != nil {
+		ret = append(ret, n.Annotations)
 	}
 
 	return ret
@@ -303,7 +455,8 @@ func (n *Namespace) ChildrenBadNode() bool {
 type Definition interface {
 	Node
 	Type() string
-	SetComments(comments string)
+	SetComments(comments []*Comment, endLineComments []*Comment)
+	SetAnnotations(annotations *Annotations)
 }
 
 type BadDefinition struct {
@@ -326,7 +479,11 @@ func (d *BadDefinition) Children() []Node {
 	return nil
 }
 
-func (d *BadDefinition) SetComments(string) {
+func (d *BadDefinition) SetComments([]*Comment, []*Comment) {
+}
+
+func (d *BadDefinition) SetAnnotations(annos *Annotations) {
+
 }
 
 func (d *BadDefinition) IsBadNode() bool {
@@ -337,20 +494,53 @@ func (d *BadDefinition) ChildrenBadNode() bool {
 	return false
 }
 
+type StructKeyword struct {
+	Keyword
+}
+
+func (s *StructKeyword) Type() string {
+	return "StructKeyword"
+}
+
+type LCurKeyword struct {
+	Keyword
+}
+
+func (s *LCurKeyword) Type() string {
+	return "LCurKeyword"
+}
+
+type RCurKeyword struct {
+	Keyword
+}
+
+func (s *RCurKeyword) Type() string {
+	return "RCurKeyword"
+}
+
 type Struct struct {
-	Identifier *Identifier
-	Fields     []*Field
-	Comments   string
+	StructKeyword *StructKeyword
+	LCurKeyword   *LCurKeyword
+	RCurKeyword   *RCurKeyword
+	Identifier    *Identifier
+	Fields        []*Field
+
+	Comments        []*Comment
+	EndLineComments []*Comment
+	Annotations     *Annotations
 
 	BadNode bool
 	Location
 }
 
-func NewStruct(identifier *Identifier, fields []*Field, loc Location) *Struct {
+func NewStruct(structKeyword *StructKeyword, lCurKeyword *LCurKeyword, rCurKeyword *RCurKeyword, identifier *Identifier, fields []*Field, loc Location) *Struct {
 	return &Struct{
-		Identifier: identifier,
-		Fields:     fields,
-		Location:   loc,
+		StructKeyword: structKeyword,
+		LCurKeyword:   lCurKeyword,
+		RCurKeyword:   rCurKeyword,
+		Identifier:    identifier,
+		Fields:        fields,
+		Location:      loc,
 	}
 }
 
@@ -365,14 +555,29 @@ func (s *Struct) Type() string {
 	return "Struct"
 }
 
-func (s *Struct) SetComments(comments string) {
+func (s *Struct) SetComments(comments []*Comment, endLineComments []*Comment) {
 	s.Comments = comments
+	s.EndLineComments = endLineComments
+}
+
+func (s *Struct) SetAnnotations(annos *Annotations) {
+	s.Annotations = annos
 }
 
 func (s *Struct) Children() []Node {
-	nodes := []Node{s.Identifier}
+	nodes := []Node{s.StructKeyword, s.LCurKeyword, s.RCurKeyword, s.Identifier}
 	for i := range s.Fields {
 		nodes = append(nodes, s.Fields[i])
+	}
+
+	for i := range s.Comments {
+		nodes = append(nodes, s.Comments[i])
+	}
+	for i := range s.EndLineComments {
+		nodes = append(nodes, s.EndLineComments[i])
+	}
+	if s.Annotations != nil {
+		nodes = append(nodes, s.Annotations)
 	}
 
 	return nodes
@@ -395,23 +600,64 @@ func (s *Struct) ChildrenBadNode() bool {
 	return false
 }
 
+type ConstKeyword struct {
+	Keyword
+}
+
+func (c *ConstKeyword) Type() string {
+	return "ConstKeyword"
+}
+
+type EqualKeyword struct {
+	Keyword
+}
+
+func NewBadEqualKeyword() *EqualKeyword {
+	return &EqualKeyword{
+		Keyword: Keyword{
+			BadNode: true,
+		},
+	}
+}
+
+func (e *EqualKeyword) Type() string {
+	return "EqualKeyword"
+}
+
+type ListSeparatorKeyword struct {
+	Keyword
+	Text string // , or ;
+}
+
+func (e *ListSeparatorKeyword) Type() string {
+	return "ListSeparator"
+}
+
 type Const struct {
-	Name      *Identifier
-	ConstType *FieldType
-	Value     *ConstValue
-	Comments  string
+	ConstKeyword         *ConstKeyword
+	EqualKeyword         *EqualKeyword
+	ListSeparatorKeyword *ListSeparatorKeyword // can be nil
+	Name                 *Identifier
+	ConstType            *FieldType
+	Value                *ConstValue
+
+	Comments        []*Comment
+	EndLineComments []*Comment
+	Annotations     *Annotations
 
 	BadNode bool
 	Location
 }
 
-func NewConst(name *Identifier, t *FieldType, v *ConstValue, comments string, loc Location) *Const {
+func NewConst(constKeyword *ConstKeyword, equalKeyword *EqualKeyword, listSeparatorKeyword *ListSeparatorKeyword, name *Identifier, t *FieldType, v *ConstValue, loc Location) *Const {
 	return &Const{
-		Name:      name,
-		ConstType: t,
-		Value:     v,
-		Comments:  comments,
-		Location:  loc,
+		ConstKeyword:         constKeyword,
+		EqualKeyword:         equalKeyword,
+		ListSeparatorKeyword: listSeparatorKeyword,
+		Name:                 name,
+		ConstType:            t,
+		Value:                v,
+		Location:             loc,
 	}
 }
 
@@ -426,12 +672,33 @@ func (c *Const) Type() string {
 	return "Const"
 }
 
-func (c *Const) SetComments(comments string) {
+func (c *Const) SetComments(comments []*Comment, endLineComments []*Comment) {
 	c.Comments = comments
+	c.EndLineComments = endLineComments
+}
+
+func (c *Const) SetAnnotations(annos *Annotations) {
+	c.Annotations = annos
 }
 
 func (c *Const) Children() []Node {
-	return []Node{c.Name, c.ConstType, c.Value}
+	res := []Node{c.ConstKeyword, c.EqualKeyword, c.Name, c.ConstType, c.Value}
+	if c.ListSeparatorKeyword != nil {
+		res = append(res, c.ListSeparatorKeyword)
+	}
+
+	for i := range c.Comments {
+		res = append(res, c.Comments[i])
+	}
+	for i := range c.EndLineComments {
+		res = append(res, c.EndLineComments[i])
+	}
+
+	if c.Annotations != nil {
+		res = append(res, c.Annotations)
+	}
+
+	return res
 }
 
 func (c *Const) IsBadNode() bool {
@@ -451,20 +718,33 @@ func (c *Const) ChildrenBadNode() bool {
 	return false
 }
 
+type TypedefKeyword struct {
+	Keyword
+}
+
+func (t *TypedefKeyword) Type() string {
+	return "TypedefKeyword"
+}
+
 type Typedef struct {
-	T        *FieldType
-	Alias    *Identifier
-	Comments string
-	BadNode  bool
+	TypedefKeyword *TypedefKeyword
+	T              *FieldType
+	Alias          *Identifier
+
+	Comments        []*Comment
+	EndLineComments []*Comment
+	Annotations     *Annotations
+	BadNode         bool
 
 	Location
 }
 
-func NewTypedef(t *FieldType, alias *Identifier, loc Location) *Typedef {
+func NewTypedef(keyword *TypedefKeyword, t *FieldType, alias *Identifier, loc Location) *Typedef {
 	return &Typedef{
-		T:        t,
-		Alias:    alias,
-		Location: loc,
+		TypedefKeyword: keyword,
+		T:              t,
+		Alias:          alias,
+		Location:       loc,
 	}
 }
 
@@ -479,12 +759,29 @@ func (t *Typedef) Type() string {
 	return "Typedef"
 }
 
-func (t *Typedef) SetComments(comments string) {
+func (t *Typedef) SetComments(comments []*Comment, endLineComments []*Comment) {
 	t.Comments = comments
+	t.EndLineComments = endLineComments
+}
+
+func (t *Typedef) SetAnnotations(annos *Annotations) {
+	t.Annotations = annos
 }
 
 func (t *Typedef) Children() []Node {
-	return []Node{t.T, t.Alias}
+	nodes := []Node{t.TypedefKeyword, t.T, t.Alias}
+
+	for i := range t.Comments {
+		nodes = append(nodes, t.Comments[i])
+	}
+	for i := range t.EndLineComments {
+		nodes = append(nodes, t.EndLineComments[i])
+	}
+	if t.Annotations != nil {
+		nodes = append(nodes, t.Annotations)
+	}
+
+	return nodes
 }
 
 func (t *Typedef) IsBadNode() bool {
@@ -504,20 +801,37 @@ func (t *Typedef) ChildrenBadNode() bool {
 	return false
 }
 
+type EnumKeyword struct {
+	Keyword
+}
+
+func (e *EnumKeyword) Type() string {
+	return "EnumKeyword"
+}
+
 type Enum struct {
-	Name     *Identifier
-	Values   []*EnumValue
-	Comments string
+	EnumKeyword *EnumKeyword
+	LCurKeyword *LCurKeyword
+	RCurKeyword *RCurKeyword
+	Name        *Identifier
+	Values      []*EnumValue
+
+	Comments        []*Comment
+	EndLineComments []*Comment
+	Annotations     *Annotations
 
 	BadNode bool
 	Location
 }
 
-func NewEnum(name *Identifier, values []*EnumValue, loc Location) *Enum {
+func NewEnum(enumKeyword *EnumKeyword, lCurKeyword *LCurKeyword, rCurKeyword *RCurKeyword, name *Identifier, values []*EnumValue, loc Location) *Enum {
 	return &Enum{
-		Name:     name,
-		Values:   values,
-		Location: loc,
+		EnumKeyword: enumKeyword,
+		LCurKeyword: lCurKeyword,
+		RCurKeyword: rCurKeyword,
+		Name:        name,
+		Values:      values,
+		Location:    loc,
 	}
 }
 
@@ -532,8 +846,13 @@ func (e *Enum) Type() string {
 	return "Enum"
 }
 
-func (e *Enum) SetComments(comments string) {
+func (e *Enum) SetComments(comments []*Comment, endlineComments []*Comment) {
 	e.Comments = comments
+	e.EndLineComments = comments
+}
+
+func (e *Enum) SetAnnotations(annos *Annotations) {
+	e.Annotations = annos
 }
 
 func (e *Enum) Children() []Node {
@@ -541,6 +860,17 @@ func (e *Enum) Children() []Node {
 	for i := range e.Values {
 		nodes = append(nodes, e.Values[i])
 	}
+
+	for i := range e.Comments {
+		nodes = append(nodes, e.Comments[i])
+	}
+	for i := range e.EndLineComments {
+		nodes = append(nodes, e.EndLineComments[i])
+	}
+	if e.Annotations != nil {
+		nodes = append(nodes, e.Annotations)
+	}
+
 	return nodes
 }
 
@@ -562,10 +892,14 @@ func (e *Enum) ChildrenBadNode() bool {
 }
 
 type EnumValue struct {
-	Name      *Identifier
-	ValueNode *ConstValue
-	Value     int64 // Value only record enum value. it is not a ast node
-	Comments  string
+	ListSeparatorKeyword *ListSeparatorKeyword // can be nil
+	EqualKeyword         *EqualKeyword         // can be nil
+	Name                 *Identifier
+	ValueNode            *ConstValue
+	Value                int64 // Value only record enum value. it is not a ast node
+	Annotations          *Annotations
+	Comments             []*Comment
+	EndLineComments      []*Comment
 
 	BadNode bool
 	Location
@@ -578,13 +912,15 @@ func NewBadEnumValue(loc Location) *EnumValue {
 	}
 }
 
-func NewEnumValue(name *Identifier, valueNode *ConstValue, value int64, comments string, loc Location) *EnumValue {
+func NewEnumValue(listSeparatorKeyword *ListSeparatorKeyword, equalKeyword *EqualKeyword, name *Identifier, valueNode *ConstValue, value int64, annotations *Annotations, loc Location) *EnumValue {
 	return &EnumValue{
-		Name:      name,
-		ValueNode: valueNode,
-		Value:     value,
-		Comments:  comments,
-		Location:  loc,
+		ListSeparatorKeyword: listSeparatorKeyword,
+		EqualKeyword:         equalKeyword,
+		Name:                 name,
+		ValueNode:            valueNode,
+		Value:                value,
+		Annotations:          annotations,
+		Location:             loc,
 	}
 }
 
@@ -593,12 +929,32 @@ func (e *EnumValue) Children() []Node {
 	if e.ValueNode != nil {
 		nodes = append(nodes, e.ValueNode)
 	}
+	if e.ListSeparatorKeyword != nil {
+		nodes = append(nodes, e.ListSeparatorKeyword)
+	}
+	if e.EqualKeyword != nil {
+		nodes = append(nodes, e.EqualKeyword)
+	}
+	for i := range e.Comments {
+		nodes = append(nodes, e.Comments[i])
+	}
+	for i := range e.EndLineComments {
+		nodes = append(nodes, e.EndLineComments[i])
+	}
+	if e.Annotations != nil {
+		nodes = append(nodes, e.Annotations)
+	}
 
 	return nodes
 }
 
 func (e *EnumValue) Type() string {
 	return "EnumValue"
+}
+
+func (e *EnumValue) SetComments(comments []*Comment, endLineComments []*Comment) {
+	e.Comments = comments
+	e.EndLineComments = endLineComments
 }
 
 func (e *EnumValue) IsBadNode() bool {
@@ -618,22 +974,49 @@ func (e *EnumValue) ChildrenBadNode() bool {
 	return false
 }
 
+type ServiceKeyword struct {
+	Keyword
+}
+
+func (s *ServiceKeyword) Type() string {
+	return "ServiceKeyword"
+}
+
+type ExtendsKeyword struct {
+	Keyword
+}
+
+func (s *ExtendsKeyword) Type() string {
+	return "ExtendsKeyword"
+}
+
 type Service struct {
-	Name      *Identifier
-	Extends   *Identifier
-	Functions []*Function
-	Comments  string
+	ServiceKeyword *ServiceKeyword
+	ExtendsKeyword *ExtendsKeyword // can be nil
+	LCurKeyword    *LCurKeyword
+	RCurKeyword    *RCurKeyword
+	Name           *Identifier
+	Extends        *Identifier
+	Functions      []*Function
+
+	Comments        []*Comment
+	EndLineComments []*Comment
+	Annotations     *Annotations
 
 	BadNode bool
 	Location
 }
 
-func NewService(name *Identifier, extends *Identifier, fns []*Function, loc Location) *Service {
+func NewService(serviceKeyword *ServiceKeyword, extendsKeyword *ExtendsKeyword, lCurKeyword *LCurKeyword, rCurKeyword *RCurKeyword, name *Identifier, extends *Identifier, fns []*Function, loc Location) *Service {
 	return &Service{
-		Name:      name,
-		Extends:   extends,
-		Functions: fns,
-		Location:  loc,
+		ServiceKeyword: serviceKeyword,
+		ExtendsKeyword: extendsKeyword,
+		LCurKeyword:    lCurKeyword,
+		RCurKeyword:    rCurKeyword,
+		Name:           name,
+		Extends:        extends,
+		Functions:      fns,
+		Location:       loc,
 	}
 }
 
@@ -648,12 +1031,20 @@ func (s *Service) Type() string {
 	return "Service"
 }
 
-func (s *Service) SetComments(comments string) {
+func (s *Service) SetComments(comments []*Comment, endLineComments []*Comment) {
 	s.Comments = comments
+	s.EndLineComments = endLineComments
+}
+
+func (s *Service) SetAnnotations(annos *Annotations) {
+	s.Annotations = annos
 }
 
 func (s *Service) Children() []Node {
-	var nodes []Node
+	nodes := []Node{s.ServiceKeyword, s.LCurKeyword, s.RCurKeyword}
+	if s.ExtendsKeyword != nil {
+		nodes = append(nodes, s.ExtendsKeyword)
+	}
 	if s.Name != nil {
 		nodes = append(nodes, s.Name)
 	}
@@ -662,6 +1053,16 @@ func (s *Service) Children() []Node {
 	}
 	for i := range s.Functions {
 		nodes = append(nodes, s.Functions[i])
+	}
+
+	for i := range s.Comments {
+		nodes = append(nodes, s.Comments[i])
+	}
+	for i := range s.EndLineComments {
+		nodes = append(nodes, s.EndLineComments[i])
+	}
+	if s.Annotations != nil {
+		nodes = append(nodes, s.Annotations)
 	}
 
 	return nodes
@@ -684,29 +1085,129 @@ func (s *Service) ChildrenBadNode() bool {
 	return false
 }
 
-type Function struct {
-	Name         *Identifier
-	Oneway       bool
-	Void         bool
-	FunctionType *FieldType
-	Arguments    []*Field
-	Throws       []*Field
-	Comments     string
+type OnewayKeyword struct {
+	Keyword
+}
+
+func (o *OnewayKeyword) Type() string {
+	return "OnewayKeyword"
+}
+
+type LParKeyword struct {
+	Keyword
+}
+
+func (l *LParKeyword) Type() string {
+	return "LParKeyword"
+}
+
+type RParKeyword struct {
+	Keyword
+}
+
+func (r *RParKeyword) Type() string {
+	return "RParKeyword"
+}
+
+type VoidKeyword struct {
+	Keyword
+}
+
+func (v *VoidKeyword) Type() string {
+	return "VoidKeyword"
+}
+
+type ThrowsKeyword struct {
+	Keyword
+}
+
+func (t *ThrowsKeyword) Type() string {
+	return "ThrowsKeyword"
+}
+
+type Throws struct {
+	ThrowsKeyword *ThrowsKeyword
+	LParKeyword   *LParKeyword
+	RParKeyword   *RParKeyword
+
+	Fields []*Field
 
 	BadNode bool
 	Location
 }
 
-func NewFunction(name *Identifier, oneway bool, void bool, ft *FieldType, args []*Field, throws []*Field, comments string, loc Location) *Function {
+func NewThrows(throwsKeyword *ThrowsKeyword, lparKeyword *LParKeyword, rparKeyword *RParKeyword, fields []*Field, loc Location) *Throws {
+	return &Throws{
+		ThrowsKeyword: throwsKeyword,
+		LParKeyword:   lparKeyword,
+		RParKeyword:   rparKeyword,
+		Fields:        fields,
+		Location:      loc,
+	}
+}
+
+func (t *Throws) Type() string {
+	return "Throws"
+}
+
+func (t *Throws) IsBadNode() bool {
+	return t.BadNode
+}
+
+func (t *Throws) ChildrenBadNode() bool {
+	children := t.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
+func (t *Throws) Children() []Node {
+	nodes := []Node{t.ThrowsKeyword, t.LParKeyword, t.RParKeyword}
+	for i := range t.Fields {
+		nodes = append(nodes, t.Fields[i])
+	}
+	return nodes
+}
+
+type Function struct {
+	LParKeyword          *LParKeyword
+	RParKeyword          *RParKeyword
+	ListSeparatorKeyword *ListSeparatorKeyword // can be nil
+	Name                 *Identifier
+	Oneway               *OnewayKeyword // can be nil
+	Void                 *VoidKeyword   // can be nil
+	FunctionType         *FieldType
+	Arguments            []*Field
+	Throws               *Throws
+	Comments             []*Comment
+	EndLineComments      []*Comment
+	Annotations          *Annotations
+
+	BadNode bool
+	Location
+}
+
+func NewFunction(lParKeyword *LParKeyword, rParKeyword *RParKeyword, listSeparatorKeyword *ListSeparatorKeyword, name *Identifier, oneway *OnewayKeyword, void *VoidKeyword, ft *FieldType, args []*Field, throws *Throws, comments []*Comment, endlineComments []*Comment, annotations *Annotations, loc Location) *Function {
 	return &Function{
-		Name:         name,
-		Oneway:       oneway,
-		Void:         void,
-		FunctionType: ft,
-		Arguments:    args,
-		Throws:       throws,
-		Comments:     comments,
-		Location:     loc,
+		LParKeyword:          lParKeyword,
+		RParKeyword:          rParKeyword,
+		ListSeparatorKeyword: listSeparatorKeyword,
+		Name:                 name,
+		Oneway:               oneway,
+		Void:                 void,
+		FunctionType:         ft,
+		Arguments:            args,
+		Throws:               throws,
+		Comments:             comments,
+		EndLineComments:      endlineComments,
+		Annotations:          annotations,
+		Location:             loc,
 	}
 }
 
@@ -718,7 +1219,16 @@ func NewBadFunction(loc Location) *Function {
 }
 
 func (f *Function) Children() []Node {
-	var nodes []Node
+	nodes := []Node{f.LParKeyword, f.RParKeyword}
+	if f.Oneway != nil {
+		nodes = append(nodes, f.Oneway)
+	}
+	if f.Void != nil {
+		nodes = append(nodes, f.Void)
+	}
+	if f.ListSeparatorKeyword != nil {
+		nodes = append(nodes, f.ListSeparatorKeyword)
+	}
 	if f.Name != nil {
 		nodes = append(nodes, f.Name)
 	}
@@ -728,8 +1238,17 @@ func (f *Function) Children() []Node {
 	for i := range f.Arguments {
 		nodes = append(nodes, f.Arguments[i])
 	}
-	for i := range f.Throws {
-		nodes = append(nodes, f.Throws[i])
+	if f.Throws != nil {
+		nodes = append(nodes, f.Throws)
+	}
+	for i := range f.Comments {
+		nodes = append(nodes, f.Comments[i])
+	}
+	for i := range f.EndLineComments {
+		nodes = append(nodes, f.EndLineComments[i])
+	}
+	if f.Annotations != nil {
+		nodes = append(nodes, f.Annotations)
 	}
 
 	return nodes
@@ -756,20 +1275,37 @@ func (f *Function) ChildrenBadNode() bool {
 	return false
 }
 
+type UnionKeyword struct {
+	Keyword
+}
+
+func (u *UnionKeyword) Type() string {
+	return "UnionKeyword"
+}
+
 type Union struct {
-	Name     *Identifier
-	Fields   []*Field
-	Comments string
+	UnionKeyword *UnionKeyword
+	LCurKeyword  *LCurKeyword
+	RCurKeyword  *RCurKeyword
+	Name         *Identifier
+	Fields       []*Field
+
+	Comments        []*Comment
+	EndLineComments []*Comment
+	Annotations     *Annotations
 
 	BadNode bool
 	Location
 }
 
-func NewUnion(name *Identifier, fields []*Field, loc Location) *Union {
+func NewUnion(unionKeyword *UnionKeyword, lCurKeyword *LCurKeyword, rCurKeyword *RCurKeyword, name *Identifier, fields []*Field, loc Location) *Union {
 	return &Union{
-		Name:     name,
-		Fields:   fields,
-		Location: loc,
+		UnionKeyword: unionKeyword,
+		LCurKeyword:  lCurKeyword,
+		RCurKeyword:  rCurKeyword,
+		Name:         name,
+		Fields:       fields,
+		Location:     loc,
 	}
 }
 
@@ -784,15 +1320,37 @@ func (u *Union) Type() string {
 	return "Union"
 }
 
-func (u *Union) SetComments(comments string) {
+func (u *Union) SetComments(comments []*Comment, endLineComments []*Comment) {
 	u.Comments = comments
+	u.EndLineComments = endLineComments
+}
+
+func (u *Union) SetAnnotations(annos *Annotations) {
+	u.Annotations = annos
 }
 
 func (u *Union) Children() []Node {
-	nodes := []Node{u.Name}
+	nodes := []Node{u.Name, u.UnionKeyword, u.LCurKeyword, u.RCurKeyword}
 	for i := range u.Fields {
 		nodes = append(nodes, u.Fields[i])
 	}
+	for i := range u.Comments {
+		nodes = append(nodes, u.Comments[i])
+	}
+	for i := range u.EndLineComments {
+		nodes = append(nodes, u.EndLineComments[i])
+	}
+
+	for i := range u.Comments {
+		nodes = append(nodes, u.Comments[i])
+	}
+	for i := range u.EndLineComments {
+		nodes = append(nodes, u.EndLineComments[i])
+	}
+	if u.Annotations != nil {
+		nodes = append(nodes, u.Annotations)
+	}
+
 	return nodes
 }
 
@@ -813,20 +1371,37 @@ func (u *Union) ChildrenBadNode() bool {
 	return false
 }
 
+type ExceptionKeyword struct {
+	Keyword
+}
+
+func (e *ExceptionKeyword) Type() string {
+	return "ExceptionKeyword"
+}
+
 type Exception struct {
-	Name     *Identifier
-	Fields   []*Field
-	Comments string
+	ExceptionKeyword *ExceptionKeyword
+	LCurKeyword      *LCurKeyword
+	RCurKeyword      *RCurKeyword
+	Name             *Identifier
+	Fields           []*Field
+
+	Comments        []*Comment
+	EndLineComments []*Comment
+	Annotations     *Annotations
 
 	BadNode bool
 	Location
 }
 
-func NewException(name *Identifier, fields []*Field, loc Location) *Exception {
+func NewException(exceptionKeyword *ExceptionKeyword, lCurKeyword *LCurKeyword, rCurKeyword *RCurKeyword, name *Identifier, fields []*Field, loc Location) *Exception {
 	return &Exception{
-		Name:     name,
-		Fields:   fields,
-		Location: loc,
+		ExceptionKeyword: exceptionKeyword,
+		LCurKeyword:      lCurKeyword,
+		RCurKeyword:      rCurKeyword,
+		Name:             name,
+		Fields:           fields,
+		Location:         loc,
 	}
 }
 
@@ -841,15 +1416,31 @@ func (e *Exception) Type() string {
 	return "Exception"
 }
 
-func (e *Exception) SetComments(comments string) {
+func (e *Exception) SetComments(comments []*Comment, endLineComments []*Comment) {
 	e.Comments = comments
+	e.EndLineComments = endLineComments
+}
+
+func (e *Exception) SetAnnotations(annos *Annotations) {
+	e.Annotations = annos
 }
 
 func (e *Exception) Children() []Node {
-	nodes := []Node{e.Name}
+	nodes := []Node{e.Name, e.ExceptionKeyword, e.LCurKeyword, e.RCurKeyword}
 	for i := range e.Fields {
 		nodes = append(nodes, e.Fields[i])
 	}
+	for i := range e.Comments {
+		nodes = append(nodes, e.Comments[i])
+	}
+	for i := range e.EndLineComments {
+		nodes = append(nodes, e.EndLineComments[i])
+	}
+
+	if e.Annotations != nil {
+		nodes = append(nodes, e.Annotations)
+	}
+
 	return nodes
 }
 
@@ -871,19 +1462,29 @@ func (e *Exception) ChildrenBadNode() bool {
 }
 
 type Identifier struct {
-	Name    string
+	Name     string
+	Comments []*Comment
+
 	BadNode bool
 	Location
 }
 
-func NewIdentifier(name string, pos position) *Identifier {
+func NewIdentifier(name string, comments []*Comment, loc Location) *Identifier {
 	id := &Identifier{
 		Name:     name,
-		Location: NewLocation(pos, name),
+		Comments: comments,
+		Location: loc,
 		BadNode:  name == "",
 	}
 
 	return id
+}
+
+func NewBadIdentifier(loc Location) *Identifier {
+	return &Identifier{
+		BadNode:  true,
+		Location: loc,
+	}
 }
 
 func (i *Identifier) ToFieldType() *FieldType {
@@ -899,7 +1500,11 @@ func (i *Identifier) ToFieldType() *FieldType {
 }
 
 func (i *Identifier) Children() []Node {
-	return nil
+	var nodes []Node
+	for _, com := range i.Comments {
+		nodes = append(nodes, com)
+	}
+	return nodes
 }
 
 func (i *Identifier) Type() string {
@@ -932,31 +1537,45 @@ func ConvertPosition(pos position) Position {
 }
 
 type Field struct {
-	Comments     string
-	LineComments string
-	Index        *FieldIndex
-	Required     *Required
-	FieldType    *FieldType
-	Identifier   *Identifier
-	ConstValue   *ConstValue
+	Index      *FieldIndex
+	Required   *Required
+	FieldType  *FieldType
+	Identifier *Identifier
+	ConstValue *ConstValue
+
+	EqualKeyword         *EqualKeyword         // can be nil
+	ListSeparatorKeyword *ListSeparatorKeyword // can be nil
+
+	Comments        []*Comment
+	EndLineComments []*Comment
+	Annotations     *Annotations
 
 	BadNode bool
 	Location
 }
 
-func NewField(comments string, lineComments string, index *FieldIndex, required *Required, fieldType *FieldType, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
+func NewField(equalKeyword *EqualKeyword, listSeparatorKeyword *ListSeparatorKeyword, comments []*Comment, endLineComments []*Comment, annotations *Annotations, index *FieldIndex, required *Required, fieldType *FieldType, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
 	field := &Field{
-		Comments:     comments,
-		LineComments: lineComments,
-		Index:        index,
-		Required:     required,
-		FieldType:    fieldType,
-		Identifier:   identifier,
-		ConstValue:   constValue,
-		BadNode:      fieldType == nil,
-		Location:     loc,
+		EqualKeyword:         equalKeyword,
+		ListSeparatorKeyword: listSeparatorKeyword,
+		Comments:             comments,
+		EndLineComments:      endLineComments,
+		Annotations:          annotations,
+		Index:                index,
+		Required:             required,
+		FieldType:            fieldType,
+		Identifier:           identifier,
+		ConstValue:           constValue,
+		Location:             loc,
 	}
 	return field
+}
+
+func NewBadField(loc Location) *Field {
+	return &Field{
+		BadNode:  true,
+		Location: loc,
+	}
 }
 
 func (f *Field) Children() []Node {
@@ -972,6 +1591,21 @@ func (f *Field) Children() []Node {
 	}
 	if f.ConstValue != nil {
 		res = append(res, f.ConstValue)
+	}
+	if f.EqualKeyword != nil {
+		res = append(res, f.EqualKeyword)
+	}
+	if f.ListSeparatorKeyword != nil {
+		res = append(res, f.ListSeparatorKeyword)
+	}
+	for i := range f.Comments {
+		res = append(res, f.Comments[i])
+	}
+	for i := range f.EndLineComments {
+		res = append(res, f.EndLineComments[i])
+	}
+	if f.Annotations != nil {
+		res = append(res, f.Annotations)
 	}
 	return res
 }
@@ -997,17 +1631,30 @@ func (f *Field) ChildrenBadNode() bool {
 	return false
 }
 
+type ColonKeyword struct {
+	Keyword
+}
+
+func (c *ColonKeyword) Type() string {
+	return "ColonKeyword"
+}
+
 type FieldIndex struct {
-	Value int
+	ColonKeyword *ColonKeyword
+	Value        int
+
+	Comments []*Comment
 
 	BadNode bool
 	Location
 }
 
-func NewFieldIndex(v int, loc Location) *FieldIndex {
+func NewFieldIndex(ColonKeyword *ColonKeyword, v int, comments []*Comment, loc Location) *FieldIndex {
 	return &FieldIndex{
-		Value:    v,
-		Location: loc,
+		ColonKeyword: ColonKeyword,
+		Value:        v,
+		Comments:     comments,
+		Location:     loc,
 	}
 }
 
@@ -1045,18 +1692,17 @@ func (f *FieldIndex) ChildrenBadNode() bool {
 
 type Required struct {
 	Required bool
+
+	Comments []*Comment
 	BadNode  bool
 	Location
 }
 
-func NewRequired(required bool, pos position) *Required {
+func NewRequired(required bool, comments []*Comment, loc Location) *Required {
 	req := &Required{
 		Required: required,
-	}
-	if required {
-		req.Location = NewLocation(pos, "required")
-	} else {
-		req.Location = NewLocation(pos, "optional")
+		Comments: comments,
+		Location: loc,
 	}
 
 	return req
@@ -1096,19 +1742,111 @@ func (r *Required) ChildrenBadNode() bool {
 	return false
 }
 
+type LPointKeyword struct {
+	Keyword
+}
+
+func (l *LPointKeyword) Type() string {
+	return "LPointKeyword"
+}
+
+type RPointKeyword struct {
+	Keyword
+}
+
+func (r *RPointKeyword) Type() string {
+	return "RPointKeyword"
+}
+
+type CommaKeyword struct {
+	Keyword
+}
+
+func (r *CommaKeyword) Type() string {
+	return "CommaKeyword"
+}
+
+type CppTypeKeyword struct {
+	Keyword
+}
+
+func (c *CppTypeKeyword) Type() string {
+	return "CppTypeKeyword"
+}
+
+type CppType struct {
+	CppTypeKeyword *CppTypeKeyword
+	Literal        *Literal
+
+	BadNode bool
+	Location
+}
+
+func NewCppType(cppTypeKeyword *CppTypeKeyword, literal *Literal, loc Location) *CppType {
+	return &CppType{
+		CppTypeKeyword: cppTypeKeyword,
+		Literal:        literal,
+		Location:       loc,
+	}
+}
+
+func (c *CppType) Type() string {
+	return "CppType"
+}
+
+func (c *CppType) Children() []Node {
+	return []Node{c.CppTypeKeyword, c.Literal}
+}
+
+func (c *CppType) IsBadNode() bool {
+	return c.IsBadNode()
+}
+
+func (c *CppType) ChildrenBadNode() bool {
+	children := c.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type FieldType struct {
 	TypeName *TypeName
 	// only exist when TypeName is map or set or list
 	KeyType *FieldType
 	// only exist when TypeName is map
 	ValueType *FieldType
-	BadNode   bool
+
+	// only exist in map, set, list. can be nil
+	CppType *CppType
+
+	// only exist in map, set, list
+	LPointKeyword *LPointKeyword
+	// only exist in map, set, list
+	RPointKeyword *RPointKeyword
+	// only exist in map
+	CommaKeyword *CommaKeyword
+
+	Annotations *Annotations
+
+	BadNode bool
 
 	Location
 }
 
-func NewFieldType(typeName *TypeName, keyType *FieldType, valueType *FieldType, loc Location) *FieldType {
+func NewFieldType(lpointKeyword *LPointKeyword, rpointKeyword *RPointKeyword, commaKeyword *CommaKeyword, cppType *CppType, typeName *TypeName, keyType *FieldType, valueType *FieldType, loc Location) *FieldType {
 	return &FieldType{
+		LPointKeyword: lpointKeyword,
+		RPointKeyword: rpointKeyword,
+		CommaKeyword:  commaKeyword,
+
+		CppType: cppType,
+
 		TypeName:  typeName,
 		KeyType:   keyType,
 		ValueType: valueType,
@@ -1154,8 +1892,9 @@ type TypeName struct {
 	// TypeName can be:
 	// container type: map, set, list
 	// base type: bool, byte, i8, i16, i32, i64, double, string, binary
-	// struct, enum, union, exception identifier
-	Name string
+	// struct, enum, union, exception, identifier
+	Name     string
+	Comments []*Comment
 
 	BadNode bool
 	Location
@@ -1171,7 +1910,11 @@ func NewTypeName(name string, pos position) *TypeName {
 }
 
 func (t *TypeName) Children() []Node {
-	return nil
+	var nodes []Node
+	for i := range t.Comments {
+		nodes = append(nodes, t.Comments[i])
+	}
+	return nodes
 }
 
 func (t *TypeName) Type() string {
@@ -1195,6 +1938,22 @@ func (t *TypeName) ChildrenBadNode() bool {
 	return false
 }
 
+type LBrkKeyword struct {
+	Keyword
+}
+
+func (l *LBrkKeyword) Type() string {
+	return "LBrkKeyword"
+}
+
+type RBrkKeyword struct {
+	Keyword
+}
+
+func (l *RBrkKeyword) Type() string {
+	return "RBrkKeyword"
+}
+
 type ConstValue struct {
 	// TypeName can be: list, map, pair, string, identifier, i64, double
 	TypeName string
@@ -1207,6 +1966,22 @@ type ConstValue struct {
 
 	// only exist when TypeName is map
 	Key any
+
+	// exist in list
+	LBrkKeyword *LBrkKeyword
+	RBrkKeyword *RBrkKeyword
+
+	// exist in map
+	LCurKeyword *LCurKeyword
+	RCurKeyword *RCurKeyword
+
+	// exist in list, map item
+	ListSeparatorKeyword *ListSeparatorKeyword
+
+	// exist in map item
+	ColonKeyword *ColonKeyword
+
+	Comments []*Comment
 
 	BadNode bool
 	Location
@@ -1245,6 +2020,10 @@ func NewMapConstValue(key, value *ConstValue, loc Location) *ConstValue {
 	}
 }
 
+func (c *ConstValue) SetComments(comments []*Comment) {
+	c.Comments = comments
+}
+
 // TODO(jpf): nodes of key, value
 func (c *ConstValue) Children() []Node {
 	return nil
@@ -1272,15 +2051,21 @@ func (c *ConstValue) ChildrenBadNode() bool {
 }
 
 type Literal struct {
-	Value   string
-	BadNode bool
+	Value string
 
+	Quote string // single for ', double for "
+
+	Comments []*Comment
+
+	BadNode bool
 	Location
 }
 
-func NewLiteral(v string, loc Location) *Literal {
+// TODO: 区分单引号还是双引号?
+func NewLiteral(comments []*Comment, v string, quote string, loc Location) *Literal {
 	return &Literal{
 		Value:    v,
+		Comments: comments,
 		Location: loc,
 	}
 }
@@ -1293,7 +2078,11 @@ func NewBadLiteral(v string, loc Location) *Literal {
 }
 
 func (l *Literal) Children() []Node {
-	return nil
+	var nodes []Node
+	for i := range l.Comments {
+		nodes = append(nodes, l.Comments[i])
+	}
+	return nodes
 }
 
 func (l *Literal) Type() string {
@@ -1317,7 +2106,58 @@ func (l *Literal) ChildrenBadNode() bool {
 	return false
 }
 
+type Annotations struct {
+	Annotation  []*Annotation
+	LParKeyword *LParKeyword
+	RParKeyword *RParKeyword
+
+	BadNode bool
+	Location
+}
+
+func NewAnnotations(lpar *LParKeyword, rpar *RParKeyword, annos []*Annotation, loc Location) *Annotations {
+	return &Annotations{
+		LParKeyword: lpar,
+		RParKeyword: rpar,
+		Annotation:  annos,
+		Location:    loc,
+	}
+}
+
+func (a *Annotations) Type() string {
+	return "Annotations"
+}
+
+func (a *Annotations) Children() []Node {
+	nodes := []Node{a.LParKeyword, a.RParKeyword}
+	for i := range a.Annotation {
+		nodes = append(nodes, a.Annotation[i])
+	}
+
+	return nodes
+}
+
+func (a *Annotations) IsBadNode() bool {
+	return a.BadNode
+}
+
+func (a *Annotations) ChildrenBadNode() bool {
+	children := a.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type Annotation struct {
+	EqualKeyword         *EqualKeyword
+	ListSeparatorKeyword *ListSeparatorKeyword
+
 	Identifier *Identifier
 	Value      *Literal
 
@@ -1325,11 +2165,13 @@ type Annotation struct {
 	Location
 }
 
-func NewAnnotation(id *Identifier, value *Literal, loc Location) *Annotation {
+func NewAnnotation(equalKeyword *EqualKeyword, listSeparatorKeyword *ListSeparatorKeyword, id *Identifier, value *Literal, loc Location) *Annotation {
 	return &Annotation{
-		Identifier: id,
-		Value:      value,
-		Location:   loc,
+		EqualKeyword:         equalKeyword,
+		ListSeparatorKeyword: listSeparatorKeyword,
+		Identifier:           id,
+		Value:                value,
+		Location:             loc,
 	}
 }
 
@@ -1341,7 +2183,12 @@ func NewBadAnnotation(loc Location) *Annotation {
 }
 
 func (a *Annotation) Children() []Node {
-	return []Node{a.Identifier, a.Value}
+	nodes := []Node{a.Identifier, a.Value, a.EqualKeyword}
+	if a.ListSeparatorKeyword != nil {
+		nodes = append(nodes, a.ListSeparatorKeyword)
+	}
+
+	return nodes
 }
 
 func (a *Annotation) Type() string {
@@ -1362,6 +2209,53 @@ func (a *Annotation) ChildrenBadNode() bool {
 			return true
 		}
 	}
+	return false
+}
+
+type CommentStyle string
+
+const (
+	CommentStyleShell      CommentStyle = "shell"
+	CommentStyleMultiLine  CommentStyle = "multiline"
+	CommentStyleSingleLine CommentStyle = "singleline"
+)
+
+type Comment struct {
+	Text  string
+	Style CommentStyle // shell: #xxx, multiline: /* *** */, singleline: // xxxxx
+
+	BadNode bool
+	Location
+}
+
+func NewComment(text string, style CommentStyle, loc Location) *Comment {
+	return &Comment{
+		Text:     text,
+		Style:    style,
+		Location: loc,
+	}
+}
+
+func NewBadComment(loc Location) *Comment {
+	return &Comment{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
+func (c *Comment) Children() []Node {
+	return nil
+}
+
+func (c *Comment) Type() string {
+	return "Comment"
+}
+
+func (c *Comment) IsBadNode() bool {
+	return c.BadNode
+}
+
+func (c *Comment) ChildrenBadNode() bool {
 	return false
 }
 

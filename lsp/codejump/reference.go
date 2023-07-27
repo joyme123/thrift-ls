@@ -195,8 +195,10 @@ func searchDefinitionIdentifierReferences(ctx context.Context, ss *cache.Snapsho
 				jumpField(fn.Arguments[i])
 			}
 
-			for i := range fn.Throws {
-				jumpField(fn.Throws[i])
+			if fn.Throws != nil {
+				for i := range fn.Throws.Fields {
+					jumpField(fn.Throws.Fields[i])
+				}
 			}
 		}
 	}
@@ -385,8 +387,10 @@ func searchConstValueIdentifierReference(ctx context.Context, ss *cache.Snapshot
 			for _, field := range fn.Arguments {
 				jumpField(field)
 			}
-			for _, field := range fn.Throws {
-				jumpField(field)
+			if fn.Throws != nil {
+				for _, field := range fn.Throws.Fields {
+					jumpField(field)
+				}
 			}
 		}
 	}

@@ -9,7 +9,7 @@ import (
 
 func MustFormatFunction(fn *parser.Function) string {
 	fnType := "void"
-	if !fn.Void {
+	if fn.Void == nil {
 		fnType = MustFormatFieldType(fn.FunctionType)
 	}
 	buf := bytes.NewBufferString(fmt.Sprintf("%s %s(", fnType, fn.Name.Name))
@@ -22,13 +22,13 @@ func MustFormatFunction(fn *parser.Function) string {
 	}
 	buf.WriteString(")")
 
-	if len(fn.Throws) > 0 {
+	if fn.Throws != nil {
 		buf.WriteString(" throws (")
-		for i := range fn.Throws {
+		for i := range fn.Throws.Fields {
 			if i != 0 {
 				buf.WriteString(", ")
 			}
-			buf.WriteString(MustFormatField(fn.Throws[i]))
+			buf.WriteString(MustFormatField(fn.Throws.Fields[i]))
 		}
 		buf.WriteString(")")
 	}

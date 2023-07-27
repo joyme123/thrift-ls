@@ -8,8 +8,8 @@ import (
 )
 
 func MustFormatNamespace(ns *parser.Namespace) string {
-	buf := bytes.NewBuffer([]byte(fmt.Sprintf("namespace %s %s", ns.Language, ns.Name)))
-	if len(ns.Annotations) > 0 {
+	buf := bytes.NewBuffer([]byte(fmt.Sprintf("namespace %s %s", ns.Language.Name, ns.Name.Name)))
+	if ns.Annotations != nil {
 		buf.WriteString(fmt.Sprintf(" %s\n", MustFormatAnnotations(ns.Annotations)))
 	}
 
