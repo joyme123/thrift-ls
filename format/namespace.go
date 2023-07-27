@@ -1,17 +1,31 @@
 package format
 
 import (
-	"bytes"
-	"fmt"
-
 	"github.com/joyme123/thrift-ls/parser"
 )
 
+const namespaceOneLineTpl = `{{.Comments}}{{.Namespace}} {{.Language}} {{.Name}}{{.Annotations}}{{.EndLineComments}}`
+
+type NamespaceFormatter struct {
+	Comments        string
+	Namespace       string
+	Language        string
+	Name            string
+	Annotations     string
+	EndLineComments string
+}
+
 func MustFormatNamespace(ns *parser.Namespace) string {
-	buf := bytes.NewBuffer([]byte(fmt.Sprintf("namespace %s %s", ns.Language.Name, ns.Name.Name)))
-	if ns.Annotations != nil {
-		buf.WriteString(fmt.Sprintf(" %s\n", MustFormatAnnotations(ns.Annotations)))
+	comments, annos := formatCommentsAndAnnos(ns.Comments, ns.Annotations)
+
+	f := &NamespaceFormatter{
+		Comments:        comments,
+		Namespace:       MustFormatKeyword(ns.NamespaceKeyword.Keyword),
+		Language:        MustFormatIdentifier(&ns.Language.Identifier),
+		Name:            MustFormatIdentifier(ns.Name),
+		Annotations:     annos,
+		EndLineComments: MustFormatComments(ns.EndLineComments),
 	}
 
-	return buf.String()
+	return MustFormat(namespaceOneLineTpl, f)
 }

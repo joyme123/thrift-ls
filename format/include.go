@@ -1,15 +1,39 @@
 package format
 
 import (
-	"fmt"
-
 	"github.com/joyme123/thrift-ls/parser"
 )
 
+const includeTpl = `{{.Comments}}{{.Include}} {{.Path}} {{.EndLineComments}}`
+
+type IncludeFormatter struct {
+	Comments        string
+	Include         string
+	Path            string
+	EndLineComments string
+}
+
 func MustFormatInclude(inc *parser.Include) string {
-	return fmt.Sprintf(`include "%s"\n`, inc.Path.Value)
+	comments, _ := formatCommentsAndAnnos(inc.Comments, nil)
+
+	f := &IncludeFormatter{
+		Comments:        comments,
+		Include:         MustFormatKeyword(inc.IncludeKeyword.Keyword),
+		Path:            MustFormatLiteral(inc.Path),
+		EndLineComments: MustFormatComments(inc.EndLineComments),
+	}
+
+	return MustFormat(includeTpl, f)
 }
 
 func MustFormatCPPInclude(inc *parser.CPPInclude) string {
-	return fmt.Sprintf(`cppinclude "%s"\n`, inc.Path.Value)
+	comments, _ := formatCommentsAndAnnos(inc.Comments, nil)
+	f := &IncludeFormatter{
+		Comments:        comments,
+		Include:         MustFormatKeyword(inc.CPPIncludeKeyword.Keyword),
+		Path:            MustFormatLiteral(inc.Path),
+		EndLineComments: MustFormatComments(inc.EndLineComments),
+	}
+
+	return MustFormat(includeTpl, f)
 }

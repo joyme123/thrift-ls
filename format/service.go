@@ -1,24 +1,46 @@
 package format
 
 import (
-	"bytes"
-	"fmt"
-
 	"github.com/joyme123/thrift-ls/parser"
 )
 
+const (
+	serviceOneLineTpl = `{{.Comments}}{{.Service}} {{.Identifier}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}`
+
+	serviceMultiLineTpl = `{{.Comments}}{{.Service}} {{.Identifier}} {{.LCUR}}
+{{.Functions}}
+{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
+`
+)
+
+type ServiceFormatter struct {
+	Comments        string
+	Service         string
+	Identifier      string
+	LCUR            string
+	Functions       string
+	RCUR            string
+	Annotations     string
+	EndLineComments string
+}
+
 func MustFormatService(svc *parser.Service) string {
-	extends := ""
-	if svc.Extends != nil {
-		extends = fmt.Sprintf("extends %s ", extends)
+	comments, annos := formatCommentsAndAnnos(svc.Comments, svc.Annotations)
+
+	f := ServiceFormatter{
+		Comments:        comments,
+		Service:         MustFormatKeyword(svc.ServiceKeyword.Keyword),
+		Identifier:      MustFormatIdentifier(svc.Name),
+		LCUR:            MustFormatKeyword(svc.LCurKeyword.Keyword),
+		Functions:       MustFormatFunctions(svc.Functions, Indent),
+		RCUR:            MustFormatKeyword(svc.RCurKeyword.Keyword),
+		Annotations:     annos,
+		EndLineComments: MustFormatComments(svc.EndLineComments),
 	}
 
-	buf := bytes.NewBufferString(fmt.Sprintf("service %s %s{\n", svc.Name.Name, extends))
-
-	for _, fn := range svc.Functions {
-		buf.WriteString(fmt.Sprintf("  %s\n", MustFormatFunction(fn)))
+	if len(svc.Functions) > 0 {
+		return MustFormat(serviceMultiLineTpl, f)
 	}
 
-	buf.WriteString("}\n")
-	return buf.String()
+	return MustFormat(serviceOneLineTpl, f)
 }

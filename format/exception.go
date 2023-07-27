@@ -1,19 +1,45 @@
 package format
 
 import (
-	"bytes"
-	"fmt"
-
 	"github.com/joyme123/thrift-ls/parser"
 )
 
+const (
+	exceptionOneLineTpl = `{{.Comments}}{{.Exception}} {{.Identifier}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}`
+
+	exceptionMultiLineTpl = `{{.Comments}}{{.Exception}} {{.Identifier}} {{.LCUR}}
+{{.Fields}}
+{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
+`
+)
+
+type ExceptionFormatter struct {
+	Comments        string
+	Exception       string
+	Identifier      string
+	LCUR            string
+	Fields          string
+	RCUR            string
+	Annotations     string
+	EndLineComments string
+}
+
 func MustFormatException(excep *parser.Exception) string {
-	buf := bytes.NewBufferString(fmt.Sprintf("exception %s {\n", excep.Name.Name))
-	for i := range excep.Fields {
-		buf.WriteString(fmt.Sprintf("  %s\n", MustFormatField(excep.Fields[i])))
+	comments, annos := formatCommentsAndAnnos(excep.Comments, excep.Annotations)
+	f := ExceptionFormatter{
+		Comments:        comments,
+		Exception:       MustFormatKeyword(excep.ExceptionKeyword.Keyword),
+		Identifier:      MustFormatIdentifier(excep.Name),
+		LCUR:            MustFormatKeyword(excep.LCurKeyword.Keyword),
+		Fields:          MustFormatFields(excep.Fields, Indent),
+		RCUR:            MustFormatKeyword(excep.RCurKeyword.Keyword),
+		Annotations:     annos,
+		EndLineComments: MustFormatComments(excep.EndLineComments),
 	}
 
-	buf.WriteString("}\n")
+	if len(excep.Fields) > 0 {
+		return MustFormat(exceptionMultiLineTpl, f)
+	}
 
-	return buf.String()
+	return MustFormat(exceptionOneLineTpl, f)
 }

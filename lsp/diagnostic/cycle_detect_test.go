@@ -148,6 +148,7 @@ include "./test/address.thrift"`
 					Path: &parser.Literal{
 						Value:   "./test/goods.thrift",
 						BadNode: false,
+						Quote:   "\"",
 						Location: parser.NewLocationFromPos(
 							parser.Position{
 								Line:   1,
@@ -213,6 +214,7 @@ include "./test/address.thrift"`
 					},
 					Path: &parser.Literal{
 						Value:   "./test/address.thrift",
+						Quote:   "\"",
 						BadNode: false,
 						Location: parser.NewLocationFromPos(
 							parser.Position{
@@ -281,6 +283,7 @@ include "./test/address.thrift"`
 					},
 					Path: &parser.Literal{
 						Value:   "../user.thrift",
+						Quote:   "\"",
 						BadNode: false,
 						Location: parser.NewLocationFromPos(
 							parser.Position{
@@ -349,6 +352,7 @@ include "./test/address.thrift"`
 					},
 					Path: &parser.Literal{
 						Value:   "../user.thrift",
+						Quote:   "\"",
 						BadNode: false,
 						Location: parser.NewLocationFromPos(
 							parser.Position{

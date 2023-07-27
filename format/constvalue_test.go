@@ -21,6 +21,20 @@ func TestMustFormatConstValue(t *testing.T) {
 			args: args{
 				cv: &parser.ConstValue{
 					TypeName: "map",
+					LCurKeyword: &parser.LCurKeyword{
+						Keyword: parser.Keyword{
+							Literal: &parser.KeywordLiteral{
+								Text: "{",
+							},
+						},
+					},
+					RCurKeyword: &parser.RCurKeyword{
+						Keyword: parser.Keyword{
+							Literal: &parser.KeywordLiteral{
+								Text: "}",
+							},
+						},
+					},
 					Value: []*parser.ConstValue{
 						{
 							TypeName: "pair",
@@ -32,12 +46,33 @@ func TestMustFormatConstValue(t *testing.T) {
 								TypeName: "string",
 								Value:    "value",
 							},
+							ColonKeyword: &parser.ColonKeyword{
+								Keyword: parser.Keyword{
+									Literal: &parser.KeywordLiteral{
+										Text: ":",
+									},
+								},
+							},
+							ListSeparatorKeyword: &parser.ListSeparatorKeyword{
+								Keyword: parser.Keyword{
+									Literal: &parser.KeywordLiteral{
+										Text: ",",
+									},
+								},
+							},
 						},
 						{
 							TypeName: "pair",
 							Key: &parser.ConstValue{
 								TypeName: "string",
 								Value:    "key2",
+							},
+							ColonKeyword: &parser.ColonKeyword{
+								Keyword: parser.Keyword{
+									Literal: &parser.KeywordLiteral{
+										Text: ":",
+									},
+								},
 							},
 							Value: &parser.ConstValue{
 								TypeName: "string",
@@ -54,10 +89,31 @@ func TestMustFormatConstValue(t *testing.T) {
 			args: args{
 				cv: &parser.ConstValue{
 					TypeName: "list",
+					LBrkKeyword: &parser.LBrkKeyword{
+						Keyword: parser.Keyword{
+							Literal: &parser.KeywordLiteral{
+								Text: "[",
+							},
+						},
+					},
+					RBrkKeyword: &parser.RBrkKeyword{
+						Keyword: parser.Keyword{
+							Literal: &parser.KeywordLiteral{
+								Text: "]",
+							},
+						},
+					},
 					Value: []*parser.ConstValue{
 						{
 							TypeName: "string",
 							Value:    "value1",
+							ListSeparatorKeyword: &parser.ListSeparatorKeyword{
+								Keyword: parser.Keyword{
+									Literal: &parser.KeywordLiteral{
+										Text: ",",
+									},
+								},
+							},
 						},
 						{
 							TypeName: "string",

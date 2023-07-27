@@ -348,9 +348,9 @@ Field = comments:ReservedComments index:FieldId required:FieldReq? fieldType:Fie
            equalKeyword = value.([]any)[0].(*EqualKeyword)
 	   constV = value.([]any)[1].(*ConstValue)
 	}
-	var requiredV *Required
+	var requiredV *RequiredKeyword
 	if required != nil {
-		requiredV = required.(*Required)
+		requiredV = required.(*RequiredKeyword)
 	}
 
 	return NewField(equalKeyword, toListSeparatorKeyword(sep), comments.([]*Comment), lineComments.([]*Comment), toAnnotations(annos), index.(*FieldIndex), requiredV, fieldType.(*FieldType), id.(*Identifier), constV, NewLocationFromCurrent(c)), nil
@@ -365,17 +365,20 @@ FieldId = comments:ReservedComments i:FieldIndex colon:COLON Indent* {
 } //{errFieldIndex} ErrFieldIndex
 
 FieldReq = comments:ReservedComments r:IsRequired Indent* {
-	if r == nil {
-		return nil, nil
-	}
-	req := r.(*Required)
-	return NewRequired(req.Required, comments.([]*Comment), req.Location), nil
+	kw := NewKeyword(comments.([]*Comment), r.(*KeywordLiteral), NewLocationFromCurrent(c))
+
+	return &RequiredKeyword{Keyword: kw}, nil
 }
-IsRequired = v:("required" / "optional") {
-	if v == nil {
-		return nil, nil
-	}
-	return NewRequired(string(v.([]byte)) == "required", nil, NewLocationFromCurrent(c)), nil
+IsRequired = v:(RequiredToken / OptionalToken) {
+	return v, nil
+}
+
+RequiredToken = "required" {
+	return NewKeywordLiteral(c), nil
+}
+
+OptionalToken = "optional" {
+	return NewKeywordLiteral(c), nil
 }
 
 Function = comments:ReservedComments oneway:ONEWAY? ft:FunctionType name:DefinitionIdentifier lpar:LPAR args:FunctionFieldWithThrow* rpar:RPAR throws:Throws? annos:Annotations? sep:ListSeparator? endLineComments:ReservedEndLineComments {

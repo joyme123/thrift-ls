@@ -8,42 +8,44 @@ import (
 )
 
 func MustFormatConstValue(cv *parser.ConstValue) string {
+	buf := bytes.NewBuffer(nil)
+	if cv.Comments != nil {
+		buf.WriteString(MustFormatComments(cv.Comments))
+	}
+	sep := ""
+	if cv.ListSeparatorKeyword != nil {
+		sep = MustFormatKeyword(cv.ListSeparatorKeyword.Keyword) + " "
+	}
+
 	switch cv.TypeName {
 	case "list":
 		values := cv.Value.([]*parser.ConstValue)
-		buf := bytes.NewBufferString("[")
+		buf.WriteString(MustFormatKeyword(cv.LBrkKeyword.Keyword))
 		for i := range values {
-			if i != 0 {
-				buf.WriteString(", ")
-			}
 			buf.WriteString(MustFormatConstValue(values[i]))
 		}
-		buf.WriteByte(']')
-		return buf.String()
+		buf.WriteString(MustFormatKeyword(cv.RBrkKeyword.Keyword))
 	case "map":
 		values := cv.Value.([]*parser.ConstValue)
-		buf := bytes.NewBufferString("{")
+		buf.WriteString(MustFormatKeyword(cv.LCurKeyword.Keyword))
 		for i := range values {
-			if i != 0 {
-				buf.WriteString(", ")
-			}
 			buf.WriteString(MustFormatConstValue(values[i]))
 		}
-		buf.WriteByte('}')
-		return buf.String()
+		buf.WriteString(MustFormatKeyword(cv.RCurKeyword.Keyword))
 	case "pair":
 		key := cv.Key.(*parser.ConstValue)
 		value := cv.Value.(*parser.ConstValue)
-		return fmt.Sprintf("%s: %s", MustFormatConstValue(key), MustFormatConstValue(value))
+
+		buf.WriteString(fmt.Sprintf("%s%s %s%s", MustFormatConstValue(key), MustFormatKeyword(cv.ColonKeyword.Keyword), MustFormatConstValue(value), sep))
 	case "identifier":
-		return cv.Value.(string)
+		buf.WriteString(fmt.Sprintf("%s%s", cv.Value.(string), sep))
 	case "string":
-		return fmt.Sprintf("%q", cv.Value)
+		buf.WriteString(fmt.Sprintf("%q%s", cv.Value, sep))
 	case "i64":
-		return cv.ValueInText
+		buf.WriteString(fmt.Sprintf("%s%s", cv.ValueInText, sep))
 	case "double":
-		return cv.ValueInText
+		buf.WriteString(fmt.Sprintf("%s%s", cv.ValueInText, sep))
 	}
 
-	return ""
+	return buf.String()
 }

@@ -1,28 +1,45 @@
 package format
 
 import (
-	"bytes"
-	"fmt"
-
 	"github.com/joyme123/thrift-ls/parser"
 )
 
-func MustFormatEnum(enum *parser.Enum) string {
-	buf := bytes.NewBufferString(fmt.Sprintf("enum %s {\n", enum.Name.Name))
-	for i := range enum.Values {
-		buf.WriteString(fmt.Sprintf("  %s\n", MustFormatEnumValue(enum.Values[i])))
-	}
+const (
+	enumOneLineTpl = `{{.Comments}}{{.Enum}} {{.Identifier}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}`
 
-	buf.WriteString("}\n")
+	enumMultiLineTpl = `{{.Comments}}{{.Enum}} {{.Identifier}} {{.LCUR}}
+{{.EnumValues}}
+{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
+`
+)
 
-	return buf.String()
+type EnumFormatter struct {
+	Comments        string
+	Enum            string
+	Identifier      string
+	LCUR            string
+	EnumValues      string
+	RCUR            string
+	Annotations     string
+	EndLineComments string
 }
 
-func MustFormatEnumValue(enumValue *parser.EnumValue) string {
-	buf := bytes.NewBufferString(enumValue.Name.Name)
-	if enumValue.ValueNode != nil {
-		buf.WriteString(fmt.Sprintf(" = %s", MustFormatConstValue(enumValue.ValueNode)))
+func MustFormatEnum(enum *parser.Enum) string {
+	comments, annos := formatCommentsAndAnnos(enum.Comments, enum.Annotations)
+	f := EnumFormatter{
+		Comments:        comments,
+		Enum:            MustFormatKeyword(enum.EnumKeyword.Keyword),
+		Identifier:      MustFormatIdentifier(enum.Name),
+		LCUR:            MustFormatKeyword(enum.LCurKeyword.Keyword),
+		EnumValues:      MustFormatEnumValues(enum.Values, Indent),
+		RCUR:            MustFormatKeyword(enum.RCurKeyword.Keyword),
+		Annotations:     annos,
+		EndLineComments: MustFormatComments(enum.EndLineComments),
 	}
 
-	return buf.String()
+	if len(enum.Values) > 0 {
+		return MustFormat(enumMultiLineTpl, f)
+	}
+
+	return MustFormat(enumOneLineTpl, f)
 }

@@ -255,7 +255,7 @@ func (i *Include) Type() string {
 
 func (i *Include) SetComments(comments []*Comment, endLineComments []*Comment) {
 	i.Comments = comments
-	i.EndLineComments = comments
+	i.EndLineComments = endLineComments
 }
 
 func (i *Include) Name() string {
@@ -307,7 +307,7 @@ type CPPInclude struct {
 	Path              *Literal
 
 	Comments        []*Comment
-	EndLintComments []*Comment
+	EndLineComments []*Comment
 
 	BadNode bool
 	Location
@@ -334,7 +334,7 @@ func (i *CPPInclude) Type() string {
 
 func (i *CPPInclude) SetComments(comments []*Comment, endLineComments []*Comment) {
 	i.Comments = comments
-	i.EndLintComments = endLineComments
+	i.EndLineComments = endLineComments
 }
 
 func (i *CPPInclude) Children() []Node {
@@ -342,7 +342,7 @@ func (i *CPPInclude) Children() []Node {
 	for _, com := range i.Comments {
 		res = append(res, com)
 	}
-	for _, com := range i.EndLintComments {
+	for _, com := range i.EndLineComments {
 		res = append(res, com)
 	}
 	return res
@@ -848,7 +848,7 @@ func (e *Enum) Type() string {
 
 func (e *Enum) SetComments(comments []*Comment, endlineComments []*Comment) {
 	e.Comments = comments
-	e.EndLineComments = comments
+	e.EndLineComments = endlineComments
 }
 
 func (e *Enum) SetAnnotations(annos *Annotations) {
@@ -1537,11 +1537,11 @@ func ConvertPosition(pos position) Position {
 }
 
 type Field struct {
-	Index      *FieldIndex
-	Required   *Required
-	FieldType  *FieldType
-	Identifier *Identifier
-	ConstValue *ConstValue
+	Index           *FieldIndex
+	RequiredKeyword *RequiredKeyword
+	FieldType       *FieldType
+	Identifier      *Identifier
+	ConstValue      *ConstValue
 
 	EqualKeyword         *EqualKeyword         // can be nil
 	ListSeparatorKeyword *ListSeparatorKeyword // can be nil
@@ -1554,7 +1554,7 @@ type Field struct {
 	Location
 }
 
-func NewField(equalKeyword *EqualKeyword, listSeparatorKeyword *ListSeparatorKeyword, comments []*Comment, endLineComments []*Comment, annotations *Annotations, index *FieldIndex, required *Required, fieldType *FieldType, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
+func NewField(equalKeyword *EqualKeyword, listSeparatorKeyword *ListSeparatorKeyword, comments []*Comment, endLineComments []*Comment, annotations *Annotations, index *FieldIndex, required *RequiredKeyword, fieldType *FieldType, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
 	field := &Field{
 		EqualKeyword:         equalKeyword,
 		ListSeparatorKeyword: listSeparatorKeyword,
@@ -1562,7 +1562,7 @@ func NewField(equalKeyword *EqualKeyword, listSeparatorKeyword *ListSeparatorKey
 		EndLineComments:      endLineComments,
 		Annotations:          annotations,
 		Index:                index,
-		Required:             required,
+		RequiredKeyword:      required,
 		FieldType:            fieldType,
 		Identifier:           identifier,
 		ConstValue:           constValue,
@@ -1580,8 +1580,8 @@ func NewBadField(loc Location) *Field {
 
 func (f *Field) Children() []Node {
 	var res []Node
-	if f.Required != nil {
-		res = append(res, f.Required)
+	if f.RequiredKeyword != nil {
+		res = append(res, f.RequiredKeyword)
 	}
 	if f.FieldType != nil {
 		res = append(res, f.FieldType)
@@ -1690,56 +1690,12 @@ func (f *FieldIndex) ChildrenBadNode() bool {
 	return false
 }
 
-type Required struct {
-	Required bool
-
-	Comments []*Comment
-	BadNode  bool
-	Location
+type RequiredKeyword struct {
+	Keyword
 }
 
-func NewRequired(required bool, comments []*Comment, loc Location) *Required {
-	req := &Required{
-		Required: required,
-		Comments: comments,
-		Location: loc,
-	}
-
-	return req
-}
-
-func NewBadRequired(text string, pos position) *Required {
-	req := &Required{
-		Location: NewLocation(pos, text),
-		BadNode:  true,
-	}
-
-	return req
-}
-
-func (r *Required) Children() []Node {
-	return nil
-}
-
-func (r *Required) Type() string {
-	return "Required"
-}
-
-func (r *Required) IsBadNode() bool {
-	return r.BadNode
-}
-
-func (r *Required) ChildrenBadNode() bool {
-	children := r.Children()
-	for i := range children {
-		if children[i].IsBadNode() {
-			return true
-		}
-		if children[i].ChildrenBadNode() {
-			return true
-		}
-	}
-	return false
+func (r *RequiredKeyword) Type() string {
+	return "RequiredKeyword"
 }
 
 type LPointKeyword struct {
@@ -2065,6 +2021,7 @@ type Literal struct {
 func NewLiteral(comments []*Comment, v string, quote string, loc Location) *Literal {
 	return &Literal{
 		Value:    v,
+		Quote:    quote,
 		Comments: comments,
 		Location: loc,
 	}
@@ -2107,7 +2064,7 @@ func (l *Literal) ChildrenBadNode() bool {
 }
 
 type Annotations struct {
-	Annotation  []*Annotation
+	Annotations []*Annotation
 	LParKeyword *LParKeyword
 	RParKeyword *RParKeyword
 
@@ -2119,7 +2076,7 @@ func NewAnnotations(lpar *LParKeyword, rpar *RParKeyword, annos []*Annotation, l
 	return &Annotations{
 		LParKeyword: lpar,
 		RParKeyword: rpar,
-		Annotation:  annos,
+		Annotations: annos,
 		Location:    loc,
 	}
 }
@@ -2130,8 +2087,8 @@ func (a *Annotations) Type() string {
 
 func (a *Annotations) Children() []Node {
 	nodes := []Node{a.LParKeyword, a.RParKeyword}
-	for i := range a.Annotation {
-		nodes = append(nodes, a.Annotation[i])
+	for i := range a.Annotations {
+		nodes = append(nodes, a.Annotations[i])
 	}
 
 	return nodes
