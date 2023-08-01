@@ -60,7 +60,7 @@ func MustFormatField(field *parser.Field, indent string) string {
 	buf.WriteString(annos)
 	buf.WriteString(formatListSeparator(field.ListSeparatorKeyword))
 	if len(field.EndLineComments) > 0 {
-		buf.WriteString(" " + MustFormatComments(field.EndLineComments, ""))
+		buf.WriteString(MustFormatEndLineComments(field.EndLineComments, ""))
 	}
 
 	// remove space at end of line

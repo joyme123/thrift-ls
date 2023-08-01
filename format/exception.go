@@ -37,7 +37,7 @@ func MustFormatException(excep *parser.Exception) string {
 		Fields:          MustFormatFields(excep.Fields, Indent),
 		RCUR:            MustFormatKeyword(excep.RCurKeyword.Keyword),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(excep.EndLineComments, ""),
+		EndLineComments: MustFormatEndLineComments(excep.EndLineComments, ""),
 	}
 
 	if len(excep.Fields) > 0 {

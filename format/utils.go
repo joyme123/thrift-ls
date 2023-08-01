@@ -33,7 +33,7 @@ func formatCommentsAndAnnos(comments []*parser.Comment, annotations *parser.Anno
 	}
 	annos := ""
 	if annotations != nil && len(annotations.Annotations) > 0 {
-		annos = " " + MustFormatAnnotations(annotations) + " "
+		annos = " " + MustFormatAnnotations(annotations)
 	}
 
 	return commentsStr, annos

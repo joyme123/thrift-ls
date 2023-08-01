@@ -38,7 +38,7 @@ func MustFormatEnum(enum *parser.Enum) string {
 		EnumValues:      MustFormatEnumValues(enum.Values, Indent),
 		RCUR:            MustFormatKeyword(enum.RCurKeyword.Keyword),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(enum.EndLineComments, ""),
+		EndLineComments: MustFormatEndLineComments(enum.EndLineComments, ""),
 	}
 
 	if len(enum.Values) > 0 {

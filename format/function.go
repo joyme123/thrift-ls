@@ -86,7 +86,7 @@ func MustFormatFunction(fn *parser.Function, indent string) string {
 		Throws:          throws,
 		Annotations:     annos,
 		ListSeparator:   sep,
-		EndLineComments: MustFormatComments(fn.EndLineComments, ""),
+		EndLineComments: MustFormatEndLineComments(fn.EndLineComments, ""),
 	}
 
 	fnStr := MustFormat(functionTpl, f)

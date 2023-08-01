@@ -29,7 +29,7 @@ func MustFormatTypedef(td *parser.Typedef) string {
 		Type:            MustFormatFieldType(td.T),
 		Name:            MustFormatIdentifier(td.Alias),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(td.EndLineComments, ""),
+		EndLineComments: MustFormatEndLineComments(td.EndLineComments, ""),
 	}
 
 	return MustFormat(typedefOneLineTpl, f)

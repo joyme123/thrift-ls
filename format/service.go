@@ -38,7 +38,7 @@ func MustFormatService(svc *parser.Service) string {
 		Functions:       MustFormatFunctions(svc.Functions, Indent),
 		RCUR:            MustFormatKeyword(svc.RCurKeyword.Keyword),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(svc.EndLineComments, ""),
+		EndLineComments: MustFormatEndLineComments(svc.EndLineComments, ""),
 	}
 
 	if len(svc.Functions) > 0 {

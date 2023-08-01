@@ -29,6 +29,28 @@ func MustFormatComments(comments []*parser.Comment, indent string) string {
 	return buf.String()
 }
 
+func MustFormatEndLineComments(comments []*parser.Comment, indent string) string {
+	if len(comments) == 0 {
+		return ""
+	}
+	fmtCtx := &fmtContext{}
+	buf := bytes.NewBufferString(" ")
+	for _, c := range comments {
+		if fmtCtx.preNode != nil {
+			buf.WriteString("\n")
+			if lineDistance(fmtCtx.preNode, c) > 1 {
+				buf.WriteString("\n")
+			}
+		}
+
+		buf.WriteString(formatMultiLineComment(c.Text, indent))
+
+		fmtCtx.preNode = c
+	}
+
+	return buf.String()
+}
+
 func formatMultiLineComment(comment string, indent string) string {
 	comment = strings.TrimSpace(comment)
 

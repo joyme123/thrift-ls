@@ -32,7 +32,7 @@ func MustFormatConst(cst *parser.Const) string {
 		Annotations:     annos,
 		Equal:           MustFormatKeyword(cst.EqualKeyword.Keyword),
 		Value:           MustFormatConstValue(cst.Value),
-		EndLineComments: MustFormatComments(cst.EndLineComments, ""),
+		EndLineComments: MustFormatEndLineComments(cst.EndLineComments, ""),
 	}
 
 	return MustFormat(constOneLineTpl, f)

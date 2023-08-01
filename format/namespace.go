@@ -27,7 +27,7 @@ func MustFormatNamespace(ns *parser.Namespace) string {
 		Language:        MustFormatIdentifier(&ns.Language.Identifier),
 		Name:            MustFormatIdentifier(ns.Name),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(ns.EndLineComments, ""),
+		EndLineComments: MustFormatEndLineComments(ns.EndLineComments, ""),
 	}
 
 	return MustFormat(namespaceOneLineTpl, f)

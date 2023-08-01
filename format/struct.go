@@ -5,8 +5,7 @@ import (
 )
 
 const (
-	structOneLineTpl = `{{.Comments}}{{.Struct}} {{.Identifier}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
-`
+	structOneLineTpl = `{{.Comments}}{{.Struct}} {{.Identifier}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}`
 
 	structMultiLineTpl = `{{.Comments}}{{.Struct}} {{.Identifier}} {{.LCUR}}
 {{.Fields}}
@@ -40,7 +39,7 @@ func MustFormatStruct(st *parser.Struct) string {
 		Fields:          MustFormatFields(st.Fields, Indent),
 		RCUR:            MustFormatKeyword(st.RCurKeyword.Keyword),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(st.EndLineComments, ""),
+		EndLineComments: MustFormatEndLineComments(st.EndLineComments, ""),
 	}
 
 	if len(st.Fields) > 0 {

@@ -39,7 +39,7 @@ func MustFormatUnion(union *parser.Union) string {
 		Fields:          MustFormatFields(union.Fields, Indent),
 		RCUR:            MustFormatKeyword(union.RCurKeyword.Keyword),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(union.EndLineComments, ""),
+		EndLineComments: MustFormatEndLineComments(union.EndLineComments, ""),
 	}
 
 	if len(union.Fields) > 0 {
