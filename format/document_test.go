@@ -80,7 +80,7 @@ enum Numberz
   ONE = 1,
 
   // annotations
-  TWO,
+  TWO, // endline comments
   THREE,
   FIVE = 5,
   SIX,
