@@ -3,6 +3,7 @@ package format
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/joyme123/thrift-ls/parser"
 )
@@ -62,7 +63,8 @@ func MustFormatField(field *parser.Field, indent string) string {
 		buf.WriteString(" " + MustFormatComments(field.EndLineComments, ""))
 	}
 
-	return buf.String()
+	// remove space at end of line
+	return strings.TrimRight(buf.String(), " ")
 }
 
 func MustFormatFieldType(ft *parser.FieldType) string {
