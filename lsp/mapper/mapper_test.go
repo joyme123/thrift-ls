@@ -145,3 +145,34 @@ func TestMapper_LSPPosToParserPosition(t *testing.T) {
 		})
 	}
 }
+
+func Test_utf16Count(t *testing.T) {
+	type args struct {
+		contents []byte
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "normal",
+			args: args{
+				contents: []byte("aaaaa"),
+			},
+			want: 5,
+		},
+		{
+			name: "case 2",
+			args: args{
+				contents: []byte("a😀a😂a"),
+			},
+			want: 7,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, utf16Count(tt.args.contents))
+		})
+	}
+}

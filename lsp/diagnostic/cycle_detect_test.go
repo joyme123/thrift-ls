@@ -112,9 +112,43 @@ include "./test/address.thrift"`
 			Include{
 				file: "file:///tmp/test/goods.thrift",
 				include: &parser.Include{
+					IncludeKeyword: &parser.IncludeKeyword{
+						Keyword: parser.Keyword{
+							Literal: &parser.KeywordLiteral{
+								Text:    "include",
+								BadNode: false,
+								Location: parser.Location{
+									StartPos: parser.Position{
+										Line:   1,
+										Col:    1,
+										Offset: 0,
+									},
+									EndPos: parser.Position{
+										Line:   1,
+										Col:    8,
+										Offset: 7,
+									},
+								},
+							},
+							BadNode: false,
+							Location: parser.Location{
+								StartPos: parser.Position{
+									Line:   1,
+									Col:    1,
+									Offset: 0,
+								},
+								EndPos: parser.Position{
+									Line:   1,
+									Col:    9,
+									Offset: 8,
+								},
+							},
+						},
+					},
 					Path: &parser.Literal{
 						Value:   "./test/goods.thrift",
 						BadNode: false,
+						Quote:   "\"",
 						Location: parser.NewLocationFromPos(
 							parser.Position{
 								Line:   1,
@@ -145,8 +179,42 @@ include "./test/address.thrift"`
 			Include{
 				file: "file:///tmp/test/address.thrift",
 				include: &parser.Include{
+					IncludeKeyword: &parser.IncludeKeyword{
+						Keyword: parser.Keyword{
+							Literal: &parser.KeywordLiteral{
+								Text:    "include",
+								BadNode: false,
+								Location: parser.Location{
+									StartPos: parser.Position{
+										Line:   2,
+										Col:    1,
+										Offset: 30,
+									},
+									EndPos: parser.Position{
+										Line:   2,
+										Col:    8,
+										Offset: 37,
+									},
+								},
+							},
+							BadNode: false,
+							Location: parser.Location{
+								StartPos: parser.Position{
+									Line:   2,
+									Col:    1,
+									Offset: 30,
+								},
+								EndPos: parser.Position{
+									Line:   2,
+									Col:    9,
+									Offset: 38,
+								},
+							},
+						},
+					},
 					Path: &parser.Literal{
 						Value:   "./test/address.thrift",
+						Quote:   "\"",
 						BadNode: false,
 						Location: parser.NewLocationFromPos(
 							parser.Position{
@@ -180,8 +248,42 @@ include "./test/address.thrift"`
 			Include{
 				file: "file:///tmp/user.thrift",
 				include: &parser.Include{
+					IncludeKeyword: &parser.IncludeKeyword{
+						Keyword: parser.Keyword{
+							Literal: &parser.KeywordLiteral{
+								Text:    "include",
+								BadNode: false,
+								Location: parser.Location{
+									StartPos: parser.Position{
+										Line:   1,
+										Col:    1,
+										Offset: 0,
+									},
+									EndPos: parser.Position{
+										Line:   1,
+										Col:    8,
+										Offset: 7,
+									},
+								},
+							},
+							BadNode: false,
+							Location: parser.Location{
+								StartPos: parser.Position{
+									Line:   1,
+									Col:    1,
+									Offset: 0,
+								},
+								EndPos: parser.Position{
+									Line:   1,
+									Col:    9,
+									Offset: 8,
+								},
+							},
+						},
+					},
 					Path: &parser.Literal{
 						Value:   "../user.thrift",
+						Quote:   "\"",
 						BadNode: false,
 						Location: parser.NewLocationFromPos(
 							parser.Position{
@@ -215,8 +317,42 @@ include "./test/address.thrift"`
 			Include{
 				file: "file:///tmp/user.thrift",
 				include: &parser.Include{
+					IncludeKeyword: &parser.IncludeKeyword{
+						Keyword: parser.Keyword{
+							Literal: &parser.KeywordLiteral{
+								Text:    "include",
+								BadNode: false,
+								Location: parser.Location{
+									StartPos: parser.Position{
+										Line:   1,
+										Col:    1,
+										Offset: 0,
+									},
+									EndPos: parser.Position{
+										Line:   1,
+										Col:    8,
+										Offset: 7,
+									},
+								},
+							},
+							BadNode: false,
+							Location: parser.Location{
+								StartPos: parser.Position{
+									Line:   1,
+									Col:    1,
+									Offset: 0,
+								},
+								EndPos: parser.Position{
+									Line:   1,
+									Col:    9,
+									Offset: 8,
+								},
+							},
+						},
+					},
 					Path: &parser.Literal{
 						Value:   "../user.thrift",
+						Quote:   "\"",
 						BadNode: false,
 						Location: parser.NewLocationFromPos(
 							parser.Position{

@@ -150,7 +150,9 @@ func (s *Server) FoldingRanges(ctx context.Context, params *protocol.FoldingRang
 }
 
 func (s *Server) Formatting(ctx context.Context, params *protocol.DocumentFormattingParams) (result []protocol.TextEdit, err error) {
-	return nil, nil
+	log.Debugln("-----------Formatting called-----------")
+	defer log.Debugln("-----------Formatting finish-----------")
+	return s.formatting(ctx, params)
 }
 
 func (s *Server) Hover(ctx context.Context, params *protocol.HoverParams) (result *protocol.Hover, err error) {

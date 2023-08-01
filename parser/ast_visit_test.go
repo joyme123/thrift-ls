@@ -114,7 +114,7 @@ enum Test {
 					Col:  70,
 				},
 			},
-			want: []string{"Document", "Service", "Function", "Field", "FieldType", "TypeName"},
+			want: []string{"Document", "Service", "Function", "Throws", "Field", "FieldType", "TypeName"},
 		},
 		{
 			name: "enum value",

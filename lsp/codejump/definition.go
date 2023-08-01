@@ -9,6 +9,7 @@ import (
 	"github.com/joyme123/thrift-ls/lsp/lsputils"
 	"github.com/joyme123/thrift-ls/lsp/types"
 	"github.com/joyme123/thrift-ls/parser"
+	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
@@ -95,6 +96,10 @@ func typeNameDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file 
 	dstAst, err := ss.Parse(ctx, astFile)
 	if err != nil {
 		return astFile, nil, "", err
+	}
+
+	if len(dstAst.Errors()) > 0 {
+		log.Errorf("parse error: %v", dstAst.Errors())
 	}
 
 	// struct, exception, enum or union
