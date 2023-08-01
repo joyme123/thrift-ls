@@ -25,7 +25,11 @@ type EnumFormatter struct {
 }
 
 func MustFormatEnum(enum *parser.Enum) string {
-	comments, annos := formatCommentsAndAnnos(enum.Comments, enum.Annotations)
+	comments, annos := formatCommentsAndAnnos(enum.Comments, enum.Annotations, "")
+	if len(enum.Comments) > 0 && lineDistance(enum.Comments[len(enum.Comments)-1], enum.EnumKeyword) > 1 {
+		comments = comments + "\n"
+	}
+
 	f := EnumFormatter{
 		Comments:        comments,
 		Enum:            MustFormatKeyword(enum.EnumKeyword.Keyword),
@@ -34,7 +38,7 @@ func MustFormatEnum(enum *parser.Enum) string {
 		EnumValues:      MustFormatEnumValues(enum.Values, Indent),
 		RCUR:            MustFormatKeyword(enum.RCurKeyword.Keyword),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(enum.EndLineComments),
+		EndLineComments: MustFormatComments(enum.EndLineComments, ""),
 	}
 
 	if len(enum.Values) > 0 {

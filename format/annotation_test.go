@@ -27,7 +27,7 @@ func TestMustFormatAnnotations(t *testing.T) {
 			args: args{
 				annotations: ast.(*parser.Document).Structs[0].Annotations,
 			},
-			want: `/* xxx */ ( /* xxx */ key /* xxx */ = /* xxx */ "value", key2 = "value2", key3 = "value3" )`,
+			want: `/* xxx */ (/* xxx */ key /* xxx */ = /* xxx */ "value", key2 = "value2", key3 = "value3")`,
 		},
 	}
 	for _, tt := range tests {

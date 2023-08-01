@@ -25,7 +25,11 @@ type UnionFormatter struct {
 }
 
 func MustFormatUnion(union *parser.Union) string {
-	comments, annos := formatCommentsAndAnnos(union.Comments, union.Annotations)
+	comments, annos := formatCommentsAndAnnos(union.Comments, union.Annotations, "")
+
+	if len(union.Comments) > 0 && lineDistance(union.Comments[len(union.Comments)-1], union.UnionKeyword) > 1 {
+		comments = comments + "\n"
+	}
 
 	f := UnionFormatter{
 		Comments:        comments,
@@ -35,7 +39,7 @@ func MustFormatUnion(union *parser.Union) string {
 		Fields:          MustFormatFields(union.Fields, Indent),
 		RCUR:            MustFormatKeyword(union.RCurKeyword.Keyword),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(union.EndLineComments),
+		EndLineComments: MustFormatComments(union.EndLineComments, ""),
 	}
 
 	if len(union.Fields) > 0 {

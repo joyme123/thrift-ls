@@ -25,7 +25,10 @@ type ExceptionFormatter struct {
 }
 
 func MustFormatException(excep *parser.Exception) string {
-	comments, annos := formatCommentsAndAnnos(excep.Comments, excep.Annotations)
+	comments, annos := formatCommentsAndAnnos(excep.Comments, excep.Annotations, "")
+	if len(excep.Comments) > 0 && lineDistance(excep.Comments[len(excep.Comments)-1], excep.ExceptionKeyword) > 1 {
+		comments = comments + "\n"
+	}
 	f := ExceptionFormatter{
 		Comments:        comments,
 		Exception:       MustFormatKeyword(excep.ExceptionKeyword.Keyword),
@@ -34,7 +37,7 @@ func MustFormatException(excep *parser.Exception) string {
 		Fields:          MustFormatFields(excep.Fields, Indent),
 		RCUR:            MustFormatKeyword(excep.RCurKeyword.Keyword),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(excep.EndLineComments),
+		EndLineComments: MustFormatComments(excep.EndLineComments, ""),
 	}
 
 	if len(excep.Fields) > 0 {

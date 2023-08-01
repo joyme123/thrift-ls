@@ -19,7 +19,10 @@ type ConstFormatter struct {
 }
 
 func MustFormatConst(cst *parser.Const) string {
-	comments, annos := formatCommentsAndAnnos(cst.Comments, cst.Annotations)
+	comments, annos := formatCommentsAndAnnos(cst.Comments, cst.Annotations, "")
+	if len(cst.Comments) > 0 && lineDistance(cst.Comments[len(cst.Comments)-1], cst.ConstKeyword) > 1 {
+		comments = comments + "\n"
+	}
 
 	f := &ConstFormatter{
 		Comments:        comments,
@@ -29,7 +32,7 @@ func MustFormatConst(cst *parser.Const) string {
 		Annotations:     annos,
 		Equal:           MustFormatKeyword(cst.EqualKeyword.Keyword),
 		Value:           MustFormatConstValue(cst.Value),
-		EndLineComments: MustFormatComments(cst.EndLineComments),
+		EndLineComments: MustFormatComments(cst.EndLineComments, ""),
 	}
 
 	return MustFormat(constOneLineTpl, f)

@@ -25,7 +25,10 @@ type ServiceFormatter struct {
 }
 
 func MustFormatService(svc *parser.Service) string {
-	comments, annos := formatCommentsAndAnnos(svc.Comments, svc.Annotations)
+	comments, annos := formatCommentsAndAnnos(svc.Comments, svc.Annotations, "")
+	if len(svc.Comments) > 0 && lineDistance(svc.Comments[len(svc.Comments)-1], svc.ServiceKeyword) > 1 {
+		comments = comments + "\n"
+	}
 
 	f := ServiceFormatter{
 		Comments:        comments,
@@ -35,7 +38,7 @@ func MustFormatService(svc *parser.Service) string {
 		Functions:       MustFormatFunctions(svc.Functions, Indent),
 		RCUR:            MustFormatKeyword(svc.RCurKeyword.Keyword),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(svc.EndLineComments),
+		EndLineComments: MustFormatComments(svc.EndLineComments, ""),
 	}
 
 	if len(svc.Functions) > 0 {

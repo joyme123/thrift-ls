@@ -17,7 +17,11 @@ type TypedefFormatter struct {
 }
 
 func MustFormatTypedef(td *parser.Typedef) string {
-	comments, annos := formatCommentsAndAnnos(td.Comments, td.Annotations)
+	comments, annos := formatCommentsAndAnnos(td.Comments, td.Annotations, "")
+
+	if len(td.Comments) > 0 && lineDistance(td.Comments[len(td.Comments)-1], td.TypedefKeyword) > 1 {
+		comments = comments + "\n"
+	}
 
 	f := &TypedefFormatter{
 		Comments:        comments,
@@ -25,7 +29,7 @@ func MustFormatTypedef(td *parser.Typedef) string {
 		Type:            MustFormatFieldType(td.T),
 		Name:            MustFormatIdentifier(td.Alias),
 		Annotations:     annos,
-		EndLineComments: MustFormatComments(td.EndLineComments),
+		EndLineComments: MustFormatComments(td.EndLineComments, ""),
 	}
 
 	return MustFormat(typedefOneLineTpl, f)

@@ -42,6 +42,13 @@ const ThriftTestContent = `
  * details.
  */
 
+
+include "a.thrift"
+include "b.thrift"
+
+cpp_include "aaaaa"
+cpp_include "bbbbb"
+
 namespace c_glib TTest
 namespace cpp thrift.test
 namespace delphi Thrift.Test
@@ -71,6 +78,8 @@ namespace * thrift.test
 enum Numberz
 {
   ONE = 1,
+
+  // annotations
   TWO,
   THREE,
   FIVE = 5,
@@ -82,7 +91,18 @@ const Numberz myNumberz = Numberz.ONE;
 // the following is expected to fail:
 // const Numberz urNumberz = ONE;
 
+
+
+
+
+// additional comment line
+
+
+
+
 typedef i64 UserId
+const UserId default_user = 0
+const UserId admin_user = 1
 
 struct Bonk
 {
@@ -94,6 +114,8 @@ typedef map<string,Bonk> MapType
 
 struct Bools {
   1: bool im_true,
+
+  // comments
   2: bool im_false,
 }
 
@@ -344,6 +366,7 @@ service ThriftTest
    * @param i32 secondsToSleep - the number of seconds to sleep
    */
   oneway void testOneway(1:i32 secondsToSleep)
+  void test()
 }
 
 service SecondService

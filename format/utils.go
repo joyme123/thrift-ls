@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	Indent = "  "
+	Indent = "    "
 )
 
 func MustFormat(tplText string, formatter any) string {
@@ -26,10 +26,10 @@ func MustFormat(tplText string, formatter any) string {
 	return buf.String()
 }
 
-func formatCommentsAndAnnos(comments []*parser.Comment, annotations *parser.Annotations) (string, string) {
+func formatCommentsAndAnnos(comments []*parser.Comment, annotations *parser.Annotations, indent string) (string, string) {
 	commentsStr := ""
 	if len(comments) > 0 {
-		commentsStr = MustFormatComments(comments) + "\n"
+		commentsStr = MustFormatComments(comments, indent) + "\n"
 	}
 	annos := ""
 	if annotations != nil && len(annotations.Annotations) > 0 {
@@ -45,4 +45,8 @@ func formatListSeparator(sep *parser.ListSeparatorKeyword) string {
 	}
 
 	return MustFormatKeyword(sep.Keyword)
+}
+
+func lineDistance(preNode parser.Node, currentNode parser.Node) int {
+	return currentNode.Pos().Line - preNode.End().Line
 }

@@ -1,28 +1,42 @@
 package format
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/joyme123/thrift-ls/parser"
 	"github.com/stretchr/testify/assert"
 )
 
+/*
+ * multi line comments
+ */
 func TestMustFormatComments(t *testing.T) {
-	doc := `/* aaaaa
-aaaaa
-aaaaa
-aaaaa
-*/
-// aaaaa
+	doc := strings.TrimSpace(`
+/*
+ * aaaaa
+ * aaaaa
+ * aaaaa
+ * aaaaa
+ */
+
+
 // aaaaa
 
-include "a.thrift" // aaaaa`
+
+
+// aaaaa
+
+include "a.thrift" // aaaaa
+
+// endline comments`)
 	ast, err := parser.Parse("test.thrift", []byte(doc))
 	assert.NoError(t, err)
 	assert.NotNil(t, ast)
 
 	type args struct {
 		comments []*parser.Comment
+		indent   string
 	}
 	tests := []struct {
 		name string
@@ -33,14 +47,19 @@ include "a.thrift" // aaaaa`
 			name: "comments",
 			args: args{
 				comments: ast.(*parser.Document).Includes[0].Comments,
+				indent:   Indent,
 			},
-			want: `/* aaaaa
-aaaaa
-aaaaa
-aaaaa
-*/
+			want: strings.TrimSpace(`
+/*
+ * aaaaa
+ * aaaaa
+ * aaaaa
+ * aaaaa
+ */
+
 // aaaaa
-// aaaaa`,
+
+// aaaaa`),
 		},
 		{
 			name: "endline comments",
@@ -52,7 +71,7 @@ aaaaa
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, MustFormatComments(tt.args.comments))
+			assert.Equal(t, tt.want, MustFormatComments(tt.args.comments, ""))
 		})
 	}
 }

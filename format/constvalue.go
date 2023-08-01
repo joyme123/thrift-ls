@@ -10,7 +10,7 @@ import (
 func MustFormatConstValue(cv *parser.ConstValue) string {
 	buf := bytes.NewBuffer(nil)
 	if cv.Comments != nil {
-		buf.WriteString(MustFormatComments(cv.Comments))
+		buf.WriteString(MustFormatComments(cv.Comments, Indent))
 	}
 	sep := ""
 	if cv.ListSeparatorKeyword != nil {

@@ -7,5 +7,9 @@ import (
 )
 
 func MustFormatIdentifier(id *parser.Identifier) string {
-	return fmt.Sprintf("%s %s", MustFormatComments(id.Comments), id.Name)
+	comments := MustFormatComments(id.Comments, "")
+	if comments != "" {
+		comments = comments + " "
+	}
+	return fmt.Sprintf("%s%s", comments, id.Name)
 }

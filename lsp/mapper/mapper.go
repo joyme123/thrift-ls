@@ -44,6 +44,19 @@ func (m *Mapper) initLineStart() {
 	})
 }
 
+func (m *Mapper) GetLSPEndPosition() types.Position {
+	m.initLineStart()
+	lastLineStart := m.lineStart[len(m.lineStart)-1]
+	lastLine := m.content[lastLineStart:]
+
+	utf16Len := utf16Count(lastLine)
+
+	return types.Position{
+		Line:      uint32(len(m.lineStart)),
+		Character: uint32(utf16Len) - 1,
+	}
+}
+
 // convert from utf16-based to rune-based position
 func (m *Mapper) LSPPosToParserPosition(pos types.Position) (parser.Position, error) {
 	m.initLineStart()
@@ -119,4 +132,18 @@ func (m *Mapper) LSPPosToParserPosition(pos types.Position) (parser.Position, er
 		Col:    runeLen,
 		Offset: lineStart + bytesCol,
 	}, nil
+}
+
+func utf16Count(contents []byte) int {
+	utf16Len := 0
+	for len(contents) > 0 {
+		utf16Len++
+		r, size := utf8.DecodeRune(contents)
+		if r >= 0x10000 {
+			utf16Len++
+		}
+		contents = contents[size:]
+	}
+
+	return utf16Len
 }

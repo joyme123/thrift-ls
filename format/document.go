@@ -6,6 +6,12 @@ import (
 	"github.com/joyme123/thrift-ls/parser"
 )
 
+type fmtContext struct {
+	// preNode record previous print node. we can use preNode as print context
+	// if preNodex is const or typdef, and current node is const or typedef, '\n' should be ignore
+	preNode parser.Node
+}
+
 func FormatDocument(doc *parser.Document) (string, error) {
 	if doc.ChildrenBadNode() {
 		return "", BadNodeError
@@ -13,61 +19,106 @@ func FormatDocument(doc *parser.Document) (string, error) {
 
 	buf := bytes.NewBuffer(nil)
 
-	var headers []parser.Node
-	var definitions []parser.Node
-	for i := range doc.Nodes {
-		node := doc.Nodes[i]
-		switch node.Type() {
-		case "Include", "CPPInclude", "Namespace":
-			headers = append(headers, node)
-		default:
-			definitions = append(definitions, node)
-		}
-	}
+	fmtCtx := &fmtContext{}
 
-	writeBuf := func(node parser.Node) {
+	writeBuf := func(node parser.Node, addtionalLine bool) {
+		if addtionalLine {
+			buf.WriteString("\n")
+		}
+
 		switch node.Type() {
 		case "Include":
 			buf.WriteString(MustFormatInclude(node.(*parser.Include)))
-			buf.WriteString("\n")
 		case "CPPInclude":
 			buf.WriteString(MustFormatCPPInclude(node.(*parser.CPPInclude)))
-			buf.WriteString("\n")
 		case "Namespace":
 			buf.WriteString(MustFormatNamespace(node.(*parser.Namespace)))
-			buf.WriteString("\n")
 		case "Struct":
 			buf.WriteString(MustFormatStruct(node.(*parser.Struct)))
-			buf.WriteString("\n")
 		case "Union":
 			buf.WriteString(MustFormatUnion(node.(*parser.Union)))
-			buf.WriteString("\n")
 		case "Exception":
 			buf.WriteString(MustFormatException(node.(*parser.Exception)))
-			buf.WriteString("\n")
 		case "Service":
 			buf.WriteString(MustFormatService(node.(*parser.Service)))
-			buf.WriteString("\n")
 		case "Typedef":
 			buf.WriteString(MustFormatTypedef(node.(*parser.Typedef)))
-			buf.WriteString("\n")
 		case "Const":
 			buf.WriteString(MustFormatConst(node.(*parser.Const)))
-			buf.WriteString("\n")
 		case "Enum":
 			buf.WriteString(MustFormatEnum(node.(*parser.Enum)))
-			buf.WriteString("\n")
 		}
+
 	}
 
-	for _, node := range headers {
-		writeBuf(node)
-	}
-	// addition line between headers and definitions
-	buf.WriteString("\n")
-	for _, node := range definitions {
-		writeBuf(node)
+	for _, node := range doc.Nodes {
+		addtionalLine := needAddtionalLineInDocument(fmtCtx.preNode, node)
+		writeBuf(node, addtionalLine)
+		fmtCtx.preNode = node
 	}
 
 	return buf.String(), nil
+}
+
+var (
+	header = map[string]struct{}{
+		"Include":    {},
+		"CPPInclude": {},
+		"Namespace":  {},
+	}
+	onelineDefinition = map[string]struct{}{
+		"Const":   {},
+		"Typedef": {},
+	}
+	multiLineDefinition = map[string]struct{}{
+		"Struct":    {},
+		"Union":     {},
+		"Exception": {},
+		"Service":   {},
+		"Typedef":   {},
+		"Const":     {},
+		"Enum":      {},
+	}
+)
+
+func isHeader(node parser.Node) bool {
+	_, ok := header[node.Type()]
+	return ok
+}
+
+func isOneLineDefinition(node parser.Node) bool {
+	_, ok := onelineDefinition[node.Type()]
+	return ok
+}
+
+func isMultiLineDefinition(node parser.Node) bool {
+	_, ok := multiLineDefinition[node.Type()]
+	return ok
+}
+
+func needAddtionalLineInDocument(preNode parser.Node, currentNode parser.Node) bool {
+	if preNode == nil {
+		return false
+	}
+
+	if isHeader(preNode) && isHeader(currentNode) {
+		if preNode.Type() == currentNode.Type() {
+			if lineDistance(preNode, currentNode) > 1 {
+				return true
+			}
+			return false
+		}
+		return true
+	}
+
+	if isOneLineDefinition(preNode) && isOneLineDefinition(currentNode) {
+		// if preNode and currentNode has one or more empty lines between them, we should reserve
+		// one empty line
+		if lineDistance(preNode, currentNode) > 1 {
+			return true
+		}
+		return false
+	}
+
+	return true
 }

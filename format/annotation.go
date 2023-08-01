@@ -27,6 +27,11 @@ func MustFormatAnnotation(anno *parser.Annotation, isLast bool) string {
 		sep = MustFormatKeyword(anno.ListSeparatorKeyword.Keyword)
 	}
 
+	space := ""
+	if !isLast {
+		space = " "
+	}
+
 	// a = "xxxx",
-	return fmt.Sprintf("%s %s %s%s", MustFormatIdentifier(anno.Identifier), MustFormatKeyword(anno.EqualKeyword.Keyword), MustFormatLiteral(anno.Value), sep)
+	return fmt.Sprintf("%s %s %s%s%s", MustFormatIdentifier(anno.Identifier), MustFormatKeyword(anno.EqualKeyword.Keyword), MustFormatLiteral(anno.Value), sep, space)
 }

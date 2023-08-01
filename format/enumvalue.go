@@ -20,6 +20,7 @@ func MustFormatEnumValues(values []*parser.EnumValue, indent string) string {
 	return buf.String()
 }
 
+// TODO(jpf): comments
 func MustFormatEnumValue(enumValue *parser.EnumValue) string {
 	buf := bytes.NewBufferString(enumValue.Name.Name)
 	if enumValue.ValueNode != nil {
