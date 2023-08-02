@@ -4,24 +4,44 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/joyme123/thrift-ls/parser"
 )
+
+type fieldGroup []string
 
 func MustFormatFields(fields []*parser.Field, indent string) string {
 	buf := bytes.NewBuffer(nil)
 
 	fmtCtx := &fmtContext{}
 
-	for i, field := range fields {
+	var fieldGroups []fieldGroup
+	var fg fieldGroup
+	for _, field := range fields {
 		if needAddtionalLineForFields(fmtCtx.preNode, field) {
-			buf.WriteString("\n")
+			fieldGroups = append(fieldGroups, fg)
+			fg = make(fieldGroup, 0)
 		}
-		buf.WriteString(MustFormatField(field, indent))
-		if i < len(fields)-1 {
-			buf.WriteString("\n")
-		}
+		fg = append(fg, MustFormatField(field, "\t", indent))
 		fmtCtx.preNode = field
+	}
+
+	if len(fg) > 0 {
+		fieldGroups = append(fieldGroups, fg)
+	}
+
+	for i, fg := range fieldGroups {
+		w := new(tabwriter.Writer)
+		w.Init(buf, 1, 0, 1, ' ', 0)
+		for j := range fg {
+			fmt.Fprintln(w, fg[j])
+		}
+		w.Flush()
+
+		if i < len(fieldGroups)-1 {
+			buf.WriteString("\n")
+		}
 	}
 
 	return buf.String()
@@ -30,7 +50,7 @@ func MustFormatFields(fields []*parser.Field, indent string) string {
 func MustFormatOneLineFields(fields []*parser.Field) string {
 	buf := bytes.NewBuffer(nil)
 	for i, field := range fields {
-		buf.WriteString(MustFormatField(field, ""))
+		buf.WriteString(MustFormatField(field, " ", ""))
 		if i < len(fields)-1 {
 			buf.WriteString(" ")
 		}
@@ -39,7 +59,7 @@ func MustFormatOneLineFields(fields []*parser.Field) string {
 	return buf.String()
 }
 
-func MustFormatField(field *parser.Field, indent string) string {
+func MustFormatField(field *parser.Field, space string, indent string) string {
 	comments, annos := formatCommentsAndAnnos(field.Comments, field.Annotations, indent)
 	if len(field.Comments) > 0 && lineDistance(field.Comments[len(field.Comments)-1], field.Index) > 1 {
 		comments = comments + "\n"
@@ -48,14 +68,14 @@ func MustFormatField(field *parser.Field, indent string) string {
 	buf := bytes.NewBuffer([]byte(comments))
 	required := ""
 	if field.RequiredKeyword != nil {
-		required = MustFormatKeyword(field.RequiredKeyword.Keyword) + " "
+		required = MustFormatKeyword(field.RequiredKeyword.Keyword) + space
 	}
 
 	value := ""
 	if field.ConstValue != nil {
-		value = fmt.Sprintf(" %s %s", MustFormatKeyword(field.EqualKeyword.Keyword), MustFormatConstValue(field.ConstValue))
+		value = fmt.Sprintf("%s%s%s%s", space, MustFormatKeyword(field.EqualKeyword.Keyword), space, MustFormatConstValue(field.ConstValue))
 	}
-	str := fmt.Sprintf("%s%d: %s%s %s%s", indent, field.Index.Value, required, MustFormatFieldType(field.FieldType), field.Identifier.Name, value)
+	str := fmt.Sprintf("%s%d:%s%s%s%s%s%s", indent, field.Index.Value, space, required, MustFormatFieldType(field.FieldType), space, field.Identifier.Name, value)
 	buf.WriteString(str)
 	buf.WriteString(annos)
 	buf.WriteString(formatListSeparator(field.ListSeparatorKeyword))

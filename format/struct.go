@@ -8,8 +8,7 @@ const (
 	structOneLineTpl = `{{.Comments}}{{.Struct}} {{.Identifier}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}`
 
 	structMultiLineTpl = `{{.Comments}}{{.Struct}} {{.Identifier}} {{.LCUR}}
-{{.Fields}}
-{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
+{{.Fields}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
 `
 )
 
