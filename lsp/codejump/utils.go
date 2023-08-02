@@ -18,7 +18,11 @@ func GetExceptionNode(ast *parser.Document, name string) *parser.Exception {
 			continue
 		}
 
-		if excep.Name.Name == name {
+		if excep.Name.BadNode || excep.Name.Name == nil {
+			continue
+		}
+
+		if excep.Name.Name.Text == name {
 			return excep
 		}
 	}
@@ -35,7 +39,11 @@ func GetStructNode(ast *parser.Document, name string) *parser.Struct {
 			continue
 		}
 
-		if st.Identifier.Name == name {
+		if st.Identifier.BadNode || st.Identifier.Name == nil {
+			continue
+		}
+
+		if st.Identifier.Name.Text == name {
 			return st
 		}
 	}
@@ -52,7 +60,11 @@ func GetUnionNode(ast *parser.Document, name string) *parser.Union {
 			continue
 		}
 
-		if st.Name.Name == name {
+		if st.Name.BadNode || st.Name.Name == nil {
+			continue
+		}
+
+		if st.Name.Name.Text == name {
 			return st
 		}
 	}
@@ -69,7 +81,11 @@ func GetEnumNode(ast *parser.Document, name string) *parser.Enum {
 			continue
 		}
 
-		if st.Name.Name == name {
+		if st.Name.BadNode || st.Name.Name == nil {
+			continue
+		}
+
+		if st.Name.Name.Text == name {
 			return st
 		}
 	}
@@ -102,11 +118,11 @@ func GetEnumValueIdentifierNode(ast *parser.Document, name string) *parser.Ident
 	}
 
 	for _, enum := range ast.Enums {
-		if enum.BadNode || enum.Name == nil || enum.Name.Name != enumName {
+		if enum.BadNode || enum.Name == nil || enum.Name.Name == nil || enum.Name.Name.Text != enumName {
 			continue
 		}
 		for _, enumValue := range enum.Values {
-			if enumValue.Name == nil || enumValue.Name.BadNode || enumValue.Name.Name != identifier {
+			if enumValue.Name == nil || enumValue.Name.BadNode || enumValue.Name.Name == nil || enumValue.Name.Name.Text != identifier {
 				continue
 			}
 			return enumValue.Name
@@ -122,7 +138,7 @@ func GetConstNode(ast *parser.Document, name string) *parser.Const {
 	}
 
 	for _, cst := range ast.Consts {
-		if cst.BadNode || cst.Name == nil || cst.Name.Name != name {
+		if cst.BadNode || cst.Name == nil || cst.Name.Name == nil || cst.Name.Name.Text != name {
 			continue
 		}
 		return cst
@@ -137,7 +153,7 @@ func GetConstIdentifierNode(ast *parser.Document, name string) *parser.Identifie
 	}
 
 	for _, cst := range ast.Consts {
-		if cst.BadNode || cst.Name == nil || cst.Name.Name != name {
+		if cst.BadNode || cst.Name == nil || cst.Name.Name == nil || cst.Name.Name.Text != name {
 			continue
 		}
 		return cst.Name
@@ -151,10 +167,10 @@ func GetTypedefNode(ast *parser.Document, name string) *parser.Typedef {
 		return nil
 	}
 	for _, td := range ast.Typedefs {
-		if td.BadNode || td.Alias == nil {
+		if td.BadNode || td.Alias == nil || td.Alias.Name == nil {
 			continue
 		}
-		if td.Alias.Name == name {
+		if td.Alias.Name.Text == name {
 			return td
 		}
 	}

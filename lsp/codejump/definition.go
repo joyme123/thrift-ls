@@ -65,7 +65,7 @@ func typeNameDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, a
 		return res, err
 	}
 	if id != nil {
-		res = append(res, jump(astFile, id))
+		res = append(res, jump(astFile, id.Name))
 	}
 
 	return res, nil

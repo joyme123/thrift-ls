@@ -75,7 +75,7 @@ func MustFormatField(field *parser.Field, space string, indent string) string {
 	if field.ConstValue != nil {
 		value = fmt.Sprintf("%s%s%s%s", space, MustFormatKeyword(field.EqualKeyword.Keyword), space, MustFormatConstValue(field.ConstValue))
 	}
-	str := fmt.Sprintf("%s%d:%s%s%s%s%s%s", indent, field.Index.Value, space, required, MustFormatFieldType(field.FieldType), space, field.Identifier.Name, value)
+	str := fmt.Sprintf("%s%d:%s%s%s%s%s%s", indent, field.Index.Value, space, required, MustFormatFieldType(field.FieldType), space, field.Identifier.Name.Text, value)
 	buf.WriteString(str)
 	buf.WriteString(annos)
 	buf.WriteString(formatListSeparator(field.ListSeparatorKeyword))

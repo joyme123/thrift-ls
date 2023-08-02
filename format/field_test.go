@@ -87,7 +87,9 @@ func TestMustFormatFieldType(t *testing.T) {
 						Annotations: []*parser.Annotation{
 							{
 								Identifier: &parser.Identifier{
-									Name: "key1",
+									Name: &parser.IdentifierName{
+										Text: "key1",
+									},
 									Comments: []*parser.Comment{
 										{
 											Text: "/* aaa */",

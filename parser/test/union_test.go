@@ -137,8 +137,8 @@ func Test_ParseUnionLocation(t *testing.T) {
 	assert.Equal(t, 71, docEnd.Offset)
 
 	assert.Len(t, doc.Unions, 1)
-	unionNamePos := doc.Unions[0].Name.Pos()
-	unionNameEnd := doc.Unions[0].Name.End()
+	unionNamePos := doc.Unions[0].Name.Name.Pos()
+	unionNameEnd := doc.Unions[0].Name.Name.End()
 
 	// union pos
 	assert.Equal(t, 1, unionNamePos.Line)

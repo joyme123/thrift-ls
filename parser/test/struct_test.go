@@ -137,8 +137,8 @@ func Test_ParseLocation(t *testing.T) {
 	assert.Equal(t, 72, docEnd.Offset)
 
 	assert.Len(t, doc.Structs, 1)
-	structNamePos := doc.Structs[0].Identifier.Pos()
-	structNameEnd := doc.Structs[0].Identifier.End()
+	structNamePos := doc.Structs[0].Identifier.Name.Pos()
+	structNameEnd := doc.Structs[0].Identifier.Name.End()
 
 	// struct pos
 	assert.Equal(t, 1, structNamePos.Line)

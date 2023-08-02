@@ -75,70 +75,71 @@ func (c *ParseCaches) Tokens() map[string]struct{} {
 			tokens[item.Name()] = struct{}{}
 		}
 		for _, item := range parsed.ast.Enums {
-			if item.Name == nil || item.Name.BadNode {
+			if item.Name == nil || item.Name.BadNode || item.Name.Name == nil || item.Name.Name.BadNode {
 				continue
 			}
-			tokens[item.Name.Name] = struct{}{}
+			tokens[item.Name.Name.Text] = struct{}{}
 			for i := range item.Values {
-				if item.Values[i].BadNode || item.Values[i].Name == nil {
+				if item.Values[i].BadNode || item.Values[i].Name == nil || item.Values[i].Name.BadNode ||
+					item.Values[i].Name.Name == nil || item.Values[i].Name.Name.BadNode {
 					continue
 				}
-				tokens[item.Name.Name] = struct{}{}
+				tokens[item.Name.Name.Text] = struct{}{}
 			}
 		}
 		for _, item := range parsed.ast.Consts {
-			if item.Name == nil || item.Name.BadNode {
+			if item.Name == nil || item.Name.BadNode || item.Name.Name == nil || item.Name.Name.BadNode {
 				continue
 			}
-			tokens[item.Name.Name] = struct{}{}
+			tokens[item.Name.Name.Text] = struct{}{}
 		}
 		for _, item := range parsed.ast.Typedefs {
-			if item.Alias == nil || item.Alias.BadNode {
+			if item.Alias == nil || item.Alias.BadNode || item.Alias.Name == nil || item.Alias.Name.BadNode {
 				continue
 			}
-			tokens[item.Alias.Name] = struct{}{}
+			tokens[item.Alias.Name.Text] = struct{}{}
 		}
 		for _, item := range parsed.ast.Services {
 			if item.Name == nil || item.Name.BadNode {
 				continue
 			}
-			tokens[item.Name.Name] = struct{}{}
+			tokens[item.Name.Name.Text] = struct{}{}
 		}
 		for _, item := range parsed.ast.Unions {
 			if item.Name == nil || item.Name.BadNode {
 				continue
 			}
-			tokens[item.Name.Name] = struct{}{}
+			tokens[item.Name.Name.Text] = struct{}{}
 			for i := range item.Fields {
-				if item.Fields[i].BadNode || item.Fields[i].Identifier == nil {
+				if item.Fields[i].BadNode || item.Fields[i].Identifier == nil || item.Fields[i].Identifier.Name == nil || item.Fields[i].Identifier.Name.BadNode {
 					continue
 				}
-				tokens[item.Fields[i].Identifier.Name] = struct{}{}
+				tokens[item.Fields[i].Identifier.Name.Text] = struct{}{}
 			}
 		}
 		for _, item := range parsed.ast.Structs {
-			if item.Identifier == nil || item.Identifier.BadNode {
+			if item.Identifier == nil || item.Identifier.BadNode || item.Identifier.Name == nil || item.Identifier.Name.BadNode {
 				continue
 			}
-			tokens[item.Identifier.Name] = struct{}{}
+			tokens[item.Identifier.Name.Text] = struct{}{}
 
 			for _, field := range item.Fields {
-				if field.BadNode || field.Identifier == nil || field.Identifier.BadNode {
+				if field.BadNode || field.Identifier == nil || field.Identifier.BadNode || field.Identifier.Name == nil || field.Identifier.Name.BadNode {
 					continue
 				}
-				tokens[field.Identifier.Name] = struct{}{}
+				tokens[field.Identifier.Name.Text] = struct{}{}
 			}
 		}
 		for _, item := range parsed.ast.Exceptions {
-			if item.Name == nil || item.Name.BadNode {
+			if item.Name == nil || item.Name.BadNode || item.Name.Name == nil || item.Name.Name.BadNode {
 				continue
 			}
-			tokens[item.Name.Name] = struct{}{}
+			tokens[item.Name.Name.Text] = struct{}{}
 			for i := range item.Fields {
-				if item.Fields[i].BadNode || item.Fields[i].Identifier == nil {
+				if item.Fields[i].BadNode || item.Fields[i].Identifier == nil || item.Fields[i].Identifier.Name == nil || item.Fields[i].Identifier.Name.BadNode {
 					continue
 				}
-				tokens[item.Fields[i].Identifier.Name] = struct{}{}
+				tokens[item.Fields[i].Identifier.Name.Text] = struct{}{}
 			}
 		}
 	}

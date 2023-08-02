@@ -7,6 +7,7 @@ import (
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/types"
 	"github.com/joyme123/thrift-ls/parser"
+	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
@@ -33,12 +34,12 @@ func TypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos p
 	switch targetNode.Type() {
 	case "TypeName":
 		return typeNameDefinition(ctx, ss, file, pf.AST(), nodePath, targetNode)
-	case "Identifier":
+	case "IdentifierName":
 		// no parent
-		if len(nodePath) == 1 {
+		if len(nodePath) <= 2 {
 			return res, nil
 		}
-		parent := nodePath[len(nodePath)-2]
+		parent := nodePath[len(nodePath)-3]
 		var fieldType *parser.FieldType
 		switch parent.Type() {
 		case "Field":
@@ -59,6 +60,8 @@ func TypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos p
 		}
 	case "ConstValue":
 		return constValueTypeDefinition(ctx, ss, file, pf.AST(), targetNode)
+	default:
+		log.Warningln("unsupport type for type definition:", targetNode.Type())
 	}
 
 	return

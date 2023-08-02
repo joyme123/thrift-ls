@@ -11,5 +11,5 @@ func MustFormatIdentifier(id *parser.Identifier) string {
 	if comments != "" {
 		comments = comments + " "
 	}
-	return fmt.Sprintf("%s%s", comments, id.Name)
+	return fmt.Sprintf("%s%s", comments, id.Name.Text)
 }
