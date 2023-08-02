@@ -57,6 +57,14 @@ func FormatDocument(doc *parser.Document) (string, error) {
 		fmtCtx.preNode = node
 	}
 
+	if len(doc.Comments) > 0 {
+		addtionalLine := needAddtionalLineInDocument(fmtCtx.preNode, doc.Comments[0])
+		if addtionalLine {
+			buf.WriteString("\n")
+		}
+		buf.WriteString(MustFormatComments(doc.Comments, ""))
+	}
+
 	return buf.String(), nil
 }
 

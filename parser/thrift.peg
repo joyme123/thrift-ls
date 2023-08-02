@@ -179,8 +179,8 @@ func toListSeparatorKeyword(sep any) *ListSeparatorKeyword {
 
 }
 
-Document = headers:Header*  defs:Definition* ReservedComments !. {
-	return NewDocument(toHeaderSlice(headers), toDefinitionSlice(defs), NewLocationFromCurrent(c)), nil
+Document = headers:Header*  defs:Definition* comments:ReservedComments !. {
+	return NewDocument(toHeaderSlice(headers), toDefinitionSlice(defs), comments.([]*Comment), NewLocationFromCurrent(c)), nil
 } //{errHeader} ErrHeader //{errDefinition} ErrDefinition
 
 Header = comments:ReservedComments v:(Include / CppInclude / Namespace) endLineComments:ReservedEndLineComments {
