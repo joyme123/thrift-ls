@@ -8,8 +8,7 @@ const (
 	unionOneLineTpl = `{{.Comments}}{{.Union}} {{.Identifier}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}`
 
 	unionMultiLineTpl = `{{.Comments}}{{.Union}} {{.Identifier}} {{.LCUR}}
-{{.Fields}}
-{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
+{{.Fields}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
 `
 )
 

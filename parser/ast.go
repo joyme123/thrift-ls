@@ -39,12 +39,14 @@ type Document struct {
 	Exceptions     []*Exception
 	BadDefinitions []*BadDefinition
 
+	Comments []*Comment // Comments at end of doc
+
 	Nodes []Node
 
 	Location
 }
 
-func NewDocument(headers []Header, defs []Definition, loc Location) *Document {
+func NewDocument(headers []Header, defs []Definition, comments []*Comment, loc Location) *Document {
 	doc := &Document{
 		Location: loc,
 	}
@@ -83,6 +85,10 @@ func NewDocument(headers []Header, defs []Definition, loc Location) *Document {
 			doc.BadDefinitions = append(doc.BadDefinitions, def.(*BadDefinition))
 		}
 		doc.Nodes = append(doc.Nodes, def)
+	}
+	doc.Comments = comments
+	for _, comment := range comments {
+		doc.Nodes = append(doc.Nodes, comment)
 	}
 	return doc
 }

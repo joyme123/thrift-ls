@@ -8,8 +8,7 @@ const (
 	exceptionOneLineTpl = `{{.Comments}}{{.Exception}} {{.Identifier}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}`
 
 	exceptionMultiLineTpl = `{{.Comments}}{{.Exception}} {{.Identifier}} {{.LCUR}}
-{{.Fields}}
-{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
+{{.Fields}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
 `
 )
 

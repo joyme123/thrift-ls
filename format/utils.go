@@ -84,12 +84,14 @@ func EqualsAfterFormat(doc1, doc2 string) error {
 		for !unicode.IsSpace(runes1[cur1]) {
 			return fmt.Errorf("")
 		}
+		cur1++
 	}
 
 	for cur2 < len(runes2) {
 		for !unicode.IsSpace(runes2[cur2]) {
 			return fmt.Errorf("")
 		}
+		cur2++
 	}
 
 	return nil
