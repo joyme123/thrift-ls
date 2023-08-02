@@ -156,7 +156,9 @@ func (s *Server) Formatting(ctx context.Context, params *protocol.DocumentFormat
 }
 
 func (s *Server) Hover(ctx context.Context, params *protocol.HoverParams) (result *protocol.Hover, err error) {
-	return nil, nil
+	log.Debugln("------------hover called----------------")
+	defer log.Debugln("------------hover finish------------")
+	return s.hover(ctx, params)
 }
 
 func (s *Server) Implementation(ctx context.Context, params *protocol.ImplementationParams) (result []protocol.Location, err error) {

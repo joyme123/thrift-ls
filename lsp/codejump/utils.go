@@ -77,6 +77,19 @@ func GetEnumNode(ast *parser.Document, name string) *parser.Enum {
 	return nil
 }
 
+func GetEnumNodeByEnumValue(ast *parser.Document, enumValueName string) *parser.Enum {
+	if ast == nil {
+		return nil
+	}
+
+	enumName, _, found := strings.Cut(enumValueName, ".")
+	if !found {
+		return nil
+	}
+
+	return GetEnumNode(ast, enumName)
+}
+
 // GetEnumValueIdentifierNode enum A { ONE }, ONE is the target node
 func GetEnumValueIdentifierNode(ast *parser.Document, name string) *parser.Identifier {
 	if ast == nil {
@@ -98,6 +111,21 @@ func GetEnumValueIdentifierNode(ast *parser.Document, name string) *parser.Ident
 			}
 			return enumValue.Name
 		}
+	}
+
+	return nil
+}
+
+func GetConstNode(ast *parser.Document, name string) *parser.Const {
+	if ast == nil {
+		return nil
+	}
+
+	for _, cst := range ast.Consts {
+		if cst.BadNode || cst.Name == nil || cst.Name.Name != name {
+			continue
+		}
+		return cst
 	}
 
 	return nil
