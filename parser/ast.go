@@ -121,6 +121,7 @@ func (d *Document) ChildrenBadNode() bool {
 type Header interface {
 	Type() string
 	SetComments(comments []*Comment, endLineComments []*Comment)
+	SetLocation(loc Location)
 	Node
 }
 
@@ -154,6 +155,10 @@ func (h *BadHeader) ChildrenBadNode() bool {
 
 func (h *BadHeader) SetComments([]*Comment, []*Comment) {
 
+}
+
+func (h *BadHeader) SetLocation(loc Location) {
+	h.Location = loc
 }
 
 type KeywordLiteral struct {
@@ -300,6 +305,10 @@ func (i *Include) ChildrenBadNode() bool {
 	return false
 }
 
+func (i *Include) SetLocation(loc Location) {
+	i.Location = loc
+}
+
 type CPPIncludeKeyword struct {
 	Keyword
 }
@@ -370,6 +379,10 @@ func (i *CPPInclude) ChildrenBadNode() bool {
 	}
 
 	return false
+}
+
+func (i *CPPInclude) SetLocation(loc Location) {
+	i.Location = loc
 }
 
 type NamespaceKeyword struct {
@@ -458,11 +471,16 @@ func (n *Namespace) ChildrenBadNode() bool {
 	return false
 }
 
+func (n *Namespace) SetLocation(loc Location) {
+	n.Location = loc
+}
+
 type Definition interface {
 	Node
 	Type() string
 	SetComments(comments []*Comment, endLineComments []*Comment)
 	SetAnnotations(annotations *Annotations)
+	SetLocation(loc Location)
 }
 
 type BadDefinition struct {
@@ -490,6 +508,10 @@ func (d *BadDefinition) SetComments([]*Comment, []*Comment) {
 
 func (d *BadDefinition) SetAnnotations(annos *Annotations) {
 
+}
+
+func (d *BadDefinition) SetLocation(loc Location) {
+	d.Location = loc
 }
 
 func (d *BadDefinition) IsBadNode() bool {
@@ -604,6 +626,10 @@ func (s *Struct) ChildrenBadNode() bool {
 		}
 	}
 	return false
+}
+
+func (s *Struct) SetLocation(loc Location) {
+	s.Location = loc
 }
 
 type ConstKeyword struct {
@@ -724,6 +750,10 @@ func (c *Const) ChildrenBadNode() bool {
 	return false
 }
 
+func (c *Const) SetLocation(loc Location) {
+	c.Location = loc
+}
+
 type TypedefKeyword struct {
 	Keyword
 }
@@ -805,6 +835,10 @@ func (t *Typedef) ChildrenBadNode() bool {
 		}
 	}
 	return false
+}
+
+func (t *Typedef) SetLocation(loc Location) {
+	t.Location = loc
 }
 
 type EnumKeyword struct {
@@ -895,6 +929,10 @@ func (e *Enum) ChildrenBadNode() bool {
 		}
 	}
 	return false
+}
+
+func (e *Enum) SetLocation(loc Location) {
+	e.Location = loc
 }
 
 type EnumValue struct {
@@ -1089,6 +1127,10 @@ func (s *Service) ChildrenBadNode() bool {
 		}
 	}
 	return false
+}
+
+func (s *Service) SetLocation(loc Location) {
+	s.Location = loc
 }
 
 type OnewayKeyword struct {
@@ -1377,6 +1419,10 @@ func (u *Union) ChildrenBadNode() bool {
 	return false
 }
 
+func (u *Union) SetLocation(loc Location) {
+	u.Location = loc
+}
+
 type ExceptionKeyword struct {
 	Keyword
 }
@@ -1465,6 +1511,10 @@ func (e *Exception) ChildrenBadNode() bool {
 		}
 	}
 	return false
+}
+
+func (e *Exception) SetLocation(loc Location) {
+	e.Location = loc
 }
 
 type Identifier struct {

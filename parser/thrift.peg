@@ -245,6 +245,7 @@ Definition = comments:ReservedComments v:(Const / Typedef / Enum / Service / Str
 	def := v.(Definition)
 	def.SetComments(comments.([]*Comment), endLineComments.([]*Comment))
 	def.SetAnnotations(toAnnotations(annos))
+	def.SetLocation(NewLocationFromCurrent(c))
 	return def, nil
 } / x:(ReservedComments &(.+) &{
 	/* fmt.Println("definition predict:", c.pos, "text:", string(c.text)) */
