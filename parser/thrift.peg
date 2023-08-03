@@ -236,8 +236,12 @@ NamespaceScope <- v:(NamespaceScopeAny / Identifier) {
 	return res, nil
 }
 
-NamespaceScopeAny = comments:ReservedComments '*' Indent* {
-	return NewIdentifier("*", comments.([]*Comment), NewLocationFromCurrent(c)), nil
+NamespaceScopeAny = comments:ReservedComments idName:NamespaceScopeAnyToken Indent* {
+	return NewIdentifier(idName.(*IdentifierName), comments.([]*Comment), NewLocationFromCurrent(c)), nil
+}
+
+NamespaceScopeAnyToken = '*' {
+	return NewIdentifierName("*", NewLocationFromCurrent(c)), nil
 }
 
 Definition = comments:ReservedComments v:(Const / Typedef / Enum / Service / Struct / Union / Exception) annos:Annotations? endLineComments:ReservedEndLineComments {
@@ -478,7 +482,7 @@ ConstValue = v:(DoubleConstant / IntConstant / Literal / IdentifierConst / Const
 }
 
 IdentifierConst = id:Identifier {
-	return NewConstValue("identifier", id.(*Identifier).Name, NewLocationFromCurrent(c)), nil
+	return NewConstValue("identifier", id.(*Identifier).Name.Text, NewLocationFromCurrent(c)), nil
 }
 
 EnumValueIntConstant = v:(EQUAL IntConstant) {
@@ -634,14 +638,13 @@ DefinitionIdentifier = id:Identifier {
 } / %{errIdentifier}
 
 Identifier = comments:ReservedComments id:IdentifierToken Indent* {
-	idV := id.(*Identifier)
-	idV.Comments = comments.([]*Comment)
+	idName := id.(*IdentifierName)
 
-	return idV, nil
+	return NewIdentifier(idName, comments.([]*Comment), NewLocationFromCurrent(c)), nil
 }
 
 IdentifierToken = Letter ( Letter / Digit / '.' )* {
-	return NewIdentifier(string(c.text), nil, NewLocationFromCurrent(c)), nil
+	return NewIdentifierName(string(c.text), NewLocationFromCurrent(c)), nil
 } 
 
 ListSeparator = comments:ReservedComments t:ListSeparatorToken Indent* {

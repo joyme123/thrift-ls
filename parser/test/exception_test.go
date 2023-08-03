@@ -137,8 +137,8 @@ func Test_ParseExceptionLocation(t *testing.T) {
 	assert.Equal(t, 75, docEnd.Offset)
 
 	assert.Len(t, doc.Exceptions, 1)
-	namePos := doc.Exceptions[0].Name.Pos()
-	nameEnd := doc.Exceptions[0].Name.End()
+	namePos := doc.Exceptions[0].Name.Name.Pos()
+	nameEnd := doc.Exceptions[0].Name.Name.End()
 
 	// pos
 	assert.Equal(t, 1, namePos.Line)

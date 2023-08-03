@@ -46,19 +46,20 @@ func Reference(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos protoc
 	switch targetNode.Type() {
 	case "TypeName":
 		return searchTypeNameReferences(ctx, ss, file, pf.AST(), nodePath, targetNode)
-	case "Identifier":
-		if len(nodePath) == 1 {
+	case "IdentifierName":
+		if len(nodePath) <= 2 {
 			return
 		}
-		parentNode := nodePath[len(nodePath)-2]
-		definitionType := parentNode.Type()
+		// identifierName -> identifier -> definition
+		parentDefinitionNode := nodePath[len(nodePath)-3]
+		definitionType := parentDefinitionNode.Type()
 		if definitionType == "EnumValue" || definitionType == "Const" {
 			var typeName string
 			if definitionType == "Const" {
-				typeName = fmt.Sprintf("%s.%s", lsputils.GetIncludeName(file), targetNode.(*parser.Identifier).Name)
+				typeName = fmt.Sprintf("%s.%s", lsputils.GetIncludeName(file), targetNode.(*parser.IdentifierName).Text)
 			} else {
-				enumNode := nodePath[len(nodePath)-3]
-				typeName = fmt.Sprintf("%s.%s.%s", lsputils.GetIncludeName(file), enumNode.(*parser.Enum).Name.Name, targetNode.(*parser.Identifier).Name)
+				enumNode := nodePath[len(nodePath)-4]
+				typeName = fmt.Sprintf("%s.%s.%s", lsputils.GetIncludeName(file), enumNode.(*parser.Enum).Name.Name.Text, targetNode.(*parser.IdentifierName).Text)
 			}
 			// search in const value
 			return searchConstValueIdentifierReferences(ctx, ss, file, typeName)
@@ -69,7 +70,7 @@ func Reference(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos protoc
 		}
 
 		// typeName is base.User
-		typeName := fmt.Sprintf("%s.%s", lsputils.GetIncludeName(file), targetNode.(*parser.Identifier).Name)
+		typeName := fmt.Sprintf("%s.%s", lsputils.GetIncludeName(file), targetNode.(*parser.IdentifierName).Text)
 		return searchIdentifierReferences(ctx, ss, file, typeName, definitionType)
 	case "ConstValue":
 		return searchConstValueReferences(ctx, ss, file, pf.AST(), nodePath, targetNode)
@@ -98,7 +99,7 @@ func searchTypeNameReferences(ctx context.Context, ss *cache.Snapshot, file uri.
 	if identifierNode == nil {
 		return
 	}
-	res = append(res, jump(definitionFile, identifierNode))
+	res = append(res, jump(definitionFile, identifierNode.Name))
 
 	locations, err := searchIdentifierReferences(ctx, ss, definitionFile, typeName, definitionType)
 	if err != nil {
@@ -266,7 +267,7 @@ func searchConstValueReferences(ctx context.Context, ss *cache.Snapshot, file ur
 	if identifierNode == nil {
 		return
 	}
-	res = append(res, jump(definitionFile, identifierNode))
+	res = append(res, jump(definitionFile, identifierNode.Name))
 
 	valueName := targetNode.(*parser.ConstValue).Value.(string)
 	locations, err := searchConstValueIdentifierReferences(ctx, ss, definitionFile, valueName)

@@ -1517,20 +1517,60 @@ func (e *Exception) SetLocation(loc Location) {
 	e.Location = loc
 }
 
+type IdentifierName struct {
+	Text string
+
+	BadNode bool
+	Location
+}
+
+func NewIdentifierName(name string, loc Location) *IdentifierName {
+	return &IdentifierName{
+		Text:     name,
+		Location: loc,
+		BadNode:  name == "",
+	}
+}
+
+func (i *IdentifierName) Children() []Node {
+	return nil
+}
+
+func (i *IdentifierName) Type() string {
+	return "IdentifierName"
+}
+
+func (i *IdentifierName) IsBadNode() bool {
+	return i.BadNode
+}
+
+func (i *IdentifierName) ChildrenBadNode() bool {
+	children := i.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type Identifier struct {
-	Name     string
+	Name     *IdentifierName
 	Comments []*Comment
 
 	BadNode bool
 	Location
 }
 
-func NewIdentifier(name string, comments []*Comment, loc Location) *Identifier {
+func NewIdentifier(name *IdentifierName, comments []*Comment, loc Location) *Identifier {
 	id := &Identifier{
 		Name:     name,
 		Comments: comments,
 		Location: loc,
-		BadNode:  name == "",
+		BadNode:  name == nil || name.BadNode,
 	}
 
 	return id
@@ -1546,8 +1586,8 @@ func NewBadIdentifier(loc Location) *Identifier {
 func (i *Identifier) ToFieldType() *FieldType {
 	t := &FieldType{
 		TypeName: &TypeName{
-			Name:     i.Name,
-			Location: i.Location,
+			Name:     i.Name.Text,
+			Location: i.Name.Location,
 		},
 		Location: i.Location,
 	}
@@ -1560,6 +1600,7 @@ func (i *Identifier) Children() []Node {
 	for _, com := range i.Comments {
 		nodes = append(nodes, com)
 	}
+	nodes = append(nodes, i.Name)
 	return nodes
 }
 

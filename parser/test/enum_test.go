@@ -21,17 +21,17 @@ func Test_ParseEnum(t *testing.T) {
 
 	enums := ast.(*parser.Document).Enums
 	assert.Len(t, enums, 1)
-	assert.Equal(t, "TweetType", enums[0].Name.Name)
+	assert.Equal(t, "TweetType", enums[0].Name.Name.Text)
 	assert.Len(t, enums[0].Values, 5)
-	assert.Equal(t, "TWEET", enums[0].Values[0].Name.Name)
+	assert.Equal(t, "TWEET", enums[0].Values[0].Name.Name.Text)
 	assert.Equal(t, int64(0), enums[0].Values[0].Value)
-	assert.Equal(t, "RETWEET", enums[0].Values[1].Name.Name)
+	assert.Equal(t, "RETWEET", enums[0].Values[1].Name.Name.Text)
 	assert.Equal(t, int64(2), enums[0].Values[1].Value)
-	assert.Equal(t, "DM", enums[0].Values[2].Name.Name)
+	assert.Equal(t, "DM", enums[0].Values[2].Name.Name.Text)
 	assert.Equal(t, int64(10), enums[0].Values[2].Value)
-	assert.Equal(t, "REPLY", enums[0].Values[3].Name.Name)
+	assert.Equal(t, "REPLY", enums[0].Values[3].Name.Name.Text)
 	assert.Equal(t, int64(11), enums[0].Values[3].Value)
-	assert.Equal(t, "POST", enums[0].Values[4].Name.Name)
+	assert.Equal(t, "POST", enums[0].Values[4].Name.Name.Text)
 	assert.Equal(t, int64(17), enums[0].Values[4].Value)
 }
 
@@ -158,8 +158,8 @@ func Test_ParseEnumLocation(t *testing.T) {
 	assert.Equal(t, len(demoContent), docEnd.Offset)
 
 	assert.Len(t, doc.Enums, 1)
-	namePos := doc.Enums[0].Name.Pos()
-	nameEnd := doc.Enums[0].Name.End()
+	namePos := doc.Enums[0].Name.Name.Pos()
+	nameEnd := doc.Enums[0].Name.Name.End()
 
 	// name pos
 	assert.Equal(t, 1, namePos.Line)

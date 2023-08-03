@@ -48,7 +48,7 @@ enum Test {
 					Col:  11,
 				},
 			},
-			want: []string{"Document", "Struct", "Identifier"},
+			want: []string{"Document", "Struct", "Identifier", "IdentifierName"},
 		},
 		{
 			name: "field type",
@@ -125,7 +125,7 @@ enum Test {
 					Col:  3,
 				},
 			},
-			want: []string{"Document", "Enum", "EnumValue", "Identifier"},
+			want: []string{"Document", "Enum", "EnumValue", "Identifier", "IdentifierName"},
 		},
 		{
 			name: "enum value const value",

@@ -54,8 +54,8 @@ func Test_ParseTypedefLocation(t *testing.T) {
 	assert.Equal(t, len(demoContent), docEnd.Offset)
 
 	assert.Len(t, doc.Typedefs, 1)
-	aliasPos := doc.Typedefs[0].Alias.Pos()
-	aliasEnd := doc.Typedefs[0].Alias.End()
+	aliasPos := doc.Typedefs[0].Alias.Name.Pos()
+	aliasEnd := doc.Typedefs[0].Alias.Name.End()
 
 	// union pos
 	assert.Equal(t, 1, aliasPos.Line)
