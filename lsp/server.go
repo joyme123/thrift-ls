@@ -170,7 +170,9 @@ func (s *Server) OnTypeFormatting(ctx context.Context, params *protocol.Document
 }
 
 func (s *Server) PrepareRename(ctx context.Context, params *protocol.PrepareRenameParams) (result *protocol.Range, err error) {
-	return nil, nil
+	log.Debugln("--------------------PrepareRename called----------------------")
+	defer log.Debugln("--------------------PrepareRename finish----------------------")
+	return s.prepareRename(ctx, params)
 }
 
 func (s *Server) RangeFormatting(ctx context.Context, params *protocol.DocumentRangeFormattingParams) (result []protocol.TextEdit, err error) {
@@ -184,7 +186,9 @@ func (s *Server) References(ctx context.Context, params *protocol.ReferenceParam
 }
 
 func (s *Server) Rename(ctx context.Context, params *protocol.RenameParams) (result *protocol.WorkspaceEdit, err error) {
-	return nil, nil
+	log.Debugln("--------------------Rename called----------------------")
+	defer log.Debugln("--------------------Rename finish----------------------")
+	return s.rename(ctx, params)
 }
 
 func (s *Server) SignatureHelp(ctx context.Context, params *protocol.SignatureHelpParams) (result *protocol.SignatureHelp, err error) {

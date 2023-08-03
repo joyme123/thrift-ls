@@ -144,5 +144,9 @@ func BuildSnapshotForTest(files []*FileChange) *Snapshot {
 	view := NewView("test", "file:///tmp", fs, store)
 	ss := NewSnapshot(view, store)
 
+	for _, f := range files {
+		ss.Parse(context.TODO(), f.URI)
+	}
+
 	return ss
 }
