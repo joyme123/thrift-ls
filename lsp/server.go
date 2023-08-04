@@ -138,7 +138,9 @@ func (s *Server) DocumentLinkResolve(ctx context.Context, params *protocol.Docum
 }
 
 func (s *Server) DocumentSymbol(ctx context.Context, params *protocol.DocumentSymbolParams) (result []interface{}, err error) {
-	return nil, nil
+	log.Debugln("-----------DocumentSymbol called-----------")
+	defer log.Debugln("-----------DocumentSymbol finish-----------")
+	return s.documentSymbol(ctx, params)
 }
 
 func (s *Server) ExecuteCommand(ctx context.Context, params *protocol.ExecuteCommandParams) (result interface{}, err error) {
