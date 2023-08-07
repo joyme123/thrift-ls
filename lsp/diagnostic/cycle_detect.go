@@ -90,7 +90,7 @@ func getIncludes(ctx context.Context, ss *cache.Snapshot, file uri.URI, includes
 
 	includes := pf.AST().Includes
 	for i := range includes {
-		if includes[i].Path != nil && includes[i].Path.BadNode {
+		if includes[i].Path == nil || includes[i].Path.BadNode {
 			continue
 		}
 		(*includesMap)[file] = append((*includesMap)[file], Include{
