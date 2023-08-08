@@ -26,12 +26,12 @@ func Test_Graph(t *testing.T) {
 	file2 := uri.New("file:///tmp/base.thrift")
 	file3 := uri.New("file:///tmp/addr.thrift")
 	graph.Set(file1, []*parser.Include{
-		{Path: &parser.Literal{Value: "../base.thrift"}},
-		{Path: &parser.Literal{Value: "../addr.thrift"}},
+		{Path: &parser.Literal{Value: &parser.LiteralValue{Text: "../base.thrift"}}},
+		{Path: &parser.Literal{Value: &parser.LiteralValue{Text: "../addr.thrift"}}},
 	})
 	graph.Set(file2, nil)
 	graph.Set(file3, []*parser.Include{
-		{Path: &parser.Literal{Value: "./base.thrift"}},
+		{Path: &parser.Literal{Value: &parser.LiteralValue{Text: "./base.thrift"}}},
 	})
 
 	expectNode1 := &IncludeNode{

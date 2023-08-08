@@ -174,7 +174,7 @@ struct Test {
 						// To insert text into a document create a range where start == end.
 						Start: protocol.Position{
 							Line:      5,
-							Character: 28,
+							Character: 27,
 						},
 						End: protocol.Position{
 							Line:      5,

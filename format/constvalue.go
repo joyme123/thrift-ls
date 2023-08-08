@@ -40,7 +40,15 @@ func MustFormatConstValue(cv *parser.ConstValue) string {
 	case "identifier":
 		buf.WriteString(fmt.Sprintf("%s%s", cv.Value.(string), sep))
 	case "string":
-		buf.WriteString(fmt.Sprintf("%q%s", cv.Value, sep))
+		fmt.Println("value:", cv.Value)
+		val := ""
+		if _, ok := cv.Value.(string); ok {
+			val = cv.Value.(string)
+		} else {
+			fmt.Println("type literal")
+			val = cv.Value.(*parser.Literal).Value.Text
+		}
+		buf.WriteString(fmt.Sprintf("%q%s", val, sep))
 	case "i64":
 		buf.WriteString(fmt.Sprintf("%s%s", cv.ValueInText, sep))
 	case "double":

@@ -102,7 +102,7 @@ func (s *Server) completion(ctx context.Context, params *protocol.CompletionPara
 	}
 	defer release()
 
-	items, err := completion.DefaultTokenCompletion.Completion(ctx, snapshot, &completion.CompletionRequest{
+	items, rng, err := completion.DefaultTokenCompletion.Completion(ctx, snapshot, &completion.CompletionRequest{
 		TriggerKind: 0,
 		Pos: types.Position{
 			Line:      params.Position.Line,
@@ -112,17 +112,6 @@ func (s *Server) completion(ctx context.Context, params *protocol.CompletionPara
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	rng := protocol.Range{
-		Start: protocol.Position{
-			Line:      params.Position.Line,
-			Character: params.Position.Character,
-		},
-		End: protocol.Position{
-			Line:      params.Position.Line,
-			Character: params.Position.Character,
-		},
 	}
 
 	return toLspCompletionList(items, rng), nil
@@ -141,7 +130,7 @@ func toLspCompletionList(items []*completion.CompletionItem, rng protocol.Range)
 				NewText: items[i].InsertText,
 				Range:   rng,
 			},
-			FilterText:       strings.TrimLeft(items[i].InsertText, "&*"),
+			FilterText:       strings.TrimLeft(items[i].Label, "&*"),
 			InsertTextFormat: items[i].InsertTextFormat,
 			SortText:         fmt.Sprintf("%05d", i),
 			Preselect:        i == 0,

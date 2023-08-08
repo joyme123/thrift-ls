@@ -17,8 +17,8 @@ include "../base.thrift"
 
 	includes := ast.(*parser.Document).Includes
 	assert.Len(t, includes, 2)
-	assert.Equal(t, "../user.thrift", includes[0].Path.Value)
-	assert.Equal(t, "../base.thrift", includes[1].Path.Value)
+	assert.Equal(t, "../user.thrift", includes[0].Path.Value.Text)
+	assert.Equal(t, "../base.thrift", includes[1].Path.Value.Text)
 }
 
 func Test_ParseIncludeWithError(t *testing.T) {
@@ -31,6 +31,6 @@ include "../base.thrift
 
 	includes := ast.(*parser.Document).Includes
 	assert.Len(t, includes, 2)
-	assert.Equal(t, "../user.thrift", includes[0].Path.Value)
+	assert.Equal(t, "../user.thrift", includes[0].Path.Value.Text)
 	assert.Equal(t, true, includes[1].Path.BadNode)
 }

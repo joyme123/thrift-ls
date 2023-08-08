@@ -475,8 +475,9 @@ CppType = cpp:CPPTYPE l:Literal {
 }
 
 ConstValue = v:(DoubleConstant / IntConstant / Literal / IdentifierConst / ConstMap / ConstList ) {
-	if str, ok := v.(*Literal); ok {
-		return NewConstValue("string", str.Value, NewLocationFromCurrent(c)), nil
+	if literal, ok := v.(*Literal); ok {
+		fmt.Println("const value convert", literal)
+		return NewConstValue("string", literal, NewLocationFromCurrent(c)), nil
 	}
 	return v.(*ConstValue), nil
 }
@@ -619,18 +620,24 @@ Literal = l:(Literal1 / Literal2) {
 	return l, nil
 } //{errLiteral1MissingRight} ErrLiteral1MissingRight //{errLiteral1} ErrLiteral1 //{errLiteral2MissingRight} ErrLiteral2MissingRight //{errLiteral2} ErrLiteral2
 
-Literal1 = comments:ReservedComments '"' t:(EscapeLiteralChar / !["\r\n] .)* '"' Indent* {
-	strs := toStringSlice(t)
-	return NewLiteral(comments.([]*Comment), strings.Join(strs, ""), "\"", NewLocationFromCurrent(c)), nil
+Literal1 = comments:ReservedComments '"' t:Literal1Val '"' Indent* {
+	return NewLiteral(comments.([]*Comment), t.(*LiteralValue), "\"", NewLocationFromCurrent(c)), nil
 } / x:(&(ReservedComments '"' t:(EscapeLiteralChar / !'"' .)* Indent*) %{errLiteral1MissingRight}) {
 	 return x.([]any)[1], nil 
 }
 
-Literal2 = comments:ReservedComments "'" t:(EscapeLiteralChar / !['\r\n] .)* "'" Indent* {
-	strs := toStringSlice(t)
-	return NewLiteral(comments.([]*Comment), strings.Join(strs, ""), "'", NewLocationFromCurrent(c)), nil
+Literal2 = comments:ReservedComments "'" t:Literal2Val "'" Indent* {
+	return NewLiteral(comments.([]*Comment), t.(*LiteralValue), "'", NewLocationFromCurrent(c)), nil
 } / x:(&(ReservedComments "'" t:(EscapeLiteralChar / !"'" .)* Indent*) %{errLiteral2MissingRight}) {
 	 return x.([]any)[1], nil 
+}
+
+Literal1Val = (EscapeLiteralChar / !["\r\n] .)* {
+	return NewLiteralValue(string(c.text), NewLocationFromCurrent(c)), nil
+}
+
+Literal2Val = (EscapeLiteralChar / !['\r\n] .)* {
+	return NewLiteralValue(string(c.text), NewLocationFromCurrent(c)), nil
 }
 
 DefinitionIdentifier = id:Identifier {
@@ -1269,25 +1276,25 @@ ErrFunctionArgument = #{
 ErrLiteral1MissingRight = #{
 	return InvalidLiteral1MissingRightError
 } ( ![\r\n] .)* { // 消费异常字符直到这行结束
-	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+	return NewBadLiteral(NewLocationFromCurrent(c)), nil
 }
 
 ErrLiteral1 = #{
 	return InvalidLiteral1Error
 } ( ![\r\n] .)* { // 消费异常字符直到这行结束
-	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+	return NewBadLiteral(NewLocationFromCurrent(c)), nil
 }
 
 ErrLiteral2MissingRight = #{
 	return InvalidLiteral2MissingRightError
 } ( ![\r\n] .)* { // 消费异常字符直到这行结束
-	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+	return NewBadLiteral(NewLocationFromCurrent(c)), nil
 }
 
 ErrLiteral2 = #{
 	return InvalidLiteral2Error
 } ( ![\r\n] .)* { // 消费异常字符直到这行结束
-	return NewBadLiteral(string(c.text), NewLocationFromCurrent(c)), nil
+	return NewBadLiteral(NewLocationFromCurrent(c)), nil
 }
 
 ErrConst = #{

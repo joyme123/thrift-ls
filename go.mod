@@ -23,3 +23,5 @@ require (
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
+
+replace go.lsp.dev/protocol => github.com/joyme123/protocol v0.12.1-0.20230807112304-26cf0ace806b
