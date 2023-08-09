@@ -1305,7 +1305,6 @@ ErrConst = #{
 ErrTypedef = #{
 	return InvalidTypedefError
 } (![\r\n] .)* { // 消费异常字符直到这行结束
-	fmt.Println("text: ", string(c.text))
 	return NewBadTypedef(NewLocationFromCurrent(c)), nil
 } 
 
