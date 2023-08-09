@@ -97,7 +97,9 @@ func TestMustFormatFieldType(t *testing.T) {
 									},
 								},
 								Value: &parser.Literal{
-									Value: "value1",
+									Value: &parser.LiteralValue{
+										Text: "value1",
+									},
 									Quote: "'",
 									Comments: []*parser.Comment{
 										{

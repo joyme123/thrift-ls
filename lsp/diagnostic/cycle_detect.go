@@ -94,11 +94,11 @@ func getIncludes(ctx context.Context, ss *cache.Snapshot, file uri.URI, includes
 			continue
 		}
 		(*includesMap)[file] = append((*includesMap)[file], Include{
-			file:    lsputils.IncludeURI(file, includes[i].Path.Value),
+			file:    lsputils.IncludeURI(file, includes[i].Path.Value.Text),
 			include: includes[i],
 		})
 
-		includeURI := lsputils.IncludeURI(file, includes[i].Path.Value)
+		includeURI := lsputils.IncludeURI(file, includes[i].Path.Value.Text)
 		if _, ok := (*includesMap)[includeURI]; ok {
 			continue
 		}

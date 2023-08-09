@@ -7,14 +7,21 @@ import (
 
 	"github.com/joyme123/thrift-ls/lsp/constants"
 	log "github.com/sirupsen/logrus"
+	"go.lsp.dev/protocol"
 )
 
-func ListDirAndFiles(dir, prefix string) (res []string, err error) {
+func ListDirAndFiles(dir, prefix string) (res []Candidate, err error) {
 	// handle prefix list ../../us
+	prefixClean := prefix
 	if len(prefix) > 0 {
-		prefix = filepath.Clean(prefix)
+		prefixClean = filepath.Clean(prefix)
 	}
-	up := strings.Count(prefix, "../")
+
+	if strings.HasSuffix(prefix, ".") {
+		prefix = prefix + "/"
+	}
+
+	up := strings.Count(prefixClean, "../")
 
 	pathItems := strings.Split(dir, "/")
 	if len(pathItems) < up {
@@ -23,11 +30,12 @@ func ListDirAndFiles(dir, prefix string) (res []string, err error) {
 
 	pathItems = pathItems[0 : len(pathItems)-up]
 
-	dir, filePrefix := filepath.Split(strings.TrimLeft(prefix, "../"))
+	dir, filePrefix := filepath.Split(strings.TrimLeft(prefixClean, "../"))
+	filePrefix = strings.TrimLeft(filePrefix, "./")
 	baseDir := strings.Join(pathItems, "/") + "/" + dir
+	prefix = strings.TrimRight(prefix, filePrefix)
 
-	log.Debugf("include completion: walk dir %s with prefix %s", baseDir, filePrefix)
-
+	log.Debugf("include completion: walk dir %s with prefix %s, filePrefix %s", baseDir, prefix, filePrefix)
 	filepath.WalkDir(baseDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || baseDir == path {
 			return nil
@@ -35,9 +43,17 @@ func ListDirAndFiles(dir, prefix string) (res []string, err error) {
 		log.Debugf("include completion: name: %s, prefix: %s", d.Name(), filePrefix)
 		if strings.HasPrefix(d.Name(), filePrefix) {
 			if d.IsDir() {
-				res = append(res, d.Name()+"/")
+				res = append(res, Candidate{
+					showText:   prefix + d.Name() + "/",
+					insertText: prefix + d.Name() + "/",
+					format:     protocol.InsertTextFormatPlainText,
+				})
 			} else if strings.HasSuffix(d.Name(), constants.ThriftExtension) {
-				res = append(res, d.Name())
+				res = append(res, Candidate{
+					showText:   prefix + d.Name(),
+					insertText: prefix + d.Name(),
+					format:     protocol.InsertTextFormatPlainText,
+				})
 			}
 		}
 

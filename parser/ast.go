@@ -270,7 +270,7 @@ func (i *Include) SetComments(comments []*Comment, endLineComments []*Comment) {
 }
 
 func (i *Include) Name() string {
-	_, file := path.Split(i.Path.Value)
+	_, file := path.Split(i.Path.Value.Text)
 	name := strings.TrimRight(file, path.Ext(file))
 	return name
 }
@@ -2103,8 +2103,54 @@ func (c *ConstValue) ChildrenBadNode() bool {
 	return false
 }
 
+type LiteralValue struct {
+	Text string
+
+	BadNode bool
+	Location
+}
+
+func NewLiteralValue(text string, loc Location) *LiteralValue {
+	return &LiteralValue{
+		Text:     text,
+		Location: loc,
+	}
+}
+
+func NewBadLiteralValue(loc Location) *LiteralValue {
+	return &LiteralValue{
+		BadNode:  true,
+		Location: loc,
+	}
+}
+
+func (l *LiteralValue) Children() []Node {
+	return nil
+}
+
+func (l *LiteralValue) Type() string {
+	return "LiteralValue"
+}
+
+func (l *LiteralValue) IsBadNode() bool {
+	return l.BadNode
+}
+
+func (l *LiteralValue) ChildrenBadNode() bool {
+	children := l.Children()
+	for i := range children {
+		if children[i].IsBadNode() {
+			return true
+		}
+		if children[i].ChildrenBadNode() {
+			return true
+		}
+	}
+	return false
+}
+
 type Literal struct {
-	Value string
+	Value *LiteralValue
 
 	Quote string // single for ', double for "
 
@@ -2115,7 +2161,7 @@ type Literal struct {
 }
 
 // TODO: 区分单引号还是双引号?
-func NewLiteral(comments []*Comment, v string, quote string, loc Location) *Literal {
+func NewLiteral(comments []*Comment, v *LiteralValue, quote string, loc Location) *Literal {
 	return &Literal{
 		Value:    v,
 		Quote:    quote,
@@ -2124,7 +2170,7 @@ func NewLiteral(comments []*Comment, v string, quote string, loc Location) *Lite
 	}
 }
 
-func NewBadLiteral(v string, loc Location) *Literal {
+func NewBadLiteral(loc Location) *Literal {
 	return &Literal{
 		Location: loc,
 		BadNode:  true,
@@ -2135,6 +2181,9 @@ func (l *Literal) Children() []Node {
 	var nodes []Node
 	for i := range l.Comments {
 		nodes = append(nodes, l.Comments[i])
+	}
+	if l.Value != nil {
+		nodes = append(nodes, l.Value)
 	}
 	return nodes
 }
@@ -2339,6 +2388,7 @@ func (l *Location) Contains(pos Position) bool {
 	if l == nil {
 		return false
 	}
+	// TODO(jpf): ut
 	return (l.StartPos.Less(pos) || l.StartPos.Equal(pos)) && l.EndPos.Greater(pos)
 }
 

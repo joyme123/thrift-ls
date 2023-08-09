@@ -43,17 +43,17 @@ func GetIncludeName(file uri.URI) string {
 // if doesn't match, return empty string
 func GetIncludePath(ast *parser.Document, includeName string) string {
 	for _, include := range ast.Includes {
-		if include.BadNode || include.Path == nil {
+		if include.BadNode || include.Path == nil || include.Path.BadNode {
 			continue
 		}
-		items := strings.Split(include.Path.Value, "/")
+		items := strings.Split(include.Path.Value.Text, "/")
 		path := items[len(items)-1]
 		name, _, found := strings.Cut(path, ".")
 		if !found {
 			continue
 		}
 		if name == includeName {
-			return include.Path.Value
+			return include.Path.Value.Text
 		}
 	}
 

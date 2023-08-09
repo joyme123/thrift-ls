@@ -217,7 +217,7 @@ func initializeResult() *protocol.InitializeResult {
 					},
 				},
 				StaticRegistrationOptions: protocol.StaticRegistrationOptions{
-					ID: "thriftfs",
+					ID: "thriftls",
 				},
 			},
 			Workspace: &protocol.ServerCapabilitiesWorkspace{

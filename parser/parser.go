@@ -57,10 +57,10 @@ func (p *PEGParser) parseRecursively(filename string, content []byte, curDepth i
 
 	if doc != nil {
 		for _, include := range doc.Includes {
-			if include.Path == nil || include.Path.BadNode {
+			if include.Path == nil || include.Path.ChildrenBadNode() {
 				continue
 			}
-			f, c, err := call(include.Path.Value)
+			f, c, err := call(include.Path.Value.Text)
 			if err == nil {
 				errs = append(errs, err)
 			}

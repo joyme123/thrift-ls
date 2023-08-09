@@ -146,7 +146,21 @@ include "./test/address.thrift"`
 						},
 					},
 					Path: &parser.Literal{
-						Value:   "./test/goods.thrift",
+						Value: &parser.LiteralValue{
+							Text: "./test/goods.thrift",
+							Location: parser.Location{
+								StartPos: parser.Position{
+									Line:   1,
+									Col:    10,
+									Offset: 9,
+								},
+								EndPos: parser.Position{
+									Line:   1,
+									Col:    29,
+									Offset: 28,
+								},
+							},
+						},
 						BadNode: false,
 						Quote:   "\"",
 						Location: parser.NewLocationFromPos(
@@ -213,7 +227,21 @@ include "./test/address.thrift"`
 						},
 					},
 					Path: &parser.Literal{
-						Value:   "./test/address.thrift",
+						Value: &parser.LiteralValue{
+							Text: "./test/address.thrift",
+							Location: parser.Location{
+								StartPos: parser.Position{
+									Line:   2,
+									Col:    10,
+									Offset: 39,
+								},
+								EndPos: parser.Position{
+									Line:   2,
+									Col:    31,
+									Offset: 60,
+								},
+							},
+						},
 						Quote:   "\"",
 						BadNode: false,
 						Location: parser.NewLocationFromPos(
@@ -282,7 +310,21 @@ include "./test/address.thrift"`
 						},
 					},
 					Path: &parser.Literal{
-						Value:   "../user.thrift",
+						Value: &parser.LiteralValue{
+							Text: "../user.thrift",
+							Location: parser.Location{
+								StartPos: parser.Position{
+									Line:   1,
+									Col:    10,
+									Offset: 9,
+								},
+								EndPos: parser.Position{
+									Line:   1,
+									Col:    24,
+									Offset: 23,
+								},
+							},
+						},
 						Quote:   "\"",
 						BadNode: false,
 						Location: parser.NewLocationFromPos(
@@ -351,7 +393,21 @@ include "./test/address.thrift"`
 						},
 					},
 					Path: &parser.Literal{
-						Value:   "../user.thrift",
+						Value: &parser.LiteralValue{
+							Text: "../user.thrift",
+							Location: parser.Location{
+								StartPos: parser.Position{
+									Line:   1,
+									Col:    10,
+									Offset: 9,
+								},
+								EndPos: parser.Position{
+									Line:   1,
+									Col:    24,
+									Offset: 23,
+								},
+							},
+						},
 						Quote:   "\"",
 						BadNode: false,
 						Location: parser.NewLocationFromPos(
