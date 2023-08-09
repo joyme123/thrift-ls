@@ -8188,26 +8188,26 @@ var g = &grammar{
 		},
 		{
 			name: "ErrEnum",
-			pos:  position{line: 1312, col: 1, offset: 37554},
+			pos:  position{line: 1311, col: 1, offset: 37515},
 			expr: &actionExpr{
-				pos: position{line: 1312, col: 11, offset: 37564},
+				pos: position{line: 1311, col: 11, offset: 37525},
 				run: (*parser).callonErrEnum1,
 				expr: &seqExpr{
-					pos: position{line: 1312, col: 11, offset: 37564},
+					pos: position{line: 1311, col: 11, offset: 37525},
 					exprs: []any{
 						&stateCodeExpr{
-							pos: position{line: 1312, col: 11, offset: 37564},
+							pos: position{line: 1311, col: 11, offset: 37525},
 							run: (*parser).callonErrEnum3,
 						},
 						&zeroOrMoreExpr{
-							pos: position{line: 1314, col: 3, offset: 37594},
+							pos: position{line: 1313, col: 3, offset: 37555},
 							expr: &seqExpr{
-								pos: position{line: 1314, col: 4, offset: 37595},
+								pos: position{line: 1313, col: 4, offset: 37556},
 								exprs: []any{
 									&notExpr{
-										pos: position{line: 1314, col: 4, offset: 37595},
+										pos: position{line: 1313, col: 4, offset: 37556},
 										expr: &charClassMatcher{
-											pos:        position{line: 1314, col: 5, offset: 37596},
+											pos:        position{line: 1313, col: 5, offset: 37557},
 											val:        "[\\r\\n]",
 											chars:      []rune{'\r', '\n'},
 											ignoreCase: false,
@@ -8215,7 +8215,7 @@ var g = &grammar{
 										},
 									},
 									&anyMatcher{
-										line: 1314, col: 12, offset: 37603,
+										line: 1313, col: 12, offset: 37564,
 									},
 								},
 							},
@@ -8226,26 +8226,26 @@ var g = &grammar{
 		},
 		{
 			name: "ErrService",
-			pos:  position{line: 1318, col: 1, offset: 37704},
+			pos:  position{line: 1317, col: 1, offset: 37665},
 			expr: &actionExpr{
-				pos: position{line: 1318, col: 14, offset: 37717},
+				pos: position{line: 1317, col: 14, offset: 37678},
 				run: (*parser).callonErrService1,
 				expr: &seqExpr{
-					pos: position{line: 1318, col: 14, offset: 37717},
+					pos: position{line: 1317, col: 14, offset: 37678},
 					exprs: []any{
 						&stateCodeExpr{
-							pos: position{line: 1318, col: 14, offset: 37717},
+							pos: position{line: 1317, col: 14, offset: 37678},
 							run: (*parser).callonErrService3,
 						},
 						&zeroOrMoreExpr{
-							pos: position{line: 1320, col: 3, offset: 37750},
+							pos: position{line: 1319, col: 3, offset: 37711},
 							expr: &seqExpr{
-								pos: position{line: 1320, col: 4, offset: 37751},
+								pos: position{line: 1319, col: 4, offset: 37712},
 								exprs: []any{
 									&notExpr{
-										pos: position{line: 1320, col: 4, offset: 37751},
+										pos: position{line: 1319, col: 4, offset: 37712},
 										expr: &charClassMatcher{
-											pos:        position{line: 1320, col: 5, offset: 37752},
+											pos:        position{line: 1319, col: 5, offset: 37713},
 											val:        "[\\r\\n]",
 											chars:      []rune{'\r', '\n'},
 											ignoreCase: false,
@@ -8253,7 +8253,7 @@ var g = &grammar{
 										},
 									},
 									&anyMatcher{
-										line: 1320, col: 12, offset: 37759,
+										line: 1319, col: 12, offset: 37720,
 									},
 								},
 							},
@@ -8264,26 +8264,26 @@ var g = &grammar{
 		},
 		{
 			name: "ErrStruct",
-			pos:  position{line: 1324, col: 1, offset: 37863},
+			pos:  position{line: 1323, col: 1, offset: 37824},
 			expr: &actionExpr{
-				pos: position{line: 1324, col: 13, offset: 37875},
+				pos: position{line: 1323, col: 13, offset: 37836},
 				run: (*parser).callonErrStruct1,
 				expr: &seqExpr{
-					pos: position{line: 1324, col: 13, offset: 37875},
+					pos: position{line: 1323, col: 13, offset: 37836},
 					exprs: []any{
 						&stateCodeExpr{
-							pos: position{line: 1324, col: 13, offset: 37875},
+							pos: position{line: 1323, col: 13, offset: 37836},
 							run: (*parser).callonErrStruct3,
 						},
 						&zeroOrMoreExpr{
-							pos: position{line: 1326, col: 3, offset: 37907},
+							pos: position{line: 1325, col: 3, offset: 37868},
 							expr: &seqExpr{
-								pos: position{line: 1326, col: 4, offset: 37908},
+								pos: position{line: 1325, col: 4, offset: 37869},
 								exprs: []any{
 									&notExpr{
-										pos: position{line: 1326, col: 4, offset: 37908},
+										pos: position{line: 1325, col: 4, offset: 37869},
 										expr: &charClassMatcher{
-											pos:        position{line: 1326, col: 5, offset: 37909},
+											pos:        position{line: 1325, col: 5, offset: 37870},
 											val:        "[\\r\\n]",
 											chars:      []rune{'\r', '\n'},
 											ignoreCase: false,
@@ -8291,7 +8291,7 @@ var g = &grammar{
 										},
 									},
 									&anyMatcher{
-										line: 1326, col: 12, offset: 37916,
+										line: 1325, col: 12, offset: 37877,
 									},
 								},
 							},
@@ -8302,26 +8302,26 @@ var g = &grammar{
 		},
 		{
 			name: "ErrUnion",
-			pos:  position{line: 1330, col: 1, offset: 38019},
+			pos:  position{line: 1329, col: 1, offset: 37980},
 			expr: &actionExpr{
-				pos: position{line: 1330, col: 12, offset: 38030},
+				pos: position{line: 1329, col: 12, offset: 37991},
 				run: (*parser).callonErrUnion1,
 				expr: &seqExpr{
-					pos: position{line: 1330, col: 12, offset: 38030},
+					pos: position{line: 1329, col: 12, offset: 37991},
 					exprs: []any{
 						&stateCodeExpr{
-							pos: position{line: 1330, col: 12, offset: 38030},
+							pos: position{line: 1329, col: 12, offset: 37991},
 							run: (*parser).callonErrUnion3,
 						},
 						&zeroOrMoreExpr{
-							pos: position{line: 1332, col: 3, offset: 38061},
+							pos: position{line: 1331, col: 3, offset: 38022},
 							expr: &seqExpr{
-								pos: position{line: 1332, col: 4, offset: 38062},
+								pos: position{line: 1331, col: 4, offset: 38023},
 								exprs: []any{
 									&notExpr{
-										pos: position{line: 1332, col: 4, offset: 38062},
+										pos: position{line: 1331, col: 4, offset: 38023},
 										expr: &charClassMatcher{
-											pos:        position{line: 1332, col: 5, offset: 38063},
+											pos:        position{line: 1331, col: 5, offset: 38024},
 											val:        "[\\r\\n]",
 											chars:      []rune{'\r', '\n'},
 											ignoreCase: false,
@@ -8329,7 +8329,7 @@ var g = &grammar{
 										},
 									},
 									&anyMatcher{
-										line: 1332, col: 12, offset: 38070,
+										line: 1331, col: 12, offset: 38031,
 									},
 								},
 							},
@@ -8340,26 +8340,26 @@ var g = &grammar{
 		},
 		{
 			name: "ErrException",
-			pos:  position{line: 1336, col: 1, offset: 38172},
+			pos:  position{line: 1335, col: 1, offset: 38133},
 			expr: &actionExpr{
-				pos: position{line: 1336, col: 16, offset: 38187},
+				pos: position{line: 1335, col: 16, offset: 38148},
 				run: (*parser).callonErrException1,
 				expr: &seqExpr{
-					pos: position{line: 1336, col: 16, offset: 38187},
+					pos: position{line: 1335, col: 16, offset: 38148},
 					exprs: []any{
 						&stateCodeExpr{
-							pos: position{line: 1336, col: 16, offset: 38187},
+							pos: position{line: 1335, col: 16, offset: 38148},
 							run: (*parser).callonErrException3,
 						},
 						&zeroOrMoreExpr{
-							pos: position{line: 1338, col: 3, offset: 38222},
+							pos: position{line: 1337, col: 3, offset: 38183},
 							expr: &seqExpr{
-								pos: position{line: 1338, col: 4, offset: 38223},
+								pos: position{line: 1337, col: 4, offset: 38184},
 								exprs: []any{
 									&notExpr{
-										pos: position{line: 1338, col: 4, offset: 38223},
+										pos: position{line: 1337, col: 4, offset: 38184},
 										expr: &charClassMatcher{
-											pos:        position{line: 1338, col: 5, offset: 38224},
+											pos:        position{line: 1337, col: 5, offset: 38185},
 											val:        "[\\r\\n]",
 											chars:      []rune{'\r', '\n'},
 											ignoreCase: false,
@@ -8367,7 +8367,7 @@ var g = &grammar{
 										},
 									},
 									&anyMatcher{
-										line: 1338, col: 12, offset: 38231,
+										line: 1337, col: 12, offset: 38192,
 									},
 								},
 							},
@@ -8378,26 +8378,26 @@ var g = &grammar{
 		},
 		{
 			name: "ErrDefinition",
-			pos:  position{line: 1342, col: 1, offset: 38337},
+			pos:  position{line: 1341, col: 1, offset: 38298},
 			expr: &actionExpr{
-				pos: position{line: 1342, col: 17, offset: 38353},
+				pos: position{line: 1341, col: 17, offset: 38314},
 				run: (*parser).callonErrDefinition1,
 				expr: &seqExpr{
-					pos: position{line: 1342, col: 17, offset: 38353},
+					pos: position{line: 1341, col: 17, offset: 38314},
 					exprs: []any{
 						&stateCodeExpr{
-							pos: position{line: 1342, col: 17, offset: 38353},
+							pos: position{line: 1341, col: 17, offset: 38314},
 							run: (*parser).callonErrDefinition3,
 						},
 						&zeroOrMoreExpr{
-							pos: position{line: 1344, col: 3, offset: 38389},
+							pos: position{line: 1343, col: 3, offset: 38350},
 							expr: &seqExpr{
-								pos: position{line: 1344, col: 4, offset: 38390},
+								pos: position{line: 1343, col: 4, offset: 38351},
 								exprs: []any{
 									&notExpr{
-										pos: position{line: 1344, col: 4, offset: 38390},
+										pos: position{line: 1343, col: 4, offset: 38351},
 										expr: &charClassMatcher{
-											pos:        position{line: 1344, col: 5, offset: 38391},
+											pos:        position{line: 1343, col: 5, offset: 38352},
 											val:        "[\\r\\n]",
 											chars:      []rune{'\r', '\n'},
 											ignoreCase: false,
@@ -8405,7 +8405,7 @@ var g = &grammar{
 										},
 									},
 									&anyMatcher{
-										line: 1344, col: 12, offset: 38398,
+										line: 1343, col: 12, offset: 38359,
 									},
 								},
 							},
@@ -8416,26 +8416,26 @@ var g = &grammar{
 		},
 		{
 			name: "ErrInclude",
-			pos:  position{line: 1348, col: 1, offset: 38504},
+			pos:  position{line: 1347, col: 1, offset: 38465},
 			expr: &actionExpr{
-				pos: position{line: 1348, col: 14, offset: 38517},
+				pos: position{line: 1347, col: 14, offset: 38478},
 				run: (*parser).callonErrInclude1,
 				expr: &seqExpr{
-					pos: position{line: 1348, col: 14, offset: 38517},
+					pos: position{line: 1347, col: 14, offset: 38478},
 					exprs: []any{
 						&stateCodeExpr{
-							pos: position{line: 1348, col: 14, offset: 38517},
+							pos: position{line: 1347, col: 14, offset: 38478},
 							run: (*parser).callonErrInclude3,
 						},
 						&zeroOrMoreExpr{
-							pos: position{line: 1350, col: 3, offset: 38550},
+							pos: position{line: 1349, col: 3, offset: 38511},
 							expr: &seqExpr{
-								pos: position{line: 1350, col: 4, offset: 38551},
+								pos: position{line: 1349, col: 4, offset: 38512},
 								exprs: []any{
 									&notExpr{
-										pos: position{line: 1350, col: 4, offset: 38551},
+										pos: position{line: 1349, col: 4, offset: 38512},
 										expr: &charClassMatcher{
-											pos:        position{line: 1350, col: 5, offset: 38552},
+											pos:        position{line: 1349, col: 5, offset: 38513},
 											val:        "[\\r\\n]",
 											chars:      []rune{'\r', '\n'},
 											ignoreCase: false,
@@ -8443,7 +8443,7 @@ var g = &grammar{
 										},
 									},
 									&anyMatcher{
-										line: 1350, col: 12, offset: 38559,
+										line: 1349, col: 12, offset: 38520,
 									},
 								},
 							},
@@ -8454,26 +8454,26 @@ var g = &grammar{
 		},
 		{
 			name: "ErrCppInclude",
-			pos:  position{line: 1354, col: 1, offset: 38662},
+			pos:  position{line: 1353, col: 1, offset: 38623},
 			expr: &actionExpr{
-				pos: position{line: 1354, col: 17, offset: 38678},
+				pos: position{line: 1353, col: 17, offset: 38639},
 				run: (*parser).callonErrCppInclude1,
 				expr: &seqExpr{
-					pos: position{line: 1354, col: 17, offset: 38678},
+					pos: position{line: 1353, col: 17, offset: 38639},
 					exprs: []any{
 						&stateCodeExpr{
-							pos: position{line: 1354, col: 17, offset: 38678},
+							pos: position{line: 1353, col: 17, offset: 38639},
 							run: (*parser).callonErrCppInclude3,
 						},
 						&zeroOrMoreExpr{
-							pos: position{line: 1356, col: 3, offset: 38714},
+							pos: position{line: 1355, col: 3, offset: 38675},
 							expr: &seqExpr{
-								pos: position{line: 1356, col: 4, offset: 38715},
+								pos: position{line: 1355, col: 4, offset: 38676},
 								exprs: []any{
 									&notExpr{
-										pos: position{line: 1356, col: 4, offset: 38715},
+										pos: position{line: 1355, col: 4, offset: 38676},
 										expr: &charClassMatcher{
-											pos:        position{line: 1356, col: 5, offset: 38716},
+											pos:        position{line: 1355, col: 5, offset: 38677},
 											val:        "[\\r\\n]",
 											chars:      []rune{'\r', '\n'},
 											ignoreCase: false,
@@ -8481,7 +8481,7 @@ var g = &grammar{
 										},
 									},
 									&anyMatcher{
-										line: 1356, col: 12, offset: 38723,
+										line: 1355, col: 12, offset: 38684,
 									},
 								},
 							},
@@ -8492,26 +8492,26 @@ var g = &grammar{
 		},
 		{
 			name: "ErrNamespace",
-			pos:  position{line: 1360, col: 1, offset: 38829},
+			pos:  position{line: 1359, col: 1, offset: 38790},
 			expr: &actionExpr{
-				pos: position{line: 1360, col: 16, offset: 38844},
+				pos: position{line: 1359, col: 16, offset: 38805},
 				run: (*parser).callonErrNamespace1,
 				expr: &seqExpr{
-					pos: position{line: 1360, col: 16, offset: 38844},
+					pos: position{line: 1359, col: 16, offset: 38805},
 					exprs: []any{
 						&stateCodeExpr{
-							pos: position{line: 1360, col: 16, offset: 38844},
+							pos: position{line: 1359, col: 16, offset: 38805},
 							run: (*parser).callonErrNamespace3,
 						},
 						&zeroOrMoreExpr{
-							pos: position{line: 1362, col: 3, offset: 38879},
+							pos: position{line: 1361, col: 3, offset: 38840},
 							expr: &seqExpr{
-								pos: position{line: 1362, col: 4, offset: 38880},
+								pos: position{line: 1361, col: 4, offset: 38841},
 								exprs: []any{
 									&notExpr{
-										pos: position{line: 1362, col: 4, offset: 38880},
+										pos: position{line: 1361, col: 4, offset: 38841},
 										expr: &charClassMatcher{
-											pos:        position{line: 1362, col: 5, offset: 38881},
+											pos:        position{line: 1361, col: 5, offset: 38842},
 											val:        "[\\r\\n]",
 											chars:      []rune{'\r', '\n'},
 											ignoreCase: false,
@@ -8519,7 +8519,7 @@ var g = &grammar{
 										},
 									},
 									&anyMatcher{
-										line: 1362, col: 12, offset: 38888,
+										line: 1361, col: 12, offset: 38849,
 									},
 								},
 							},
@@ -8530,26 +8530,26 @@ var g = &grammar{
 		},
 		{
 			name: "ErrHeader",
-			pos:  position{line: 1366, col: 1, offset: 38993},
+			pos:  position{line: 1365, col: 1, offset: 38954},
 			expr: &actionExpr{
-				pos: position{line: 1366, col: 13, offset: 39005},
+				pos: position{line: 1365, col: 13, offset: 38966},
 				run: (*parser).callonErrHeader1,
 				expr: &seqExpr{
-					pos: position{line: 1366, col: 13, offset: 39005},
+					pos: position{line: 1365, col: 13, offset: 38966},
 					exprs: []any{
 						&stateCodeExpr{
-							pos: position{line: 1366, col: 13, offset: 39005},
+							pos: position{line: 1365, col: 13, offset: 38966},
 							run: (*parser).callonErrHeader3,
 						},
 						&zeroOrMoreExpr{
-							pos: position{line: 1368, col: 3, offset: 39037},
+							pos: position{line: 1367, col: 3, offset: 38998},
 							expr: &seqExpr{
-								pos: position{line: 1368, col: 4, offset: 39038},
+								pos: position{line: 1367, col: 4, offset: 38999},
 								exprs: []any{
 									&notExpr{
-										pos: position{line: 1368, col: 4, offset: 39038},
+										pos: position{line: 1367, col: 4, offset: 38999},
 										expr: &charClassMatcher{
-											pos:        position{line: 1368, col: 5, offset: 39039},
+											pos:        position{line: 1367, col: 5, offset: 39000},
 											val:        "[\\r\\n]",
 											chars:      []rune{'\r', '\n'},
 											ignoreCase: false,
@@ -8557,7 +8557,7 @@ var g = &grammar{
 										},
 									},
 									&anyMatcher{
-										line: 1368, col: 12, offset: 39046,
+										line: 1367, col: 12, offset: 39007,
 									},
 								},
 							},
@@ -11284,7 +11284,6 @@ func (p *parser) callonErrTypedef3() error {
 
 func (c *current) onErrTypedef1() (any, error) {
 	// 消费异常字符直到这行结束
-	fmt.Println("text: ", string(c.text))
 	return NewBadTypedef(NewLocationFromCurrent(c)), nil
 }
 
