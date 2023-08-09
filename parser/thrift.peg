@@ -476,7 +476,6 @@ CppType = cpp:CPPTYPE l:Literal {
 
 ConstValue = v:(DoubleConstant / IntConstant / Literal / IdentifierConst / ConstMap / ConstList ) {
 	if literal, ok := v.(*Literal); ok {
-		fmt.Println("const value convert", literal)
 		return NewConstValue("string", literal, NewLocationFromCurrent(c)), nil
 	}
 	return v.(*ConstValue), nil

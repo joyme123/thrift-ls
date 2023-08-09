@@ -59,7 +59,7 @@ func (g *IncludeGraph) Set(file uri.URI, includes []*parser.Include) {
 	defer g.mu.Unlock()
 	includeURIs := make([]uri.URI, 0, len(includes))
 	for _, inc := range includes {
-		if inc.BadNode || inc.Path == nil || inc.Path.ChildrenBadNode() {
+		if inc.BadNode || inc.Path == nil || inc.Path.ChildrenBadNode() || inc.Path.Value == nil {
 			continue
 		}
 
