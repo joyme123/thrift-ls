@@ -6905,7 +6905,7 @@ var g = &grammar{
 							pos: position{line: 1088, col: 18, offset: 31834},
 							run: (*parser).callonErrStructField3,
 						},
-						&zeroOrMoreExpr{
+						&oneOrMoreExpr{
 							pos: position{line: 1090, col: 3, offset: 31871},
 							expr: &seqExpr{
 								pos: position{line: 1090, col: 5, offset: 31873},
@@ -7189,7 +7189,7 @@ var g = &grammar{
 							pos: position{line: 1136, col: 17, offset: 33213},
 							run: (*parser).callonErrUnionField3,
 						},
-						&zeroOrMoreExpr{
+						&oneOrMoreExpr{
 							pos: position{line: 1138, col: 3, offset: 33249},
 							expr: &seqExpr{
 								pos: position{line: 1138, col: 5, offset: 33251},
@@ -7364,7 +7364,7 @@ var g = &grammar{
 							pos: position{line: 1164, col: 21, offset: 33947},
 							run: (*parser).callonErrExceptionField3,
 						},
-						&zeroOrMoreExpr{
+						&oneOrMoreExpr{
 							pos: position{line: 1166, col: 3, offset: 33987},
 							expr: &seqExpr{
 								pos: position{line: 1166, col: 5, offset: 33989},
