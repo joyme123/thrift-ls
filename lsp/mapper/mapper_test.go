@@ -76,7 +76,41 @@ func TestMapper_LSPPosToParserPosition(t *testing.T) {
 			args: args{
 				pos: types.Position{
 					Line:      1,
-					Character: 27,
+					Character: 28,
+				},
+			},
+			want:      parser.InvalidPosition,
+			assertion: assert.Error,
+		},
+		{
+			name: "ascii character no exceeded end of file",
+			fields: fields{
+				fileURI: "test/test.thrift",
+				content: []byte(content),
+			},
+			args: args{
+				pos: types.Position{
+					Line:      2,
+					Character: 1,
+				},
+			},
+			want: parser.Position{
+				Line:   3,
+				Col:    2,
+				Offset: 42,
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "ascii character exceeded end of file",
+			fields: fields{
+				fileURI: "test/test.thrift",
+				content: []byte(content),
+			},
+			args: args{
+				pos: types.Position{
+					Line:      2,
+					Character: 2,
 				},
 			},
 			want:      parser.InvalidPosition,
@@ -125,7 +159,7 @@ func TestMapper_LSPPosToParserPosition(t *testing.T) {
 			args: args{
 				pos: types.Position{
 					Line:      0,
-					Character: 14,
+					Character: 15,
 				},
 			},
 			want:      parser.InvalidPosition,

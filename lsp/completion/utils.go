@@ -17,7 +17,7 @@ func ListDirAndFiles(dir, prefix string) (res []Candidate, err error) {
 		prefixClean = filepath.Clean(prefix)
 	}
 
-	if strings.HasSuffix(prefix, ".") {
+	if prefix == "." {
 		prefix = prefix + "/"
 	}
 
