@@ -5,9 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"os"
 	"sync"
-	"syscall"
 	"time"
 
 	"go.lsp.dev/protocol"
@@ -27,18 +25,6 @@ type FileID struct {
 // modification time.
 // Like os.Stat, it reads through symbolic links.
 func GetFileID(filename string) (FileID, time.Time, error) { return getFileID(filename) }
-
-func getFileID(filename string) (FileID, time.Time, error) {
-	fi, err := os.Stat(filename)
-	if err != nil {
-		return FileID{}, time.Time{}, err
-	}
-	stat := fi.Sys().(*syscall.Stat_t)
-	return FileID{
-		device: uint64(stat.Dev), // (int32 on darwin, uint64 on linux)
-		inode:  stat.Ino,
-	}, fi.ModTime(), nil
-}
 
 type Hash [sha256.Size]byte
 
