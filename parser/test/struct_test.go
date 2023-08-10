@@ -149,3 +149,9 @@ func Test_ParseLocation(t *testing.T) {
 	assert.Equal(t, 12, structNameEnd.Col)
 	assert.Equal(t, 11, structNameEnd.Offset)
 }
+
+func Test_ParseStructErr(t *testing.T) {
+	demoContent := `struct Demo {`
+	_, err := parser.Parse("test.thrift", []byte(demoContent))
+	assert.Error(t, err)
+}

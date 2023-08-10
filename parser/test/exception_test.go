@@ -149,3 +149,9 @@ func Test_ParseExceptionLocation(t *testing.T) {
 	assert.Equal(t, 15, nameEnd.Col)
 	assert.Equal(t, 14, nameEnd.Offset)
 }
+
+func Test_ParseExceptionErr(t *testing.T) {
+	demoContent := `exception Demo {`
+	_, err := parser.Parse("test.thrift", []byte(demoContent))
+	assert.Error(t, err)
+}

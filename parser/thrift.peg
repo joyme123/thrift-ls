@@ -1087,7 +1087,7 @@ ErrFieldIndex = #{
 
 ErrStructField = #{
 	return InvalidStructFieldError
-} ( !(Field / (ReservedComments '}' Indent*) / DefinitionStart ) . )* {
+} ( !(Field / (ReservedComments '}' Indent*) / DefinitionStart ) . )+ {
 	return NewBadField(NewLocationFromCurrent(c)), nil
 }
 
@@ -1135,7 +1135,7 @@ ErrUnionLCUR = #{
 
 ErrUnionField = #{
 	return InvalidUnionFieldError
-} ( !(Field / (ReservedComments '}' Indent*) / DefinitionStart ) . )* {
+} ( !(Field / (ReservedComments '}' Indent*) / DefinitionStart ) . )+ {
 	return NewBadField(NewLocationFromCurrent(c)), nil
 }
 
@@ -1163,7 +1163,7 @@ ErrExceptionLCUR = #{
 
 ErrExceptionField = #{
 	return InvalidExceptionFieldError
-} ( !(Field / (ReservedComments '}' Indent*) / DefinitionStart ) . )* {
+} ( !(Field / (ReservedComments '}' Indent*) / DefinitionStart ) . )+ {
 	return NewBadField(NewLocationFromCurrent(c)), nil
 }
 
