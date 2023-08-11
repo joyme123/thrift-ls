@@ -2403,7 +2403,10 @@ func NewLocationFromCurrent(c *current) Location {
 func NewLocation(startPos position, text string) Location {
 	start := ConvertPosition(startPos)
 
-	nLine := strings.Count(text, "\n")
+	nLine := strings.Count(text, "\n") // "\r\nline 1", this will start with line 1,0 in parsed ast
+	if startPos.col == 0 {
+		nLine = nLine - 1
+	}
 	lastLineOffset := strings.LastIndexByte(text, '\n')
 	if lastLineOffset == -1 {
 		lastLineOffset = 0

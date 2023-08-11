@@ -23,10 +23,6 @@ struct test {
 }      (a.b = "c")          // endline comments
 `
 
-	ast, err := parser.Parse("test.thrift", []byte(doc))
-	assert.NoError(t, err)
-	assert.NotNil(t, ast)
-
 	type args struct {
 		st *parser.Struct
 	}
@@ -38,7 +34,11 @@ struct test {
 		{
 			name: "test",
 			args: args{
-				st: ast.(*parser.Document).Structs[0],
+				st: func() *parser.Struct {
+					ast, err := parser.Parse("test.thrift", []byte(doc))
+					assert.NoError(t, err)
+					return ast.(*parser.Document).Structs[0]
+				}(),
 			},
 			want: `// comments
 
@@ -52,6 +52,39 @@ struct test {
     1: required string test,
 } (a.b = "c") // endline comments
 `,
+		},
+		{
+			name: "test with CRLF",
+			args: args{
+				st: func() *parser.Struct {
+					ast, err := parser.Parse("test.thrift", []byte("struct test {\r\n 1: required string test,\r\n 2: required string test2\r\n}"))
+					assert.NoError(t, err)
+					return ast.(*parser.Document).Structs[0]
+				}(),
+			},
+			want: "struct test {\n    1: required string test,\n    2: required string test2\n}\n",
+		},
+		{
+			name: "test with LF",
+			args: args{
+				st: func() *parser.Struct {
+					ast, err := parser.Parse("test.thrift", []byte("struct test {\n 1: required string test,\n 2: required string test2\n}"))
+					assert.NoError(t, err)
+					return ast.(*parser.Document).Structs[0]
+				}(),
+			},
+			want: "struct test {\n    1: required string test,\n    2: required string test2\n}\n",
+		},
+		{
+			name: "test with additional LF",
+			args: args{
+				st: func() *parser.Struct {
+					ast, err := parser.Parse("test.thrift", []byte("struct test {\n 1: required string test,\n\n 2: required string test2\n}"))
+					assert.NoError(t, err)
+					return ast.(*parser.Document).Structs[0]
+				}(),
+			},
+			want: "struct test {\n    1: required string test,\n\n    2: required string test2\n}\n",
 		},
 	}
 	for _, tt := range tests {
