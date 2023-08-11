@@ -139,5 +139,5 @@ func needAddtionalLineForFields(preNode, curNode parser.Node) bool {
 		}
 	}
 
-	return curStartLine-preNode.End().Line >= 1
+	return curStartLine-preNode.End().Line > 1
 }
