@@ -26,7 +26,7 @@ func ASTNodeToRange(node parser.Node) protocol.Range {
 // for example: file uri is file:///base.thrift, then `base` is include name
 func GetIncludeName(file uri.URI) string {
 	fileName := file.Filename()
-	index := strings.LastIndexByte(fileName, '/')
+	index := strings.LastIndexByte(fileName, filepath.Separator)
 	if index == -1 {
 		return fileName
 	}
@@ -61,10 +61,10 @@ func GetIncludePath(ast *parser.Document, includeName string) string {
 }
 
 // cur is current file uri. for example file:///tmp/user.thrift
-// includePath is include name used in code. for example: base
+// includePath is include name used in code. for example: base.thrift
 func IncludeURI(cur uri.URI, includePath string) uri.URI {
 	filePath := cur.Filename()
-	items := strings.Split(filePath, "/")
+	items := strings.Split(filePath, string(filepath.Separator))
 	basePath := strings.TrimSuffix(filePath, items[len(items)-1])
 
 	path := filepath.Join(basePath, includePath)
