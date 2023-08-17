@@ -23,8 +23,8 @@ func (s *Server) hover(ctx context.Context, params *protocol.HoverParams) (*prot
 
 	return &protocol.Hover{
 		Contents: protocol.MarkupContent{
-			Kind:  protocol.PlainText,
-			Value: content,
+			Kind:  protocol.Markdown,
+			Value: "```thrift\n" + content + "```",
 		},
 	}, nil
 }
