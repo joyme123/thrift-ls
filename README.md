@@ -1,63 +1,37 @@
-# thrift language server
+# Thrift language server
 
 [![Language grade: Go](https://img.shields.io/lgtm/grade/go/g/joyme123/thrift-ls.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/joyme123/thrift-ls/context:go)
 
 ![Go](https://github.com/joyme123/thrift-ls/workflows/Go/badge.svg?branch=main)
 
-## 调试
+thrift-ls implements language server protocol
 
-这里以 neovim 为例，在配置文件里用 lua 进行设置：
+## Usages
 
-```lua
-require('lspconfig').thriftls.setup{
-  handlers=handlers,
-  on_attach = on_attach,
-  flags = {
-    debounce_text_changes = 150,
-  },
-}
+### vim
 
-vim.lsp.set_log_level("debug")
-```
+use thriftls as a lsp provider for thrift
 
-修改 lspconfig 的代码，增加 thriftls 的配置。这里以 lazy 安装 lspconfig 为例:
+### neovim
 
-path: ~/.local/share/nvim/lazy/nvim-lspconfig/lua/lspconfig/server_configurations/thriftls.lua
+You can use [mason](https://github.com/williamboman/mason.nvim) to install thriftls.
+And use [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) to configure thriftls
 
-```
-local util = require 'lspconfig.util'
+`:LspInfo` to set lsp information. default log file location: `~/.local/state/nvim/lsp.log`.
 
-return {
-  default_config = {
-    cmd = { 'thriftls' },
-    filetypes = { 'thrift' },
-    root_dir = function(fname)
-      return util.root_pattern('.thrift')(fname)
-    end,
-    single_file_support = true,
-  },
-  docs = {
-    description = [[
-    thrift language server
-    ]],
-    default_config = {
-      root_dir = [[root_pattern(".thrift")]],
-    },
-  },
-}
-```
+![neovim](./doc/image/neovim.png)
 
-`:LspInfo` 查看 lsp 的信息。一般日志的路径在 ~/.local/state/nvim/lsp.log。可以 tail -f 查看日志的输出进行调试
+### vscode
 
-## 配置文件与二进制文件
+install thrift-language-server in extension market
 
-配置文件默认路径:
+![vscode](./doc/image/vscode.png)
+
+## Configurations
+
+config file default location:
 
 - windows: `C:\Users\${user}\.thriftls\config.yaml`
 - macos, linux: `~/.thriftls/config.yaml`
 
- 二进制文件默认路径:
-
- - windows: `C:\Users\${user}\AppData\Roaming\Code\User\globalStorage\jiangpengfei.thrift-language-server/thriftls-windows-amd64`
- - linux: `~/.config/Code/User/globalStorage/jiangpengfei.thrift-language-server/thriftls-linux-amd64`
- - macos: `~/Library/Application\ Support/Code/User/globalStorage/jiangpengfei.thrift-language-server/thriftls-darwin-amd64`
+## ScreenShot
