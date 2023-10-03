@@ -185,3 +185,34 @@ func jump(file uri.URI, node parser.Node) protocol.Location {
 		URI:   file,
 	}
 }
+
+var basicType = map[string]struct{}{
+	"map":    {},
+	"set":    {},
+	"list":   {},
+	"string": {},
+	"i16":    {},
+	"i32":    {},
+	"i64":    {},
+	"i8":     {},
+	"double": {},
+	"bool":   {},
+	"byte":   {},
+	"binary": {},
+}
+
+var containerType = map[string]struct{}{
+	"map":  {},
+	"set":  {},
+	"list": {},
+}
+
+func IsBasicType(t string) bool {
+	_, ok := basicType[t]
+	return ok
+}
+
+func IsContainerType(t string) bool {
+	_, ok := containerType[t]
+	return ok
+}

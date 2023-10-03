@@ -87,7 +87,7 @@ func (c *TokenCompletion) Completion(ctx context.Context, ss *cache.Snapshot, cm
 	log.Debugln("parser pos: ", pos)
 	includeLiteralPos := pos
 	includeLiteralPos.Col = includeLiteralPos.Col - 1 // remove quote
-	nodePath := parser.SearchNodePath(parsedFile.AST(), includeLiteralPos)
+	nodePath := parser.SearchNodePathByPosition(parsedFile.AST(), includeLiteralPos)
 	if items, includeRng, err := c.includeCompletion(ss, cmp.Fh.URI(), nodePath); err == nil {
 		for i := range items {
 			candidates = append(candidates, items[i])
@@ -99,7 +99,7 @@ func (c *TokenCompletion) Completion(ctx context.Context, ss *cache.Snapshot, cm
 	}
 
 	if len(candidates) == 0 {
-		nodePath = parser.SearchNodePath(parsedFile.AST(), pos)
+		nodePath = parser.SearchNodePathByPosition(parsedFile.AST(), pos)
 		content, err := cmp.Fh.Content()
 		if err != nil {
 			return nil, rng, err

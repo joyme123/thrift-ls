@@ -144,7 +144,7 @@ enum Test {
 			if tt.name == "enum value" {
 				fmt.Println()
 			}
-			path := SearchNodePath(tt.args.root, tt.args.pos)
+			path := SearchNodePathByPosition(tt.args.root, tt.args.pos)
 			pathStr := make([]string, 0, len(path))
 			for i := range path {
 				nodeType := path[i].Type()

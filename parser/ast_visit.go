@@ -4,7 +4,7 @@ import (
 	"github.com/joyme123/thrift-ls/utils"
 )
 
-func SearchNodePath(root Node, pos Position) []Node {
+func SearchNodePathByPosition(root Node, pos Position) []Node {
 	path := make([]Node, 0)
 	searchNodePath(root, pos, &path)
 

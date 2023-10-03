@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
+	"github.com/joyme123/thrift-ls/lsp/codejump"
 	"github.com/joyme123/thrift-ls/lsp/lsputils"
 	"github.com/joyme123/thrift-ls/parser"
 	log "github.com/sirupsen/logrus"
@@ -47,6 +48,9 @@ func (s *SemanticAnalysis) diagnostic(ctx context.Context, ss *cache.Snapshot, c
 	}
 
 	res := s.checkDefineConflict(ctx, pf)
+
+	items := s.checkDefinitionExist(ctx, ss, changeFile, pf)
+	res = append(res, items...)
 
 	return res, nil
 }
@@ -226,9 +230,117 @@ func (s *SemanticAnalysis) checkDefineConflict(ctx context.Context, pf *cache.Pa
 	return ret
 }
 
-// same sa goto definition
-func (s *SemanticAnalysis) checkTypeExist(ctx context.Context, pf *cache.ParsedFile) []protocol.Diagnostic {
+// same as goto definition
+// struct/union/exception field type
+func (s *SemanticAnalysis) checkDefinitionExist(ctx context.Context, ss *cache.Snapshot, file uri.URI, pf *cache.ParsedFile) []protocol.Diagnostic {
 	ret := make([]protocol.Diagnostic, 0)
+
+	// struct/union/exception/function arguments/throw fields field type
+	processStructLike := func(fields []*parser.Field) {
+		for i := range fields {
+			field := fields[i]
+			if field.IsBadNode() || field.ChildrenBadNode() {
+				continue
+			}
+			items := s.checkTypeExist(ctx, ss, file, pf, field.FieldType)
+			ret = append(ret, items...)
+
+			// default value check
+			if field.ConstValue != nil {
+				items := s.checkConstValueExist(ctx, ss, file, pf, field.ConstValue)
+				ret = append(ret, items...)
+			}
+		}
+	}
+
+	for _, st := range pf.AST().Structs {
+		processStructLike(st.Fields)
+	}
+
+	for _, union := range pf.AST().Unions {
+		processStructLike(union.Fields)
+	}
+
+	for _, excep := range pf.AST().Exceptions {
+		processStructLike(excep.Fields)
+	}
+
+	for _, cst := range pf.AST().Consts {
+		items := s.checkConstValueExist(ctx, ss, file, pf, cst.Value)
+		ret = append(ret, items...)
+	}
+
+	for _, svc := range pf.AST().Services {
+		for _, fn := range svc.Functions {
+			if fn.FunctionType != nil {
+				items := s.checkTypeExist(ctx, ss, file, pf, fn.FunctionType)
+				ret = append(ret, items...)
+			}
+
+			processStructLike(fn.Arguments)
+			if fn.Throws != nil {
+				processStructLike(fn.Throws.Fields)
+			}
+		}
+	}
 
 	return ret
 }
+
+func (s *SemanticAnalysis) checkConstValueExist(ctx context.Context, ss *cache.Snapshot,
+	file uri.URI, pf *cache.ParsedFile, cst *parser.ConstValue) (res []protocol.Diagnostic) {
+	if cst.TypeName != "identifier" {
+		return
+	}
+
+	_, id, err := codejump.ConstValueTypeDefinitionIdentifier(ctx, ss, file, pf.AST(), cst)
+	if err != nil || id == nil {
+		res = append(res, protocol.Diagnostic{
+			Range:    lsputils.ASTNodeToRange(cst),
+			Severity: protocol.DiagnosticSeverityError,
+			Source:   "thrift-ls",
+			Message:  fmt.Sprintf("default value doesn't exist"),
+		})
+	}
+
+	return
+}
+
+func (s *SemanticAnalysis) checkTypeExist(ctx context.Context, ss *cache.Snapshot,
+	file uri.URI, pf *cache.ParsedFile, ft *parser.FieldType) (res []protocol.Diagnostic) {
+	if codejump.IsContainerType(ft.TypeName.Name) {
+		return s.checkContainerTypeExist(ctx, ss, file, pf, ft)
+	} else if codejump.IsBasicType(ft.TypeName.Name) {
+		return nil
+	} else {
+		_, id, _, err := codejump.TypeNameDefinitionIdentifier(ctx, ss, file, pf.AST(), ft.TypeName)
+		if err != nil || id == nil {
+			res = append(res, protocol.Diagnostic{
+				Range:    lsputils.ASTNodeToRange(ft),
+				Severity: protocol.DiagnosticSeverityError,
+				Source:   "thrift-ls",
+				Message:  fmt.Sprintf("field type doesn't exist"),
+			})
+		}
+	}
+
+	return res
+}
+
+func (s *SemanticAnalysis) checkContainerTypeExist(ctx context.Context,
+	ss *cache.Snapshot, file uri.URI, pf *cache.ParsedFile, ft *parser.FieldType) (res []protocol.Diagnostic) {
+
+	if ft.KeyType != nil {
+		items := s.checkTypeExist(ctx, ss, file, pf, ft.KeyType)
+		res = append(res, items...)
+	}
+
+	if ft.ValueType != nil {
+		items := s.checkTypeExist(ctx, ss, file, pf, ft.ValueType)
+		res = append(res, items...)
+	}
+
+	return res
+}
+
+// TODO(jpf): 类型和默认值的类型要一致

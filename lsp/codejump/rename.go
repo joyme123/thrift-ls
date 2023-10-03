@@ -28,7 +28,7 @@ func PrepareRename(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos pr
 	if err != nil {
 		return
 	}
-	nodePath := parser.SearchNodePath(pf.AST(), astPos)
+	nodePath := parser.SearchNodePathByPosition(pf.AST(), astPos)
 	targetNode := nodePath[len(nodePath)-1]
 
 	switch targetNode.Type() {
@@ -56,7 +56,7 @@ func Rename(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos protocol.
 	if err != nil {
 		return
 	}
-	nodePath := parser.SearchNodePath(pf.AST(), astPos)
+	nodePath := parser.SearchNodePathByPosition(pf.AST(), astPos)
 	targetNode := nodePath[len(nodePath)-1]
 
 	self := lsputils.ASTNodeToRange(targetNode)
