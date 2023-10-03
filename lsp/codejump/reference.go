@@ -40,7 +40,7 @@ func Reference(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos protoc
 	if err != nil {
 		return
 	}
-	nodePath := parser.SearchNodePath(pf.AST(), astPos)
+	nodePath := parser.SearchNodePathByPosition(pf.AST(), astPos)
 	targetNode := nodePath[len(nodePath)-1]
 
 	switch targetNode.Type() {
@@ -85,13 +85,13 @@ func searchTypeNameReferences(ctx context.Context, ss *cache.Snapshot, file uri.
 	res = make([]protocol.Location, 0)
 	typeNameNode := targetNode.(*parser.TypeName)
 	typeName := typeNameNode.Name
-	if _, ok := baseType[typeName]; ok {
+	if IsBasicType(typeName) {
 		return
 	}
 
 	var errs []error
 	// search type definition
-	definitionFile, identifierNode, definitionType, err := typeNameDefinitionIdentifier(ctx, ss, file, ast, nodePath, targetNode)
+	definitionFile, identifierNode, definitionType, err := TypeNameDefinitionIdentifier(ctx, ss, file, ast, targetNode)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -259,7 +259,7 @@ func searchConstValueReferences(ctx context.Context, ss *cache.Snapshot, file ur
 
 	var errs []error
 	// search type definition
-	definitionFile, identifierNode, err := constValueTypeDefinitionIdentifier(ctx, ss, file, ast, targetNode)
+	definitionFile, identifierNode, err := ConstValueTypeDefinitionIdentifier(ctx, ss, file, ast, targetNode)
 	if err != nil {
 		errs = append(errs, err)
 	}

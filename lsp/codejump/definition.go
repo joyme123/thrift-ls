@@ -14,21 +14,6 @@ import (
 	"go.lsp.dev/uri"
 )
 
-var baseType = map[string]struct{}{
-	"map":    {},
-	"set":    {},
-	"list":   {},
-	"string": {},
-	"i16":    {},
-	"i32":    {},
-	"i64":    {},
-	"i8":     {},
-	"double": {},
-	"bool":   {},
-	"byte":   {},
-	"binary": {},
-}
-
 func Definition(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos protocol.Position) (res []protocol.Location, err error) {
 	res = make([]protocol.Location, 0)
 	pf, err := ss.Parse(ctx, file)
@@ -45,12 +30,12 @@ func Definition(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos proto
 	if err != nil {
 		return
 	}
-	nodePath := parser.SearchNodePath(pf.AST(), astPos)
+	nodePath := parser.SearchNodePathByPosition(pf.AST(), astPos)
 	targetNode := nodePath[len(nodePath)-1]
 
 	switch targetNode.Type() {
 	case "TypeName":
-		return typeNameDefinition(ctx, ss, file, pf.AST(), nodePath, targetNode)
+		return typeNameDefinition(ctx, ss, file, pf.AST(), targetNode)
 	case "ConstValue":
 		return constValueTypeDefinition(ctx, ss, file, pf.AST(), targetNode)
 	}
@@ -58,9 +43,9 @@ func Definition(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos proto
 	return
 }
 
-func typeNameDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, nodePath []parser.Node, targetNode parser.Node) ([]protocol.Location, error) {
+func typeNameDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) ([]protocol.Location, error) {
 	res := make([]protocol.Location, 0)
-	astFile, id, _, err := typeNameDefinitionIdentifier(ctx, ss, file, ast, nodePath, targetNode)
+	astFile, id, _, err := TypeNameDefinitionIdentifier(ctx, ss, file, ast, targetNode)
 	if err != nil {
 		return res, err
 	}
@@ -71,10 +56,10 @@ func typeNameDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, a
 	return res, nil
 }
 
-func typeNameDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, nodePath []parser.Node, targetNode parser.Node) (uri.URI, *parser.Identifier, string, error) {
+func TypeNameDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) (uri.URI, *parser.Identifier, string, error) {
 	typeName := targetNode.(*parser.TypeName)
 	typeV := typeName.Name
-	if _, ok := baseType[typeV]; ok {
+	if IsBasicType(typeV) {
 		return "", nil, "", nil
 	}
 
@@ -130,7 +115,7 @@ func typeNameDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file 
 // search enum
 func constValueTypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) ([]protocol.Location, error) {
 	res := make([]protocol.Location, 0)
-	astFile, id, err := constValueTypeDefinitionIdentifier(ctx, ss, file, ast, targetNode)
+	astFile, id, err := ConstValueTypeDefinitionIdentifier(ctx, ss, file, ast, targetNode)
 	if err != nil {
 		return res, err
 	}
@@ -142,7 +127,7 @@ func constValueTypeDefinition(ctx context.Context, ss *cache.Snapshot, file uri.
 	return res, nil
 }
 
-func constValueTypeDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) (uri.URI, *parser.Identifier, error) {
+func ConstValueTypeDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) (uri.URI, *parser.Identifier, error) {
 	constValue := targetNode.(*parser.ConstValue)
 	if constValue.TypeName != "identifier" {
 		return "", nil, nil
