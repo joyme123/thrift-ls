@@ -16,7 +16,7 @@ func Test_SemanticAnalysis_Diagnostic(t *testing.T) {
 	file1 := `struct Student {
 	1: required string name,
 	2: required User user1,
-	3: required Student user2 = "",
+	3: required Student user2,
 }
 // line 6
 	struct Student {}
@@ -39,6 +39,14 @@ service TestService {
 // line 24
 struct TestContainer {
 	1: required list<Student> Students
+	2: required i32 failed1 = true
+	3: required i32 failed2 = ""
+	4: required string failed3 = true
+	5: required string failed4 = 71
+
+	100: required i32 user2 = 1
+	101: required i64 user3 = 2
+	102: required bool isUser = true
 }
 `
 	ss := buildSnapshotForTest([]*cache.FileChange{
@@ -175,6 +183,66 @@ struct TestContainer {
 						Severity: protocol.DiagnosticSeverityError,
 						Source:   "thrift-ls",
 						Message:  "field type doesn't exist",
+					},
+					{
+						Range: protocol.Range{
+							Start: protocol.Position{
+								Line:      26,
+								Character: 27,
+							},
+							End: protocol.Position{
+								Line:      26,
+								Character: 31,
+							},
+						},
+						Severity: protocol.DiagnosticSeverityError,
+						Source:   "thrift-ls",
+						Message:  "expect i32 but got bool",
+					},
+					{
+						Range: protocol.Range{
+							Start: protocol.Position{
+								Line:      27,
+								Character: 27,
+							},
+							End: protocol.Position{
+								Line:      27,
+								Character: 29,
+							},
+						},
+						Severity: protocol.DiagnosticSeverityError,
+						Source:   "thrift-ls",
+						Message:  "expect i32 but got string",
+					},
+					{
+						Range: protocol.Range{
+							Start: protocol.Position{
+								Line:      28,
+								Character: 30,
+							},
+							End: protocol.Position{
+								Line:      28,
+								Character: 34,
+							},
+						},
+						Severity: protocol.DiagnosticSeverityError,
+						Source:   "thrift-ls",
+						Message:  "expect string but got bool",
+					},
+					{
+						Range: protocol.Range{
+							Start: protocol.Position{
+								Line:      29,
+								Character: 30,
+							},
+							End: protocol.Position{
+								Line:      29,
+								Character: 32,
+							},
+						},
+						Severity: protocol.DiagnosticSeverityError,
+						Source:   "thrift-ls",
+						Message:  "expect string but got i64",
 					},
 				},
 			},
