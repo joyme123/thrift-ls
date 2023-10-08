@@ -249,6 +249,11 @@ func (s *SemanticAnalysis) checkDefinitionExist(ctx context.Context, ss *cache.S
 			if field.ConstValue != nil {
 				items := s.checkConstValueExist(ctx, ss, file, pf, field.ConstValue)
 				ret = append(ret, items...)
+
+				dig := s.checkConstValueMatchType(ctx, field)
+				if dig != nil {
+					ret = append(ret, *dig)
+				}
 			}
 		}
 	}
@@ -293,6 +298,10 @@ func (s *SemanticAnalysis) checkConstValueExist(ctx context.Context, ss *cache.S
 		return
 	}
 
+	if cst.Value == "true" || cst.Value == "false" {
+		return
+	}
+
 	_, id, err := codejump.ConstValueTypeDefinitionIdentifier(ctx, ss, file, pf.AST(), cst)
 	if err != nil || id == nil {
 		res = append(res, protocol.Diagnostic{
@@ -304,6 +313,66 @@ func (s *SemanticAnalysis) checkConstValueExist(ctx context.Context, ss *cache.S
 	}
 
 	return
+}
+
+func (s *SemanticAnalysis) checkConstValueMatchType(ctx context.Context, field *parser.Field) (res *protocol.Diagnostic) {
+	if field.BadNode || field.ChildrenBadNode() {
+		return nil
+	}
+
+	expectTypeName := field.FieldType.TypeName
+
+	if field.ConstValue != nil {
+		valueType := field.ConstValue.TypeName
+		// TypeName can be: list, map, pair, string, identifier, i64, double
+		switch valueType {
+		case "list", "map", "string", "double":
+			if expectTypeName.Name != valueType {
+				return &protocol.Diagnostic{
+					Range:    lsputils.ASTNodeToRange(field.ConstValue),
+					Severity: protocol.DiagnosticSeverityError,
+					Source:   "thrift-ls",
+					Message:  fmt.Sprintf("expect %s but got %s", expectTypeName.Name, valueType),
+				}
+			}
+		case "identifier":
+			if valueType == "identifier" &&
+				(field.ConstValue.Value == "true" || field.ConstValue.Value == "false") {
+				valueType = "bool"
+			}
+			if expectTypeName.Name == "bool" {
+				if field.ConstValue.Value != "true" && field.ConstValue.Value != "false" {
+					return &protocol.Diagnostic{
+						Range:    lsputils.ASTNodeToRange(field.ConstValue),
+						Severity: protocol.DiagnosticSeverityError,
+						Source:   "thrift-ls",
+						Message:  fmt.Sprintf("expect %s but got %s", expectTypeName.Name, valueType),
+					}
+				}
+			} else if codejump.IsBasicType(valueType) {
+				return &protocol.Diagnostic{
+					Range:    lsputils.ASTNodeToRange(field.ConstValue),
+					Severity: protocol.DiagnosticSeverityError,
+					Source:   "thrift-ls",
+					Message:  fmt.Sprintf("expect %s but got %s", expectTypeName.Name, valueType),
+				}
+			}
+		case "i64":
+			if expectTypeName.Name != "i8" &&
+				expectTypeName.Name != "i16" &&
+				expectTypeName.Name != "i32" &&
+				expectTypeName.Name != "i64" {
+				return &protocol.Diagnostic{
+					Range:    lsputils.ASTNodeToRange(field.ConstValue),
+					Severity: protocol.DiagnosticSeverityError,
+					Source:   "thrift-ls",
+					Message:  fmt.Sprintf("expect %s but got %s", expectTypeName.Name, valueType),
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *SemanticAnalysis) checkTypeExist(ctx context.Context, ss *cache.Snapshot,
