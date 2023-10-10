@@ -215,6 +215,10 @@ func initializeResult() *protocol.InitializeResult {
 					WorkDoneProgressOptions: protocol.WorkDoneProgressOptions{
 						WorkDoneProgress: true,
 					},
+					Legend: protocol.SemanticTokensLegend{
+						TokenTypes:     []protocol.SemanticTokenTypes{},
+						TokenModifiers: []protocol.SemanticTokenModifiers{},
+					},
 				},
 				StaticRegistrationOptions: protocol.StaticRegistrationOptions{
 					ID: "thriftls",
