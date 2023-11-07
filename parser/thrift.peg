@@ -501,7 +501,7 @@ IntConstant = comments:ReservedComments  v:(HexIntConstant / OctIntConstant / No
 }
 
 HexIntConstant = "0x" ([0-9] / [A-Z] / [a-z])+ {
-        v, err := strconv.ParseInt(strings.TrimLeft(string(c.text), "0x"), 16, 64)
+        v, err := strconv.ParseInt(strings.TrimPrefix(string(c.text), "0x"), 16, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +513,7 @@ HexIntConstant = "0x" ([0-9] / [A-Z] / [a-z])+ {
 }
 
 OctIntConstant = "0o" Digit+ {
-	v, err := strconv.ParseInt(strings.TrimLeft(string(c.text), "0o"), 8, 64)
+	v, err := strconv.ParseInt(strings.TrimPrefix(string(c.text), "0o"), 8, 64)
 	if err != nil {
 		return nil, err
 	}

@@ -21,6 +21,10 @@ func (s *Server) hover(ctx context.Context, params *protocol.HoverParams) (*prot
 		return nil, err
 	}
 
+	if content == "" {
+		return nil, nil
+	}
+
 	return &protocol.Hover{
 		Contents: protocol.MarkupContent{
 			Kind:  protocol.Markdown,

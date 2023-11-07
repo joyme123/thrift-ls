@@ -63,6 +63,18 @@ func Reference(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos protoc
 			}
 			// search in const value
 			return searchConstValueIdentifierReferences(ctx, ss, file, typeName)
+		} else if definitionType == "Service" {
+			svcName := targetNode.(*parser.IdentifierName).Text
+			if !strings.Contains(svcName, ".") {
+				svcName = fmt.Sprintf("%s.%s", lsputils.GetIncludeName(file), svcName)
+			} else {
+				include, _, _ := strings.Cut(svcName, ".")
+				path := lsputils.GetIncludePath(pf.AST(), include)
+				if path != "" { // doesn't match any include path
+					file = lsputils.IncludeURI(file, path)
+				}
+			}
+			return searchServiceReferences(ctx, ss, file, svcName)
 		}
 
 		if _, ok := validReferenceDefinitionType[definitionType]; !ok {
@@ -114,13 +126,71 @@ func searchTypeNameReferences(ctx context.Context, ss *cache.Snapshot, file uri.
 	return
 }
 
+func searchServiceReferences(ctx context.Context, ss *cache.Snapshot, file uri.URI, svcName string) (res []protocol.Location, err error) {
+	log.Debugln("searchServiceReferences for file:", file, "svcName:", svcName)
+	var errs []error
+
+	// search in it self
+	locations, err := searchServiceDefinitionReferences(ctx, ss, file, strings.TrimPrefix(svcName, fmt.Sprintf("%s.", lsputils.GetIncludeName(file))))
+	if err != nil {
+		errs = append(errs, err)
+	}
+	res = append(res, locations...)
+
+	// search service references in other file
+	includeNode := ss.Graph().Get(file)
+	if includeNode != nil {
+		if len(includeNode.InDegree()) == 0 && len(includeNode.OutDegree()) == 0 {
+			ss.Graph().Debug()
+		}
+		referenceFiles := includeNode.InDegree()
+		for _, referenceFile := range referenceFiles {
+			log.Debugln("reference file: ", referenceFile)
+			locations, err := searchServiceDefinitionReferences(ctx, ss, referenceFile, svcName)
+			if err != nil {
+				errs = append(errs, err)
+			}
+			res = append(res, locations...)
+		}
+	}
+
+	if len(errs) > 0 {
+		err = utilerrors.NewAggregate(errs)
+	}
+
+	return
+}
+
+func searchServiceDefinitionReferences(ctx context.Context, ss *cache.Snapshot, file uri.URI, svcName string) (res []protocol.Location, err error) {
+	ast, err := ss.Parse(ctx, file)
+	if err != nil {
+		return
+	}
+
+	if ast.AST() == nil {
+		return
+	}
+
+	for _, svc := range ast.AST().Services {
+		if svc.BadNode || svc.ChildrenBadNode() || svc.Extends == nil || svc.Extends.Name == nil {
+			continue
+		}
+
+		if svcName == svc.Extends.Name.Text {
+			res = append(res, jump(file, svc.Extends.Name))
+		}
+	}
+
+	return
+}
+
 func searchIdentifierReferences(ctx context.Context, ss *cache.Snapshot, file uri.URI, typeName string, definitionType string) (res []protocol.Location, err error) {
 	log.Debugln("searchIdentifierReferences for file:", file, "typeName:", typeName)
 	var errs []error
 
 	// search in it self
 	locations, err := searchDefinitionIdentifierReferences(ctx, ss, file,
-		strings.TrimLeft(typeName, fmt.Sprintf("%s.", lsputils.GetIncludeName(file))), definitionType)
+		strings.TrimPrefix(typeName, fmt.Sprintf("%s.", lsputils.GetIncludeName(file))), definitionType)
 	if err != nil {
 		errs = append(errs, err)
 	}
@@ -193,6 +263,7 @@ func searchDefinitionIdentifierReferences(ctx context.Context, ss *cache.Snapsho
 			}
 
 			for i := range fn.Arguments {
+				log.Debugln("search function args", "definitionType", definitionType, "typeName", typeName)
 				jumpField(fn.Arguments[i])
 			}
 
@@ -287,7 +358,7 @@ func searchConstValueReferences(ctx context.Context, ss *cache.Snapshot, file ur
 func searchConstValueIdentifierReferences(ctx context.Context, ss *cache.Snapshot, file uri.URI, valueName string) (res []protocol.Location, err error) {
 	var errs []error
 	// search in it self
-	locations, err := searchConstValueIdentifierReference(ctx, ss, file, strings.TrimLeft(valueName, fmt.Sprintf("%s.", lsputils.GetIncludeName(file))))
+	locations, err := searchConstValueIdentifierReference(ctx, ss, file, strings.TrimPrefix(valueName, fmt.Sprintf("%s.", lsputils.GetIncludeName(file))))
 	if err != nil {
 		errs = append(errs, err)
 	}

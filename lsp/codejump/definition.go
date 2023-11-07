@@ -38,9 +38,59 @@ func Definition(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos proto
 		return typeNameDefinition(ctx, ss, file, pf.AST(), targetNode)
 	case "ConstValue":
 		return constValueTypeDefinition(ctx, ss, file, pf.AST(), targetNode)
+	case "IdentifierName": // service extends
+		return serviceDefinition(ctx, ss, file, pf.AST(), targetNode)
 	}
 
 	return
+}
+
+func serviceDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) ([]protocol.Location, error) {
+	res := make([]protocol.Location, 0)
+	astFile, id, _, err := ServiceDefinitionIdentifier(ctx, ss, file, ast, targetNode)
+	if err != nil {
+		return res, err
+	}
+	if id != nil {
+		res = append(res, jump(astFile, id.Name))
+	}
+
+	return res, nil
+}
+
+func ServiceDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) (uri.URI, *parser.Identifier, string, error) {
+	identifierName := targetNode.(*parser.IdentifierName)
+
+	include, identifier, found := strings.Cut(identifierName.Text, ".")
+	var astFile uri.URI
+	if !found {
+		identifier = include
+		include = ""
+		astFile = file
+	} else {
+		path := lsputils.GetIncludePath(ast, include)
+		if path == "" { // doesn't match any include path
+			return "", nil, "", nil
+		}
+		astFile = lsputils.IncludeURI(file, path)
+	}
+
+	// now we can find destinate definition in `dstAst` by `identifier`
+	dstAst, err := ss.Parse(ctx, astFile)
+	if err != nil {
+		return astFile, nil, "", err
+	}
+
+	if len(dstAst.Errors()) > 0 {
+		log.Errorf("parse error: %v", dstAst.Errors())
+	}
+
+	dstService := GetServiceNode(dstAst.AST(), identifier)
+	if dstService != nil {
+		return astFile, dstService.Name, "Service", nil
+	}
+
+	return astFile, nil, "", nil
 }
 
 func typeNameDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) ([]protocol.Location, error) {

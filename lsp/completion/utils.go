@@ -30,10 +30,10 @@ func ListDirAndFiles(dir, prefix string) (res []Candidate, err error) {
 
 	pathItems = pathItems[0 : len(pathItems)-up]
 
-	dir, filePrefix := filepath.Split(strings.TrimLeft(prefixClean, "../"))
-	filePrefix = strings.TrimLeft(filePrefix, "./")
+	dir, filePrefix := filepath.Split(strings.TrimPrefix(prefixClean, "../"))
+	filePrefix = strings.TrimPrefix(filePrefix, "./")
 	baseDir := strings.Join(pathItems, "/") + "/" + dir
-	prefix = strings.TrimRight(prefix, filePrefix)
+	prefix = strings.TrimSuffix(prefix, filePrefix)
 
 	log.Debugf("include completion: walk dir %s with prefix %s, filePrefix %s", baseDir, prefix, filePrefix)
 	filepath.WalkDir(baseDir, func(path string, d fs.DirEntry, err error) error {
