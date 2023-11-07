@@ -178,6 +178,21 @@ func GetTypedefNode(ast *parser.Document, name string) *parser.Typedef {
 	return nil
 }
 
+func GetServiceNode(ast *parser.Document, name string) *parser.Service {
+	if ast == nil {
+		return nil
+	}
+
+	for _, svc := range ast.Services {
+		if svc.BadNode || svc.Name == nil || svc.Name.Name == nil || svc.Name.Name.Text != name {
+			continue
+		}
+		return svc
+	}
+
+	return nil
+}
+
 func jump(file uri.URI, node parser.Node) protocol.Location {
 	rng := lsputils.ASTNodeToRange(node)
 	return protocol.Location{

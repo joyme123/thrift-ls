@@ -5,23 +5,25 @@ import (
 )
 
 const (
-	serviceOneLineTpl = `{{.Comments}}{{.Service}} {{.Identifier}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}`
+	serviceOneLineTpl = `{{.Comments}}{{.Service}} {{.Identifier}}{{.Extends}}{{.ExtendServiceName}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}`
 
-	serviceMultiLineTpl = `{{.Comments}}{{.Service}} {{.Identifier}} {{.LCUR}}
+	serviceMultiLineTpl = `{{.Comments}}{{.Service}} {{.Identifier}}{{.Extends}}{{.ExtendServiceName}} {{.LCUR}}
 {{.Functions}}
 {{.RCUR}}{{.Annotations}}{{.EndLineComments}}
 `
 )
 
 type ServiceFormatter struct {
-	Comments        string
-	Service         string
-	Identifier      string
-	LCUR            string
-	Functions       string
-	RCUR            string
-	Annotations     string
-	EndLineComments string
+	Comments          string
+	Service           string
+	Identifier        string
+	LCUR              string
+	Functions         string
+	RCUR              string
+	Annotations       string
+	EndLineComments   string
+	Extends           string
+	ExtendServiceName string
 }
 
 func MustFormatService(svc *parser.Service) string {
@@ -39,6 +41,13 @@ func MustFormatService(svc *parser.Service) string {
 		RCUR:            MustFormatKeyword(svc.RCurKeyword.Keyword),
 		Annotations:     annos,
 		EndLineComments: MustFormatEndLineComments(svc.EndLineComments, ""),
+	}
+
+	if svc.ExtendsKeyword != nil {
+		f.Extends = " " + MustFormatKeyword(svc.ExtendsKeyword.Keyword)
+	}
+	if svc.Extends != nil {
+		f.ExtendServiceName = " " + MustFormatIdentifier(svc.Extends)
 	}
 
 	if len(svc.Functions) > 0 {

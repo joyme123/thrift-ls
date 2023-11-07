@@ -76,8 +76,8 @@ func (v *View) ContainsFile(uri uri.URI) bool {
 		return false
 	}
 
-	folder = strings.TrimRight(folder, "/")
-	file = strings.TrimLeft(file, folder)
+	folder = strings.TrimSuffix(folder, "/")
+	file = strings.TrimPrefix(file, folder)
 
 	if strings.HasPrefix(file, "/") {
 		return true

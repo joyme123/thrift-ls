@@ -33,17 +33,56 @@ func Hover(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos protocol.P
 	nodePath := parser.SearchNodePathByPosition(pf.AST(), astPos)
 	targetNode := nodePath[len(nodePath)-1]
 
+	log.Info("node type:", targetNode.Type())
+
 	switch targetNode.Type() {
 	case "TypeName":
-		return hoverDefinition(ctx, ss, file, pf.AST(), nodePath, targetNode)
+		return hoverDefinition(ctx, ss, file, pf.AST(), targetNode)
 	case "ConstValue":
 		return hoverConstValue(ctx, ss, file, pf.AST(), targetNode)
+	case "IdentifierName": // service extends
+		return hoverService(ctx, ss, file, pf.AST(), targetNode)
 	}
 
 	return
 }
 
-func hoverDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, nodePath []parser.Node, targetNode parser.Node) (string, error) {
+func hoverService(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) (string, error) {
+	identifierName := targetNode.(*parser.IdentifierName)
+	name := identifierName.Text
+	include, identifier, found := strings.Cut(name, ".")
+	var astFile uri.URI
+	if !found {
+		identifier = include
+		include = ""
+		astFile = file
+	} else {
+		path := lsputils.GetIncludePath(ast, include)
+		if path == "" { // doesn't match any include path
+			return "", nil
+		}
+		astFile = lsputils.IncludeURI(file, path)
+	}
+
+	// now we can find destinate definition in `dstAst` by `identifier`
+	dstAst, err := ss.Parse(ctx, astFile)
+	if err != nil {
+		return "", err
+	}
+
+	if len(dstAst.Errors()) > 0 {
+		log.Errorf("parse error: %v", dstAst.Errors())
+	}
+
+	dstService := GetServiceNode(dstAst.AST(), identifier)
+	if dstService != nil {
+		return format.MustFormatService(dstService), nil
+	}
+
+	return "", nil
+}
+
+func hoverDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) (string, error) {
 	typeName := targetNode.(*parser.TypeName)
 	typeV := typeName.Name
 	if IsBasicType(typeV) {

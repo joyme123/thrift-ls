@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/lsputils"
@@ -79,6 +80,28 @@ func Rename(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos protocol.
 			}
 			// search in const value
 			locations, err := searchConstValueIdentifierReferences(ctx, ss, file, typeName)
+			if err != nil {
+				return nil, err
+			}
+
+			locations = append(locations, protocol.Location{
+				URI:   file,
+				Range: self,
+			})
+
+			return convertLocationToWorkspaceEdit(locations, file, newName), nil
+		} else if definitionType == "Service" {
+			svcName := targetNode.(*parser.IdentifierName).Text
+			if !strings.Contains(svcName, ".") {
+				svcName = fmt.Sprintf("%s.%s", lsputils.GetIncludeName(file), svcName)
+			} else {
+				include, _, _ := strings.Cut(svcName, ".")
+				path := lsputils.GetIncludePath(pf.AST(), include)
+				if path != "" { // doesn't match any include path
+					file = lsputils.IncludeURI(file, path)
+				}
+			}
+			locations, err := searchServiceReferences(ctx, ss, file, svcName)
 			if err != nil {
 				return nil, err
 			}
