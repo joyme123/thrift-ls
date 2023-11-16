@@ -68,7 +68,7 @@ func Reference(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos protoc
 			if !strings.Contains(svcName, ".") {
 				svcName = fmt.Sprintf("%s.%s", lsputils.GetIncludeName(file), svcName)
 			} else {
-				include, _, _ := strings.Cut(svcName, ".")
+				include, _ := lsputils.ParseIdent(file, pf.AST().Includes, svcName)
 				path := lsputils.GetIncludePath(pf.AST(), include)
 				if path != "" { // doesn't match any include path
 					file = lsputils.IncludeURI(file, path)

@@ -3,7 +3,6 @@ package codejump
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/lsputils"
@@ -61,11 +60,9 @@ func serviceDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, as
 func ServiceDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) (uri.URI, *parser.Identifier, string, error) {
 	identifierName := targetNode.(*parser.IdentifierName)
 
-	include, identifier, found := strings.Cut(identifierName.Text, ".")
+	include, identifier := lsputils.ParseIdent(file, ast.Includes, identifierName.Text)
 	var astFile uri.URI
-	if !found {
-		identifier = include
-		include = ""
+	if include == "" {
 		astFile = file
 	} else {
 		path := lsputils.GetIncludePath(ast, include)
@@ -113,11 +110,9 @@ func TypeNameDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot, file 
 		return "", nil, "", nil
 	}
 
-	include, identifier, found := strings.Cut(typeV, ".")
+	include, identifier := lsputils.ParseIdent(file, ast.Includes, typeV)
 	var astFile uri.URI
-	if !found {
-		identifier = include
-		include = ""
+	if include == "" {
 		astFile = file
 	} else {
 		path := lsputils.GetIncludePath(ast, include)
@@ -183,11 +178,9 @@ func ConstValueTypeDefinitionIdentifier(ctx context.Context, ss *cache.Snapshot,
 		return "", nil, nil
 	}
 
-	include, identifier, found := strings.Cut(constValue.Value.(string), ".")
+	include, identifier := lsputils.ParseIdent(file, ast.Includes, constValue.Value.(string))
 	var astFile uri.URI
-	if !found {
-		identifier = include
-		include = ""
+	if include == "" {
 		astFile = file
 	} else {
 		path := lsputils.GetIncludePath(ast, include)
