@@ -3,7 +3,6 @@ package codejump
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/joyme123/thrift-ls/format"
 	"github.com/joyme123/thrift-ls/lsp/cache"
@@ -50,11 +49,9 @@ func Hover(ctx context.Context, ss *cache.Snapshot, file uri.URI, pos protocol.P
 func hoverService(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast *parser.Document, targetNode parser.Node) (string, error) {
 	identifierName := targetNode.(*parser.IdentifierName)
 	name := identifierName.Text
-	include, identifier, found := strings.Cut(name, ".")
+	include, identifier := lsputils.ParseIdent(file, ast.Includes, name)
 	var astFile uri.URI
-	if !found {
-		identifier = include
-		include = ""
+	if include == "" {
 		astFile = file
 	} else {
 		path := lsputils.GetIncludePath(ast, include)
@@ -89,11 +86,9 @@ func hoverDefinition(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast 
 		return "", nil
 	}
 
-	include, identifier, found := strings.Cut(typeV, ".")
+	include, identifier := lsputils.ParseIdent(file, ast.Includes, typeV)
 	var astFile uri.URI
-	if !found {
-		identifier = include
-		include = ""
+	if include == "" {
 		astFile = file
 	} else {
 		path := lsputils.GetIncludePath(ast, include)
@@ -144,11 +139,9 @@ func hoverConstValue(ctx context.Context, ss *cache.Snapshot, file uri.URI, ast 
 		return "", nil
 	}
 
-	include, identifier, found := strings.Cut(constValue.Value.(string), ".")
+	include, identifier := lsputils.ParseIdent(file, ast.Includes, constValue.Value.(string))
 	var astFile uri.URI
-	if !found {
-		identifier = include
-		include = ""
+	if include == "" {
 		astFile = file
 	} else {
 		path := lsputils.GetIncludePath(ast, include)

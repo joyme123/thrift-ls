@@ -46,6 +46,17 @@ service Demo {
   list<user.UserType> UserTypes(1:user.Test3 arg1=user.Test3.TWO, 2:string arg2=user.DefaultName)
 }`
 
+	// user.extra.thrift
+	file3 := `struct Test {}`
+
+	file4 := `include "user.extra.thrift"
+include "user.thrift"
+
+struct Person {
+  1: required user.extra.Test field1,
+  2: required user.Test field2,
+}`
+
 	ss := cache.BuildSnapshotForTest([]*cache.FileChange{
 		{
 			URI:     "file:///tmp/user.thrift",
@@ -57,6 +68,18 @@ service Demo {
 			URI:     "file:///tmp/api.thrift",
 			Version: 0,
 			Content: []byte(file2),
+			From:    cache.FileChangeTypeDidOpen,
+		},
+		{
+			URI:     "file:///tmp/user.extra.thrift",
+			Version: 0,
+			Content: []byte(file3),
+			From:    cache.FileChangeTypeDidOpen,
+		},
+		{
+			URI:     "file:///tmp/app.thrift",
+			Version: 0,
+			Content: []byte(file4),
 			From:    cache.FileChangeTypeDidOpen,
 		},
 	})
@@ -263,6 +286,62 @@ service Demo {
 						End: protocol.Position{
 							Line:      27,
 							Character: 24,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "case include 1",
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/app.thrift",
+				pos: protocol.Position{
+					Line:      4,
+					Character: 25,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/user.extra.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      0,
+							Character: 7,
+						},
+						End: protocol.Position{
+							Line:      0,
+							Character: 11,
+						},
+					},
+				},
+			},
+			assertion: assert.NoError,
+		},
+		{
+			name: "case include 2",
+			args: args{
+				ctx:  context.TODO(),
+				ss:   ss,
+				file: "file:///tmp/app.thrift",
+				pos: protocol.Position{
+					Line:      5,
+					Character: 19,
+				},
+			},
+			want: []protocol.Location{
+				{
+					URI: "file:///tmp/user.thrift",
+					Range: protocol.Range{
+						Start: protocol.Position{
+							Line:      0,
+							Character: 7,
+						},
+						End: protocol.Position{
+							Line:      0,
+							Character: 11,
 						},
 					},
 				},
