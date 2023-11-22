@@ -4,7 +4,7 @@ import (
 	"github.com/joyme123/thrift-ls/parser"
 )
 
-const includeTpl = "{{.Comments}}{{.Include}} {{.Path}} {{.EndLineComments}}\n"
+const includeTpl = "{{.Comments}}{{.Include}} {{.Path}}{{.EndLineComments}}\n"
 
 type IncludeFormatter struct {
 	Comments        string

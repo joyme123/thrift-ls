@@ -82,8 +82,8 @@ func main() {
 
 	formatter := false
 	formatFile := ""
-	flag.BoolVar(&formatter, "formatter", false, "use thrift-ls as a format tool")
-	flag.StringVar(&formatFile, "file", "", "file path to format")
+	flag.BoolVar(&formatter, "format", false, "use thrift-ls as a format tool")
+	flag.StringVar(&formatFile, "f", "", "file path to format")
 	formatOpts := format.Options{}
 	formatOpts.SetFlags()
 

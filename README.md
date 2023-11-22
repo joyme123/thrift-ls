@@ -6,7 +6,7 @@
 
 thrift-ls implements language server protocol
 
-## Usages
+## As Thrift Langugae Server
 
 ### vim
 
@@ -27,6 +27,34 @@ install thrift-language-server in extension market
 
 ![vscode](./doc/image/vscode.png)
 
+## As Thrift Format Tool
+
+**supported flags**
+
+```bash
+Usage of ./bin/thriftls:
+  -d	Do not print reformatted sources to standard output. If a file's formatting is different than gofmt's, print diffs to standard output.
+  -f string
+    	file path to format
+  -format
+    	use thrift-ls as a format tool
+  -indent string
+    	Indent to use. Support: num*space, num*tab. example: 4spaces, 1tab, tab (default "4spaces")
+  -logLevel int
+    	set log level (default -1)
+  -w	Do not print reformatted sources to standard output. If a file's formatting is different from thriftls's, overwrite it with thrfitls's version.
+```
+
+**how to use**
+
+```bash
+# format single file
+thriftls -format -w -indent 2spaces -f ./tests/galaxy-thrift-api/sds/Table.thrift
+
+# batch format thrift files
+find ./tests/galaxy-thrift-api -name "*.thrift" | xargs -n 1 thriftls -format -w -indent 8spaces -f
+```
+
 ## Configurations
 
 config file default location:
@@ -34,4 +62,4 @@ config file default location:
 - windows: `C:\Users\${user}\.thriftls\config.yaml`
 - macos, linux: `~/.thriftls/config.yaml`
 
-## ScreenShot
+
