@@ -43,10 +43,11 @@ func MustFormatConstValue(cv *parser.ConstValue) string {
 		val := ""
 		if _, ok := cv.Value.(string); ok {
 			val = cv.Value.(string)
+			buf.WriteString(fmt.Sprintf("%q%s", val, sep))
 		} else {
-			val = cv.Value.(*parser.Literal).Value.Text
+			val = MustFormatLiteral(cv.Value.(*parser.Literal))
+			buf.WriteString(fmt.Sprintf("%s%s", val, sep))
 		}
-		buf.WriteString(fmt.Sprintf("%q%s", val, sep))
 	case "i64":
 		buf.WriteString(fmt.Sprintf("%s%s", cv.ValueInText, sep))
 	case "double":
