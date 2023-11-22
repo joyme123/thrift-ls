@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/cloudwego/thriftgo v0.2.11
+	github.com/sergi/go-diff v1.3.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.7.0
 	go.lsp.dev/jsonrpc2 v0.10.0
@@ -11,7 +12,7 @@ require (
 	go.lsp.dev/protocol v0.12.0
 	go.lsp.dev/uri v0.3.0
 	go.uber.org/zap v1.21.0
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (

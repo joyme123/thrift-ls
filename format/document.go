@@ -2,6 +2,7 @@ package format
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/joyme123/thrift-ls/parser"
 )
@@ -64,8 +65,11 @@ func FormatDocument(doc *parser.Document) (string, error) {
 		}
 		buf.WriteString(MustFormatComments(doc.Comments, ""))
 	}
+	res := buf.String()
 
-	return buf.String(), nil
+	res = strings.TrimSpace(res)
+
+	return res, nil
 }
 
 var (
