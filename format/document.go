@@ -14,6 +14,10 @@ type fmtContext struct {
 }
 
 func FormatDocument(doc *parser.Document) (string, error) {
+	return FormatDocumentWithValidation(doc, false)
+}
+
+func FormatDocumentWithValidation(doc *parser.Document, selfValidation bool) (string, error) {
 	if doc.ChildrenBadNode() {
 		return "", BadNodeError
 	}

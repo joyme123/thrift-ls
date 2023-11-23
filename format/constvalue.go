@@ -7,10 +7,10 @@ import (
 	"github.com/joyme123/thrift-ls/parser"
 )
 
-func MustFormatConstValue(cv *parser.ConstValue) string {
+func MustFormatConstValue(cv *parser.ConstValue, indent string) string {
 	buf := bytes.NewBuffer(nil)
-	if cv.Comments != nil {
-		buf.WriteString(MustFormatComments(cv.Comments, Indent))
+	if len(cv.Comments) > 0 {
+		buf.WriteString(MustFormatComments(cv.Comments, indent))
 	}
 	sep := ""
 	if cv.ListSeparatorKeyword != nil {
@@ -20,32 +20,67 @@ func MustFormatConstValue(cv *parser.ConstValue) string {
 	switch cv.TypeName {
 	case "list":
 		values := cv.Value.([]*parser.ConstValue)
+
+		if len(cv.Comments) > 0 && len(values) > 0 {
+			if lineDistance(cv.Comments[len(cv.Comments)-1], values[0]) >= 1 {
+				buf.WriteString("\n")
+			}
+		}
+
 		buf.WriteString(MustFormatKeyword(cv.LBrkKeyword.Keyword))
 		for i := range values {
-			buf.WriteString(MustFormatConstValue(values[i]))
+			buf.WriteString(MustFormatConstValue(values[i], ""))
 		}
 		buf.WriteString(MustFormatKeyword(cv.RBrkKeyword.Keyword))
 	case "map":
 		values := cv.Value.([]*parser.ConstValue)
-		buf.WriteString(MustFormatKeyword(cv.LCurKeyword.Keyword))
+
+		if len(cv.Comments) > 0 && len(values) > 0 {
+			if lineDistance(cv.Comments[len(cv.Comments)-1], values[0]) >= 1 {
+				buf.WriteString("\n")
+			}
+		}
+
+		buf.WriteString(MustFormatKeyword(cv.LCurKeyword.Keyword) + "\n")
 		for i := range values {
-			buf.WriteString(MustFormatConstValue(values[i]))
+			buf.WriteString(MustFormatConstValue(values[i], ""))
 		}
 		buf.WriteString(MustFormatKeyword(cv.RCurKeyword.Keyword))
 	case "pair":
 		key := cv.Key.(*parser.ConstValue)
 		value := cv.Value.(*parser.ConstValue)
 
-		buf.WriteString(fmt.Sprintf("%s%s %s%s", MustFormatConstValue(key), MustFormatKeyword(cv.ColonKeyword.Keyword), MustFormatConstValue(value), sep))
+		if len(cv.Comments) > 0 {
+			if lineDistance(cv.Comments[len(cv.Comments)-1], key) >= 1 {
+				buf.WriteString("\n")
+			}
+		}
+
+		if cv.ListSeparatorKeyword != nil {
+			sep = MustFormatKeyword(cv.ListSeparatorKeyword.Keyword)
+		}
+		buf.WriteString(fmt.Sprintf("%s%s %s%s\n", MustFormatConstValue(key, indent+Indent), MustFormatKeyword(cv.ColonKeyword.Keyword), MustFormatConstValue(value, ""), sep))
 	case "identifier":
-		buf.WriteString(fmt.Sprintf("%s%s", cv.Value.(string), sep))
+		if len(cv.Comments) > 0 {
+			// special case for iline distance
+			if lineDistance(cv.Comments[len(cv.Comments)-1], cv) >= 1 {
+				buf.WriteString("\n")
+			}
+		}
+		buf.WriteString(indent + fmt.Sprintf("%s%s", cv.Value.(string), sep))
 	case "string":
 		val := ""
 		if _, ok := cv.Value.(string); ok {
 			val = cv.Value.(string)
 			buf.WriteString(fmt.Sprintf("%q%s", val, sep))
 		} else {
-			val = MustFormatLiteral(cv.Value.(*parser.Literal))
+			literal := cv.Value.(*parser.Literal)
+			if len(cv.Comments) > 0 {
+				if lineDistance(cv.Comments[len(cv.Comments)-1], literal) >= 1 {
+					buf.WriteString("\n")
+				}
+			}
+			val = MustFormatLiteral(literal)
 			buf.WriteString(fmt.Sprintf("%s%s", val, sep))
 		}
 	case "i64":

@@ -37,7 +37,7 @@ func MustFormatConst(cst *parser.Const) string {
 		Name:            MustFormatIdentifier(cst.Name),
 		Annotations:     annos,
 		Equal:           MustFormatKeyword(cst.EqualKeyword.Keyword),
-		Value:           MustFormatConstValue(cst.Value),
+		Value:           MustFormatConstValue(cst.Value, ""),
 		ListSeparator:   sep,
 		EndLineComments: MustFormatEndLineComments(cst.EndLineComments, ""),
 	}
