@@ -459,7 +459,7 @@ struct OptionalBinary {
 }
 
 struct OptionalMap {
-    1: optional map<string,i32>    str_map  = { /* comment 1 */ "text": 1, "text2": 2}
+    1: optional map<string,i32>    str_map  = {/* comment 1 */ "text": 1, "text2": 2}
     2: optional map<string,string> str_map2 = {
         // comments
         "text": "text",

@@ -52,7 +52,9 @@ func MustFormatConstValue(cv *parser.ConstValue, indent string, newLine bool) st
 				buf.WriteString("\n")
 				newLine = true
 			} else {
-				buf.WriteString(" ")
+				if i > 0 {
+					buf.WriteString(" ")
+				}
 				newLine = false
 			}
 			buf.WriteString(MustFormatConstValue(values[i], indent, newLine))

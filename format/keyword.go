@@ -9,7 +9,7 @@ import (
 func MustFormatKeyword(kw parser.Keyword) string {
 	if len(kw.Comments) > 0 {
 		buf := bytes.NewBuffer(nil)
-		buf.WriteString(MustFormatComments(kw.Comments, Indent))
+		buf.WriteString(MustFormatComments(kw.Comments, ""))
 
 		if lineDistance(kw.Comments[len(kw.Comments)-1], kw.Literal) >= 1 {
 			buf.WriteString("\n")
