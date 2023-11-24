@@ -1,7 +1,6 @@
 package format
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/joyme123/thrift-ls/parser"
@@ -13,9 +12,8 @@ func Test_FormatDocument(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, ast)
 
-	formated, err := FormatDocument(ast.(*parser.Document))
+	formated, err := FormatDocumentWithValidation(ast.(*parser.Document), true)
 	assert.NoError(t, err)
-	fmt.Println(formated)
 
 	assert.Equal(t, expectedFormated, formated)
 }

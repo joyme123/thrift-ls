@@ -13,6 +13,15 @@ func Test_Parse(t *testing.T) {
 	assert.NotNil(t, ast)
 }
 
+func Test_Equals(t *testing.T) {
+	psr := parser.PEGParser{}
+	doc, err := psr.Parse("thrifttest.thrift", []byte(ThriftTestContent))
+	assert.Zero(t, len(err))
+	assert.NotNil(t, doc)
+
+	assert.True(t, doc.Equals(doc))
+}
+
 const ThriftTestContent = `
 /*
  * Licensed to the Apache Software Foundation (ASF) under one

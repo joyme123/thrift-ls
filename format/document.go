@@ -2,6 +2,7 @@ package format
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/joyme123/thrift-ls/parser"
@@ -72,6 +73,18 @@ func FormatDocumentWithValidation(doc *parser.Document, selfValidation bool) (st
 	res := buf.String()
 
 	res = strings.TrimSpace(res)
+
+	if selfValidation {
+		psr := parser.PEGParser{}
+		formattedAst, err := psr.Parse("formated.thrift", []byte(res))
+		if err != nil {
+			return "", fmt.Errorf("format error: format result failed to parse. Please to report bug at https://github.com/joyme123/thrift-ls/issues")
+		}
+
+		if !doc.Equals(formattedAst) {
+			return "", fmt.Errorf("format error: format result failed to pass self validation. Please to report bug at https://github.com/joyme123/thrift-ls/issues")
+		}
+	}
 
 	return res, nil
 }
