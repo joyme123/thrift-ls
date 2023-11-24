@@ -6,6 +6,17 @@
 
 thrift-ls implements language server protocol
 
+## features
+
+- highlight
+- code completion
+- go to definition
+- find references
+- hover
+- dignostic
+- rename
+- format
+
 ## As Thrift Langugae Server
 
 ### vim
