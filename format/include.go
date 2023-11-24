@@ -22,7 +22,7 @@ func MustFormatInclude(inc *parser.Include) string {
 	f := &IncludeFormatter{
 		Comments:        comments,
 		Include:         MustFormatKeyword(inc.IncludeKeyword.Keyword),
-		Path:            MustFormatLiteral(inc.Path),
+		Path:            MustFormatLiteral(inc.Path, ""),
 		EndLineComments: MustFormatComments(inc.EndLineComments, ""),
 	}
 
@@ -38,7 +38,7 @@ func MustFormatCPPInclude(inc *parser.CPPInclude) string {
 	f := &IncludeFormatter{
 		Comments:        comments,
 		Include:         MustFormatKeyword(inc.CPPIncludeKeyword.Keyword),
-		Path:            MustFormatLiteral(inc.Path),
+		Path:            MustFormatLiteral(inc.Path, ""),
 		EndLineComments: MustFormatComments(inc.EndLineComments, ""),
 	}
 

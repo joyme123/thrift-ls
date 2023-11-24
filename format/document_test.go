@@ -12,10 +12,12 @@ func Test_FormatDocument(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, ast)
 
-	formated, err := FormatDocumentWithValidation(ast.(*parser.Document), true)
+	formated, err := FormatDocument(ast.(*parser.Document))
+	assert.Equal(t, expectedFormated, formated)
+
+	_, err = FormatDocumentWithValidation(ast.(*parser.Document), true)
 	assert.NoError(t, err)
 
-	assert.Equal(t, expectedFormated, formated)
 }
 
 var expectedFormated = `/*
@@ -457,11 +459,19 @@ struct OptionalBinary {
 }
 
 struct OptionalMap {
-    1: optional map<string, i32> str_map = {/* comment 1 */ "text": 1, "text2": 2}
-    2: optional map<string, string> str_map2 = {
+    1: optional map<string,i32>    str_map  = { /* comment 1 */ "text": 1, "text2": 2}
+    2: optional map<string,string> str_map2 = {
         // comments
         "text": "text",
-        "text2": "text2", "text3": "text3"
+        'text2': "text2", "text3": "text3"
+    }
+    3: optional map<i32,i32> int_map = {
+        // comments
+        1: 1,
+    }
+    4: optional map<i32,bool> int_bool_map = {
+        // comments
+        1: true,
     }
 }
 
@@ -925,8 +935,16 @@ struct OptionalMap {
   2: optional map<string, string> str_map2 = {
     // comments
     "text": "text",
-    "text2": "text2", "text3": "text3"
+    'text2': "text2", "text3": "text3"
   }
+      3: optional map<i32,i32>      int_map = {
+        // comments
+	1: 1,
+    }
+    4: optional map<i32,bool>      int_bool_map = {
+        // comments
+	1: true,
+    }
 }
 
 // comments at end of doc

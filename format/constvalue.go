@@ -7,7 +7,7 @@ import (
 	"github.com/joyme123/thrift-ls/parser"
 )
 
-func MustFormatConstValue(cv *parser.ConstValue, indent string) string {
+func MustFormatConstValue(cv *parser.ConstValue, indent string, newLine bool) string {
 	buf := bytes.NewBuffer(nil)
 	if len(cv.Comments) > 0 {
 		buf.WriteString(MustFormatComments(cv.Comments, indent))
@@ -29,7 +29,9 @@ func MustFormatConstValue(cv *parser.ConstValue, indent string) string {
 
 		buf.WriteString(MustFormatKeyword(cv.LBrkKeyword.Keyword))
 		for i := range values {
-			buf.WriteString(MustFormatConstValue(values[i], ""))
+			// TODO(jpf): 优化显示
+			newLine = false
+			buf.WriteString(MustFormatConstValue(values[i], indent, newLine))
 		}
 		buf.WriteString(MustFormatKeyword(cv.RBrkKeyword.Keyword))
 	case "map":
@@ -48,12 +50,17 @@ func MustFormatConstValue(cv *parser.ConstValue, indent string) string {
 			distance := lineDistance(preNode, values[i])
 			if distance >= 1 {
 				buf.WriteString("\n")
+				newLine = true
+			} else {
+				buf.WriteString(" ")
+				newLine = false
 			}
-			buf.WriteString(MustFormatConstValue(values[i], ""))
+			buf.WriteString(MustFormatConstValue(values[i], indent, newLine))
 			preNode = values[i]
 		}
-		if lineDistance(cv.RCurKeyword, preNode) >= 1 {
+		if lineDistance(preNode, cv.RCurKeyword) >= 1 {
 			buf.WriteString("\n")
+			buf.WriteString(Indent)
 		}
 		buf.WriteString(MustFormatKeyword(cv.RCurKeyword.Keyword))
 	case "pair":
@@ -69,18 +76,38 @@ func MustFormatConstValue(cv *parser.ConstValue, indent string) string {
 		if cv.ListSeparatorKeyword != nil {
 			sep = MustFormatKeyword(cv.ListSeparatorKeyword.Keyword)
 		}
-		buf.WriteString(fmt.Sprintf("%s%s %s%s", MustFormatConstValue(key, indent+Indent), MustFormatKeyword(cv.ColonKeyword.Keyword), MustFormatConstValue(value, ""), sep))
+		buf.WriteString(fmt.Sprintf("%s%s %s%s",
+			MustFormatConstValue(key, indent+Indent, newLine),
+			MustFormatKeyword(cv.ColonKeyword.Keyword),
+			MustFormatConstValue(value, indent, false),
+			sep))
 	case "identifier":
 		if len(cv.Comments) > 0 {
 			// special case for iline distance
 			if lineDistance(cv.Comments[len(cv.Comments)-1], cv) >= 1 {
 				buf.WriteString("\n")
+				newLine = true
 			}
 		}
-		buf.WriteString(indent + fmt.Sprintf("%s%s", cv.Value.(string), sep))
+
+		if newLine {
+			buf.WriteString(indent)
+		}
+
+		buf.WriteString(fmt.Sprintf("%s%s", cv.Value.(string), sep))
 	case "string":
 		val := ""
 		if _, ok := cv.Value.(string); ok {
+			if len(cv.Comments) > 0 {
+				if lineDistance(cv.Comments[len(cv.Comments)-1], cv) >= 1 {
+					buf.WriteString("\n")
+					newLine = true
+				}
+			}
+
+			if newLine {
+				buf.WriteString(indent)
+			}
 			val = cv.Value.(string)
 			buf.WriteString(fmt.Sprintf("%q%s", val, sep))
 		} else {
@@ -88,14 +115,40 @@ func MustFormatConstValue(cv *parser.ConstValue, indent string) string {
 			if len(cv.Comments) > 0 {
 				if lineDistance(cv.Comments[len(cv.Comments)-1], literal) >= 1 {
 					buf.WriteString("\n")
+					newLine = true
 				}
 			}
-			val = MustFormatLiteral(literal)
+
+			if !newLine {
+				indent = ""
+			}
+
+			val = MustFormatLiteral(literal, indent)
 			buf.WriteString(fmt.Sprintf("%s%s", val, sep))
 		}
 	case "i64":
+		if len(cv.Comments) > 0 {
+			if lineDistance(cv.Comments[len(cv.Comments)-1], cv) >= 1 {
+				buf.WriteString("\n")
+				newLine = true
+			}
+		}
+
+		if newLine {
+			buf.WriteString(indent)
+		}
 		buf.WriteString(fmt.Sprintf("%s%s", cv.ValueInText, sep))
 	case "double":
+		if len(cv.Comments) > 0 {
+			if lineDistance(cv.Comments[len(cv.Comments)-1], cv) >= 1 {
+				buf.WriteString("\n")
+				newLine = true
+			}
+		}
+
+		if newLine {
+			buf.WriteString(indent)
+		}
 		buf.WriteString(fmt.Sprintf("%s%s", cv.ValueInText, sep))
 	}
 
