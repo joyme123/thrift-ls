@@ -37,7 +37,7 @@ func MustFormatEnumValue(enumValue *parser.EnumValue, indent string) string {
 	buf := bytes.NewBufferString(comments)
 	buf.WriteString(indent + MustFormatIdentifier(enumValue.Name))
 	if enumValue.ValueNode != nil {
-		buf.WriteString(fmt.Sprintf(" %s %s", MustFormatKeyword(enumValue.EqualKeyword.Keyword), MustFormatConstValue(enumValue.ValueNode)))
+		buf.WriteString(fmt.Sprintf(" %s %s", MustFormatKeyword(enumValue.EqualKeyword.Keyword), MustFormatConstValue(enumValue.ValueNode, indent, false)))
 	}
 
 	buf.WriteString(annos)

@@ -2,6 +2,8 @@ package format
 
 import (
 	"bytes"
+	"fmt"
+	"strings"
 
 	"github.com/joyme123/thrift-ls/parser"
 )
@@ -13,6 +15,10 @@ type fmtContext struct {
 }
 
 func FormatDocument(doc *parser.Document) (string, error) {
+	return FormatDocumentWithValidation(doc, false)
+}
+
+func FormatDocumentWithValidation(doc *parser.Document, selfValidation bool) (string, error) {
 	if doc.ChildrenBadNode() {
 		return "", BadNodeError
 	}
@@ -58,14 +64,25 @@ func FormatDocument(doc *parser.Document) (string, error) {
 	}
 
 	if len(doc.Comments) > 0 {
-		addtionalLine := needAddtionalLineInDocument(fmtCtx.preNode, doc.Comments[0])
-		if addtionalLine {
-			buf.WriteString("\n")
-		}
 		buf.WriteString(MustFormatComments(doc.Comments, ""))
 	}
+	res := buf.String()
 
-	return buf.String(), nil
+	res = strings.TrimSpace(res)
+
+	if selfValidation {
+		psr := parser.PEGParser{}
+		formattedAst, err := psr.Parse("formated.thrift", []byte(res))
+		if err != nil {
+			return "", fmt.Errorf("format error: format result failed to parse. Please report bug to author at https://github.com/joyme123/thrift-ls/issues")
+		}
+
+		if !doc.Equals(formattedAst) {
+			return "", fmt.Errorf("format error: format result failed to pass self validation. Please report bug to author at https://github.com/joyme123/thrift-ls/issues")
+		}
+	}
+
+	return res, nil
 }
 
 var (

@@ -1,7 +1,6 @@
 package format
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/joyme123/thrift-ls/parser"
@@ -14,10 +13,11 @@ func Test_FormatDocument(t *testing.T) {
 	assert.NotNil(t, ast)
 
 	formated, err := FormatDocument(ast.(*parser.Document))
-	assert.NoError(t, err)
-	fmt.Println(formated)
-
 	assert.Equal(t, expectedFormated, formated)
+
+	_, err = FormatDocumentWithValidation(ast.(*parser.Document), true)
+	assert.NoError(t, err)
+
 }
 
 var expectedFormated = `/*
@@ -43,11 +43,11 @@ var expectedFormated = `/*
  * details.
  */
 
-include "a.thrift" 
-include "b.thrift" 
+include "a.thrift"
+include "b.thrift"
 
-cpp_include "aaaaa" 
-cpp_include "bbbbb" 
+cpp_include "aaaaa"
+cpp_include "bbbbb"
 
 namespace c_glib TTest
 namespace cpp thrift.test
@@ -458,6 +458,31 @@ struct OptionalBinary {
     2: optional map<binary,i32> bin_map = {}
 }
 
+struct OptionalMap {
+    1: optional map<string,i32>    str_map  = {/* comment 1 */ "text": 1, "text2": 2}
+    2: optional map<string,string> str_map2 = {
+        // comments
+        "text": "text",
+        'text2': "text2", "text3": "text3"
+    }
+    3: optional map<i32,i32> int_map = {
+        // comments
+        1: 1,
+    }
+    4: optional map<i32,bool> int_bool_map = {
+        // comments
+        1: true,
+    }
+}
+
+const map<UserType,bool> SIGNATURE_SUPPORT = {
+    UserType.DEV_XIAOMI_SSO: false,
+    UserType.DEV_XIAOMI: true,
+    UserType.APP_SECRET: true,
+    UserType.APP_ACCESS_TOKEN: true,
+    UserType.APP_XIAOMI_SSO: false,
+    UserType.APP_ANONYMOUS: false
+}
 
 // comments at end of doc`
 
@@ -912,6 +937,33 @@ struct OptionalSetDefaultTest {
 struct OptionalBinary {
   1: optional set<binary> bin_set = {}
   2: optional map<binary,i32> bin_map = {}
+}
+
+struct OptionalMap {
+  1: optional map<string, i32> str_map = {/* comment 1 */ "text": 1, "text2": 2}
+  2: optional map<string, string> str_map2 = {
+    // comments
+    "text": "text",
+    'text2': "text2", "text3": "text3"
+  }
+      3: optional map<i32,i32>      int_map = {
+        // comments
+	1: 1,
+    }
+    4: optional map<i32,bool>      int_bool_map = {
+        // comments
+	1: true,
+    }
+}
+
+
+const map<UserType, bool> SIGNATURE_SUPPORT = {
+  UserType.DEV_XIAOMI_SSO: false,
+  UserType.DEV_XIAOMI: true,
+  UserType.APP_SECRET: true,
+  UserType.APP_ACCESS_TOKEN: true,
+  UserType.APP_XIAOMI_SSO: false,
+  UserType.APP_ANONYMOUS: false
 }
 
 // comments at end of doc

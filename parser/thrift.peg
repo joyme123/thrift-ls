@@ -481,8 +481,15 @@ ConstValue = v:(DoubleConstant / IntConstant / Literal / IdentifierConst / Const
 	return v.(*ConstValue), nil
 }
 
-IdentifierConst = id:Identifier {
-	return NewConstValue("identifier", id.(*Identifier).Name.Text, NewLocationFromCurrent(c)), nil
+IdentifierConst = comments:ReservedComments cv:IdentifierConstValue {
+	node := cv.(*ConstValue)	
+	node.SetComments(comments.([]*Comment))
+	return node, nil
+}
+
+IdentifierConstValue = id:Identifier {
+	cv := NewConstValue("identifier", id.(*Identifier).Name.Text, NewLocationFromCurrent(c))
+	return cv, nil
 }
 
 EnumValueIntConstant = v:(EQUAL IntConstant) {

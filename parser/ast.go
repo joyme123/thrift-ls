@@ -20,6 +20,9 @@ type Node interface {
 
 	IsBadNode() bool
 	ChildrenBadNode() bool
+
+	// Equals checks ast equals between two node
+	Equals(node Node) bool
 }
 
 type Document struct {
@@ -118,6 +121,32 @@ func (d *Document) ChildrenBadNode() bool {
 	return false
 }
 
+func (d *Document) Equals(node Node) bool {
+	doc, ok := node.(*Document)
+	if !ok {
+		return false
+	}
+
+	if (d == nil && doc != nil) ||
+		(d != nil && doc == nil) {
+		return false
+	} else if d == nil && doc == nil {
+		return true
+	}
+
+	if len(doc.Nodes) != len(d.Nodes) {
+		return false
+	}
+
+	for i := range d.Nodes {
+		if !d.Nodes[i].Equals(doc.Nodes[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 type Header interface {
 	Type() string
 	SetComments(comments []*Comment, endLineComments []*Comment)
@@ -155,6 +184,20 @@ func (h *BadHeader) ChildrenBadNode() bool {
 
 func (h *BadHeader) SetComments([]*Comment, []*Comment) {
 
+}
+
+func (h *BadHeader) Equals(node Node) bool {
+	hn, ok := node.(*BadHeader)
+	if !ok {
+		return false
+	}
+
+	if (h != nil && hn == nil) ||
+		(h == nil && hn != nil) {
+		return false
+	}
+
+	return true
 }
 
 func (h *BadHeader) SetLocation(loc Location) {
@@ -198,6 +241,26 @@ func (k *KeywordLiteral) ChildrenBadNode() bool {
 	return false
 }
 
+func (k *KeywordLiteral) Equals(node Node) bool {
+	kl, ok := node.(*KeywordLiteral)
+	if !ok {
+		return false
+	}
+
+	if (k == nil && kl != nil) ||
+		(k != nil && kl == nil) {
+		return false
+	} else if k == nil && kl == nil {
+		return true
+	}
+
+	if k.BadNode != kl.BadNode {
+		return false
+	}
+
+	return k.Text == kl.Text
+}
+
 type Keyword struct {
 	Comments []*Comment
 	Literal  *KeywordLiteral
@@ -226,12 +289,57 @@ func (i *Keyword) ChildrenBadNode() bool {
 	return false
 }
 
+func (i *Keyword) Equals(k *Keyword) bool {
+	if (i == nil && k != nil) ||
+		(i != nil && k == nil) {
+		return false
+	} else if i == nil && k == nil {
+		return true
+	}
+
+	if i.BadNode != k.BadNode {
+		return false
+	}
+
+	if !i.Literal.Equals(k.Literal) {
+		return false
+	}
+
+	if len(i.Comments) != len(k.Comments) {
+		return false
+	}
+
+	for n := range i.Comments {
+		if !i.Comments[n].Equals(k.Comments[n]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 type IncludeKeyword struct {
 	Keyword
 }
 
 func (i *IncludeKeyword) Type() string {
 	return "IncludeKeyword"
+}
+
+func (i *IncludeKeyword) Equals(node Node) bool {
+	ik, ok := node.(*IncludeKeyword)
+	if !ok {
+		return false
+	}
+
+	if (i == nil && ik != nil) ||
+		(i != nil && ik == nil) {
+		return false
+	} else if i == nil && ik == nil {
+		return true
+	}
+
+	return ik.Keyword.Equals(&i.Keyword)
 }
 
 type Include struct {
@@ -309,12 +417,76 @@ func (i *Include) SetLocation(loc Location) {
 	i.Location = loc
 }
 
+func (i *Include) Equals(node Node) bool {
+	in, ok := node.(*Include)
+	if !ok {
+		return false
+	}
+
+	if (i == nil && in != nil) ||
+		(i != nil && in == nil) {
+		return false
+	} else if i == nil && in == nil {
+		return true
+	}
+
+	if i.BadNode != in.BadNode {
+		return false
+	}
+
+	if !i.IncludeKeyword.Equals(in.IncludeKeyword) {
+		return false
+	}
+
+	if !i.Path.Equals(in.Path) {
+		return false
+	}
+
+	if len(i.Comments) != len(in.Comments) {
+		return false
+	}
+
+	for n := range i.Comments {
+		if !i.Comments[n].Equals(in.Comments[n]) {
+			return false
+		}
+	}
+
+	if len(i.EndLineComments) != len(in.EndLineComments) {
+		return false
+	}
+
+	for n := range i.EndLineComments {
+		if !i.EndLineComments[n].Equals(in.EndLineComments[n]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 type CPPIncludeKeyword struct {
 	Keyword
 }
 
 func (c *CPPIncludeKeyword) Type() string {
 	return "CPPIncludeKeyword"
+}
+
+func (c *CPPIncludeKeyword) Equals(node Node) bool {
+	cn, ok := node.(*CPPIncludeKeyword)
+	if !ok {
+		return false
+	}
+
+	if (c == nil && cn != nil) ||
+		(c != nil && cn == nil) {
+		return false
+	} else if c == nil && cn == nil {
+		return true
+	}
+
+	return c.Keyword.Equals(&cn.Keyword)
 }
 
 type CPPInclude struct {
@@ -385,6 +557,54 @@ func (i *CPPInclude) SetLocation(loc Location) {
 	i.Location = loc
 }
 
+func (i *CPPInclude) Equals(node Node) bool {
+	cn, ok := node.(*CPPInclude)
+	if !ok {
+		return false
+	}
+
+	if (i == nil && cn != nil) ||
+		(i != nil && cn == nil) {
+		return false
+	} else if i == nil && cn == nil {
+		return true
+	}
+
+	if i.BadNode != cn.BadNode {
+		return false
+	}
+
+	if !i.CPPIncludeKeyword.Equals(cn.CPPIncludeKeyword) {
+		return false
+	}
+
+	if !i.Path.Equals(cn.Path) {
+		return false
+	}
+
+	if len(i.Comments) != len(cn.Comments) {
+		return false
+	}
+
+	for n := range i.Comments {
+		if !i.Comments[n].Equals(cn.Comments[n]) {
+			return false
+		}
+	}
+
+	if len(i.EndLineComments) != len(cn.EndLineComments) {
+		return false
+	}
+
+	for n := range i.EndLineComments {
+		if !i.EndLineComments[n].Equals(cn.EndLineComments[n]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 type NamespaceKeyword struct {
 	Keyword
 }
@@ -393,8 +613,40 @@ func (n *NamespaceKeyword) Type() string {
 	return "NamespaceKeyword"
 }
 
+func (n *NamespaceKeyword) Equals(node Node) bool {
+	nn, ok := node.(*NamespaceKeyword)
+	if !ok {
+		return false
+	}
+
+	if (n == nil && nn != nil) ||
+		(n != nil && nn == nil) {
+		return false
+	} else if n == nil && nn == nil {
+		return true
+	}
+
+	return n.Keyword.Equals(&nn.Keyword)
+}
+
 type NamespaceScope struct {
 	Identifier
+}
+
+func (ns *NamespaceScope) Equals(node Node) bool {
+	nn, ok := node.(*NamespaceScope)
+	if !ok {
+		return false
+	}
+
+	if (ns == nil && nn != nil) ||
+		(ns != nil && nn == nil) {
+		return false
+	} else if ns == nil && nn == nil {
+		return true
+	}
+
+	return ns.Identifier.Equals(&nn.Identifier)
 }
 
 type Namespace struct {
@@ -475,6 +727,62 @@ func (n *Namespace) SetLocation(loc Location) {
 	n.Location = loc
 }
 
+func (n *Namespace) Equals(node Node) bool {
+	nn, ok := node.(*Namespace)
+	if !ok {
+		return false
+	}
+
+	if (n == nil && nn != nil) ||
+		(n != nil && nn == nil) {
+		return false
+	} else if n == nil && nn == nil {
+		return true
+	}
+
+	if n.BadNode != nn.BadNode {
+		return false
+	}
+
+	if !n.NamespaceKeyword.Equals(nn.NamespaceKeyword) {
+		return false
+	}
+
+	if !n.Language.Equals(nn.Language) {
+		return false
+	}
+
+	if !n.Name.Equals(nn.Name) {
+		return false
+	}
+
+	if !n.Annotations.Equals(nn.Annotations) {
+		return false
+	}
+
+	if len(n.Comments) != len(nn.Comments) {
+		return false
+	}
+
+	for i := range n.Comments {
+		if !n.Comments[i].Equals(nn.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(n.EndLineComments) != len(nn.EndLineComments) {
+		return false
+	}
+
+	for i := range n.EndLineComments {
+		if !n.EndLineComments[i].Equals(nn.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 type Definition interface {
 	Node
 	Type() string
@@ -522,12 +830,48 @@ func (d *BadDefinition) ChildrenBadNode() bool {
 	return false
 }
 
+func (d *BadDefinition) Equals(node Node) bool {
+	dn, ok := node.(*BadDefinition)
+	if !ok {
+		return false
+	}
+
+	if (d == nil && dn != nil) ||
+		(d != nil && dn == nil) {
+		return false
+	} else if d == nil && dn == nil {
+		return true
+	}
+
+	if d.BadNode != dn.BadNode {
+		return false
+	}
+
+	return true
+}
+
 type StructKeyword struct {
 	Keyword
 }
 
 func (s *StructKeyword) Type() string {
 	return "StructKeyword"
+}
+
+func (s *StructKeyword) Equals(node Node) bool {
+	sn, ok := node.(*StructKeyword)
+	if !ok {
+		return false
+	}
+
+	if (s == nil && sn != nil) ||
+		(s != nil && sn == nil) {
+		return false
+	} else if s == nil && sn == nil {
+		return true
+	}
+
+	return s.Keyword.Equals(&sn.Keyword)
 }
 
 type LCurKeyword struct {
@@ -538,12 +882,44 @@ func (s *LCurKeyword) Type() string {
 	return "LCurKeyword"
 }
 
+func (s *LCurKeyword) Equals(node Node) bool {
+	sn, ok := node.(*LCurKeyword)
+	if !ok {
+		return false
+	}
+
+	if (s == nil && sn != nil) ||
+		(s != nil && sn == nil) {
+		return false
+	} else if s == nil && sn == nil {
+		return true
+	}
+
+	return s.Keyword.Equals(&sn.Keyword)
+}
+
 type RCurKeyword struct {
 	Keyword
 }
 
 func (s *RCurKeyword) Type() string {
 	return "RCurKeyword"
+}
+
+func (s *RCurKeyword) Equals(node Node) bool {
+	sn, ok := node.(*RCurKeyword)
+	if !ok {
+		return false
+	}
+
+	if (s == nil && sn != nil) ||
+		(s != nil && sn == nil) {
+		return false
+	} else if s == nil && sn == nil {
+		return true
+	}
+
+	return s.Keyword.Equals(&sn.Keyword)
 }
 
 type Struct struct {
@@ -632,12 +1008,98 @@ func (s *Struct) SetLocation(loc Location) {
 	s.Location = loc
 }
 
+func (s *Struct) Equals(node Node) bool {
+	sn, ok := node.(*Struct)
+	if !ok {
+		return false
+	}
+
+	if (s == nil && sn != nil) ||
+		(s != nil && sn == nil) {
+		return false
+	} else if s == nil && sn == nil {
+		return true
+	}
+
+	if s.BadNode != sn.BadNode {
+		return false
+	}
+
+	if !s.StructKeyword.Equals(sn.StructKeyword) {
+		return false
+	}
+
+	if !s.LCurKeyword.Equals(sn.LCurKeyword) {
+		return false
+	}
+
+	if !s.RCurKeyword.Equals(sn.RCurKeyword) {
+		return false
+	}
+
+	if !s.Identifier.Equals(sn.Identifier) {
+		return false
+	}
+
+	if len(s.Fields) != len(sn.Fields) {
+		return false
+	}
+
+	for i := range s.Fields {
+		if !s.Fields[i].Equals(sn.Fields[i]) {
+			return false
+		}
+	}
+
+	if len(s.Comments) != len(sn.Comments) {
+		return false
+	}
+
+	for i := range s.Comments {
+		if !s.Comments[i].Equals(sn.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(s.EndLineComments) != len(sn.EndLineComments) {
+		return false
+	}
+
+	for i := range s.EndLineComments {
+		if !s.EndLineComments[i].Equals(sn.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	if !s.Annotations.Equals(sn.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type ConstKeyword struct {
 	Keyword
 }
 
 func (c *ConstKeyword) Type() string {
 	return "ConstKeyword"
+}
+
+func (c *ConstKeyword) Equals(node Node) bool {
+	cn, ok := node.(*ConstKeyword)
+	if !ok {
+		return false
+	}
+
+	if (c == nil && cn != nil) ||
+		(c != nil && cn == nil) {
+		return false
+	} else if c == nil && cn == nil {
+		return true
+	}
+
+	return c.Keyword.Equals(&cn.Keyword)
 }
 
 type EqualKeyword struct {
@@ -656,6 +1118,22 @@ func (e *EqualKeyword) Type() string {
 	return "EqualKeyword"
 }
 
+func (e *EqualKeyword) Equals(node Node) bool {
+	en, ok := node.(*EqualKeyword)
+	if !ok {
+		return false
+	}
+
+	if (e == nil && en != nil) ||
+		(e != nil && en == nil) {
+		return false
+	} else if e == nil && en == nil {
+		return true
+	}
+
+	return e.Keyword.Equals(&en.Keyword)
+}
+
 type ListSeparatorKeyword struct {
 	Keyword
 	Text string // , or ;
@@ -663,6 +1141,22 @@ type ListSeparatorKeyword struct {
 
 func (e *ListSeparatorKeyword) Type() string {
 	return "ListSeparator"
+}
+
+func (e *ListSeparatorKeyword) Equals(node Node) bool {
+	en, ok := node.(*ListSeparatorKeyword)
+	if !ok {
+		return false
+	}
+
+	if (e == nil && en != nil) ||
+		(e != nil && en == nil) {
+		return false
+	} else if e == nil && en == nil {
+		return true
+	}
+
+	return e.Keyword.Equals(&en.Keyword)
 }
 
 type Const struct {
@@ -754,12 +1248,95 @@ func (c *Const) SetLocation(loc Location) {
 	c.Location = loc
 }
 
+func (c *Const) Equals(node Node) bool {
+	cn, ok := node.(*Const)
+	if !ok {
+		return false
+	}
+
+	if (c == nil && cn != nil) ||
+		(c != nil && cn == nil) {
+		return false
+	} else if c == nil && cn == nil {
+		return true
+	}
+
+	if c.BadNode != cn.BadNode {
+		return false
+	}
+
+	if !c.ConstKeyword.Equals(cn.ConstKeyword) {
+		return false
+	}
+
+	if !c.EqualKeyword.Equals(cn.EqualKeyword) {
+		return false
+	}
+
+	if !c.ListSeparatorKeyword.Equals(cn.ListSeparatorKeyword) {
+		return false
+	}
+
+	if !c.Name.Equals(cn.Name) {
+		return false
+	}
+
+	if !c.ConstType.Equals(cn.ConstType) {
+		return false
+	}
+	if !c.Value.Equals(cn.Value) {
+		return false
+	}
+
+	if len(c.Comments) != len(cn.Comments) {
+		return false
+	}
+
+	for i := range c.Comments {
+		if !c.Comments[i].Equals(cn.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(c.EndLineComments) != len(cn.EndLineComments) {
+		return false
+	}
+
+	for i := range c.EndLineComments {
+		if !c.EndLineComments[i].Equals(cn.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	if !c.Annotations.Equals(cn.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type TypedefKeyword struct {
 	Keyword
 }
 
 func (t *TypedefKeyword) Type() string {
 	return "TypedefKeyword"
+}
+
+func (t *TypedefKeyword) Equals(node Node) bool {
+	tn, ok := node.(*TypedefKeyword)
+	if !ok {
+		return false
+	}
+
+	if (t == nil && tn != nil) ||
+		(t != nil && tn == nil) {
+		return false
+	} else if t == nil && tn == nil {
+		return true
+	}
+
+	return t.Keyword.Equals(&tn.Keyword)
 }
 
 type Typedef struct {
@@ -841,12 +1418,84 @@ func (t *Typedef) SetLocation(loc Location) {
 	t.Location = loc
 }
 
+func (t *Typedef) Equals(node Node) bool {
+	tn, ok := node.(*Typedef)
+	if !ok {
+		return false
+	}
+
+	if (t == nil && tn != nil) ||
+		(t != nil && tn == nil) {
+		return false
+	} else if t == nil && tn == nil {
+		return true
+	}
+
+	if t.BadNode != tn.BadNode {
+		return false
+	}
+
+	if !t.TypedefKeyword.Equals(tn.TypedefKeyword) {
+		return false
+	}
+
+	if !t.T.Equals(tn.T) {
+		return false
+	}
+
+	if !t.Alias.Equals(tn.Alias) {
+		return false
+	}
+
+	if len(t.Comments) != len(tn.Comments) {
+		return false
+	}
+
+	for i := range t.Comments {
+		if !t.Comments[i].Equals(tn.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(t.EndLineComments) != len(tn.EndLineComments) {
+		return false
+	}
+
+	for i := range t.EndLineComments {
+		if !t.EndLineComments[i].Equals(tn.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	if !t.Annotations.Equals(tn.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type EnumKeyword struct {
 	Keyword
 }
 
 func (e *EnumKeyword) Type() string {
 	return "EnumKeyword"
+}
+
+func (e *EnumKeyword) Equals(node Node) bool {
+	en, ok := node.(*EnumKeyword)
+	if !ok {
+		return false
+	}
+
+	if (e == nil && en != nil) ||
+		(e != nil && en == nil) {
+		return false
+	} else if e == nil && en == nil {
+		return true
+	}
+
+	return e.Keyword.Equals(&en.Keyword)
 }
 
 type Enum struct {
@@ -935,6 +1584,74 @@ func (e *Enum) SetLocation(loc Location) {
 	e.Location = loc
 }
 
+func (e *Enum) Equals(node Node) bool {
+	en, ok := node.(*Enum)
+	if !ok {
+		return false
+	}
+
+	if (e == nil && en != nil) ||
+		(e != nil && en == nil) {
+		return false
+	} else if e == nil && en == nil {
+		return true
+	}
+
+	if e.BadNode != en.BadNode {
+		return false
+	}
+
+	if !e.EnumKeyword.Equals(en.EnumKeyword) {
+		return false
+	}
+
+	if !e.LCurKeyword.Equals(en.LCurKeyword) {
+		return false
+	}
+
+	if !e.RCurKeyword.Equals(en.RCurKeyword) {
+		return false
+	}
+
+	if !e.Name.Equals(en.Name) {
+		return false
+	}
+	if len(e.Values) != len(en.Values) {
+		return false
+	}
+	for i := range e.Values {
+		if !e.Values[i].Equals(en.Values[i]) {
+			return false
+		}
+	}
+
+	if len(e.Comments) != len(en.Comments) {
+		return false
+	}
+
+	for i := range e.Comments {
+		if !e.Comments[i].Equals(en.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(e.EndLineComments) != len(en.EndLineComments) {
+		return false
+	}
+
+	for i := range e.EndLineComments {
+		if !e.EndLineComments[i].Equals(en.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	if !e.Annotations.Equals(en.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type EnumValue struct {
 	ListSeparatorKeyword *ListSeparatorKeyword // can be nil
 	EqualKeyword         *EqualKeyword         // can be nil
@@ -1018,6 +1735,70 @@ func (e *EnumValue) ChildrenBadNode() bool {
 	return false
 }
 
+func (e *EnumValue) Equals(node Node) bool {
+	en, ok := node.(*EnumValue)
+	if !ok {
+		return false
+	}
+
+	if (e == nil && en != nil) ||
+		(e != nil && en == nil) {
+		return false
+	} else if e == nil && en == nil {
+		return true
+	}
+
+	if e.BadNode != en.BadNode {
+		return true
+	}
+
+	if !e.ListSeparatorKeyword.Equals(en.ListSeparatorKeyword) {
+		return false
+	}
+
+	if !e.EqualKeyword.Equals(en.EqualKeyword) {
+		return false
+	}
+
+	if !e.Name.Equals(en.Name) {
+		return false
+	}
+
+	if !e.ValueNode.Equals(en.ValueNode) {
+		return false
+	}
+
+	if e.Value != en.Value {
+		return false
+	}
+
+	if len(e.Comments) != len(en.Comments) {
+		return false
+	}
+
+	for i := range e.Comments {
+		if !e.Comments[i].Equals(en.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(e.EndLineComments) != len(en.EndLineComments) {
+		return false
+	}
+
+	for i := range e.EndLineComments {
+		if !e.EndLineComments[i].Equals(en.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	if !e.Annotations.Equals(en.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type ServiceKeyword struct {
 	Keyword
 }
@@ -1026,12 +1807,44 @@ func (s *ServiceKeyword) Type() string {
 	return "ServiceKeyword"
 }
 
+func (s *ServiceKeyword) Equals(node Node) bool {
+	sn, ok := node.(*ServiceKeyword)
+	if !ok {
+		return false
+	}
+
+	if (s == nil && sn != nil) ||
+		(s != nil && sn == nil) {
+		return false
+	} else if s == nil && sn == nil {
+		return true
+	}
+
+	return s.Keyword.Equals(&sn.Keyword)
+}
+
 type ExtendsKeyword struct {
 	Keyword
 }
 
 func (s *ExtendsKeyword) Type() string {
 	return "ExtendsKeyword"
+}
+
+func (s *ExtendsKeyword) Equals(node Node) bool {
+	sn, ok := node.(*ExtendsKeyword)
+	if !ok {
+		return false
+	}
+
+	if (s == nil && sn != nil) ||
+		(s != nil && sn == nil) {
+		return false
+	} else if s == nil && sn == nil {
+		return true
+	}
+
+	return s.Keyword.Equals(&sn.Keyword)
 }
 
 type Service struct {
@@ -1133,12 +1946,106 @@ func (s *Service) SetLocation(loc Location) {
 	s.Location = loc
 }
 
+func (s *Service) Equals(node Node) bool {
+	sn, ok := node.(*Service)
+	if !ok {
+		return false
+	}
+
+	if (s == nil && sn != nil) ||
+		(s != nil && sn == nil) {
+		return false
+	} else if s == nil && sn == nil {
+		return true
+	}
+
+	if s.BadNode != sn.BadNode {
+		return false
+	}
+
+	if !s.ServiceKeyword.Equals(sn.ServiceKeyword) {
+		return false
+	}
+
+	if !s.ExtendsKeyword.Equals(sn.ExtendsKeyword) {
+		return false
+	}
+
+	if !s.LCurKeyword.Equals(sn.LCurKeyword) {
+		return false
+	}
+
+	if !s.RCurKeyword.Equals(sn.RCurKeyword) {
+		return false
+	}
+
+	if !s.Name.Equals(sn.Name) {
+		return false
+	}
+
+	if !s.Extends.Equals(sn.Extends) {
+		return false
+	}
+
+	if len(s.Functions) != len(sn.Functions) {
+		return false
+	}
+
+	for i := range s.Functions {
+		if !s.Functions[i].Equals(sn.Functions[i]) {
+			return false
+		}
+	}
+
+	if len(s.Comments) != len(sn.Comments) {
+		return false
+	}
+
+	for i := range s.Comments {
+		if !s.Comments[i].Equals(sn.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(s.EndLineComments) != len(sn.EndLineComments) {
+		return false
+	}
+
+	for i := range s.EndLineComments {
+		if !s.EndLineComments[i].Equals(sn.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	if !s.Annotations.Equals(sn.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type OnewayKeyword struct {
 	Keyword
 }
 
 func (o *OnewayKeyword) Type() string {
 	return "OnewayKeyword"
+}
+
+func (o *OnewayKeyword) Equals(node Node) bool {
+	on, ok := node.(*OnewayKeyword)
+	if !ok {
+		return false
+	}
+
+	if (o == nil && on != nil) ||
+		(o != nil && on == nil) {
+		return false
+	} else if o == nil && on == nil {
+		return true
+	}
+
+	return o.Keyword.Equals(&on.Keyword)
 }
 
 type LParKeyword struct {
@@ -1149,12 +2056,44 @@ func (l *LParKeyword) Type() string {
 	return "LParKeyword"
 }
 
+func (l *LParKeyword) Equals(node Node) bool {
+	ln, ok := node.(*LParKeyword)
+	if !ok {
+		return false
+	}
+
+	if (l == nil && ln != nil) ||
+		(l != nil && ln == nil) {
+		return false
+	} else if l == nil && ln == nil {
+		return true
+	}
+
+	return l.Keyword.Equals(&ln.Keyword)
+}
+
 type RParKeyword struct {
 	Keyword
 }
 
 func (r *RParKeyword) Type() string {
 	return "RParKeyword"
+}
+
+func (r *RParKeyword) Equals(node Node) bool {
+	rn, ok := node.(*RParKeyword)
+	if !ok {
+		return false
+	}
+
+	if (r == nil && rn != nil) ||
+		(r != nil && rn == nil) {
+		return false
+	} else if r == nil && rn == nil {
+		return true
+	}
+
+	return r.Keyword.Equals(&rn.Keyword)
 }
 
 type VoidKeyword struct {
@@ -1165,12 +2104,44 @@ func (v *VoidKeyword) Type() string {
 	return "VoidKeyword"
 }
 
+func (v *VoidKeyword) Equals(node Node) bool {
+	vn, ok := node.(*VoidKeyword)
+	if !ok {
+		return false
+	}
+
+	if (v == nil && vn != nil) ||
+		(v != nil && vn == nil) {
+		return false
+	} else if v == nil && vn == nil {
+		return true
+	}
+
+	return v.Keyword.Equals(&vn.Keyword)
+}
+
 type ThrowsKeyword struct {
 	Keyword
 }
 
 func (t *ThrowsKeyword) Type() string {
 	return "ThrowsKeyword"
+}
+
+func (t *ThrowsKeyword) Equals(node Node) bool {
+	tn, ok := node.(*ThrowsKeyword)
+	if !ok {
+		return false
+	}
+
+	if (t == nil && tn != nil) ||
+		(t != nil && tn == nil) {
+		return false
+	} else if t == nil && tn == nil {
+		return true
+	}
+
+	return t.Keyword.Equals(&tn.Keyword)
 }
 
 type Throws struct {
@@ -1221,6 +2192,48 @@ func (t *Throws) Children() []Node {
 		nodes = append(nodes, t.Fields[i])
 	}
 	return nodes
+}
+
+func (t *Throws) Equals(node Node) bool {
+	tn, ok := node.(*Throws)
+	if !ok {
+		return false
+	}
+
+	if (t == nil && tn != nil) ||
+		(t != nil && tn == nil) {
+		return false
+	} else if t == nil && tn == nil {
+		return true
+	}
+
+	if t.BadNode != tn.BadNode {
+		return false
+	}
+
+	if !t.ThrowsKeyword.Equals(tn.ThrowsKeyword) {
+		return false
+	}
+
+	if !t.LParKeyword.Equals(tn.LParKeyword) {
+		return false
+	}
+
+	if !t.RParKeyword.Equals(tn.RParKeyword) {
+		return false
+	}
+
+	if len(t.Fields) != len(tn.Fields) {
+		return false
+	}
+
+	for i := range t.Fields {
+		if !t.Fields[i].Equals(tn.Fields[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 type Function struct {
@@ -1323,12 +2336,114 @@ func (f *Function) ChildrenBadNode() bool {
 	return false
 }
 
+func (f *Function) Equals(node Node) bool {
+	fn, ok := node.(*Function)
+	if !ok {
+		return false
+	}
+
+	if (f == nil && fn != nil) ||
+		(f != nil && fn == nil) {
+		return false
+	} else if f == nil && fn == nil {
+		return true
+	}
+
+	if f.BadNode != fn.BadNode {
+		return false
+	}
+
+	if !f.LParKeyword.Equals(fn.LParKeyword) {
+		return false
+	}
+
+	if !f.RParKeyword.Equals(fn.RParKeyword) {
+		return false
+	}
+
+	if !f.ListSeparatorKeyword.Equals(fn.ListSeparatorKeyword) {
+		return false
+	}
+
+	if !f.Name.Equals(fn.Name) {
+		return false
+	}
+
+	if !f.Oneway.Equals(fn.Oneway) {
+		return false
+	}
+
+	if !f.Void.Equals(fn.Void) {
+		return false
+	}
+
+	if !f.FunctionType.Equals(fn.FunctionType) {
+		return false
+	}
+
+	if len(f.Arguments) != len(fn.Arguments) {
+		return false
+	}
+
+	for i := range f.Arguments {
+		if !f.Arguments[i].Equals(fn.Arguments[i]) {
+			return false
+		}
+	}
+
+	if !f.Throws.Equals(fn.Throws) {
+		return false
+	}
+
+	if len(f.Comments) != len(fn.Comments) {
+		return false
+	}
+
+	for i := range f.Comments {
+		if !f.Comments[i].Equals(fn.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(f.EndLineComments) != len(fn.EndLineComments) {
+		return false
+	}
+
+	for i := range f.EndLineComments {
+		if !f.EndLineComments[i].Equals(fn.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	if !f.Annotations.Equals(fn.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type UnionKeyword struct {
 	Keyword
 }
 
 func (u *UnionKeyword) Type() string {
 	return "UnionKeyword"
+}
+
+func (u *UnionKeyword) Equals(node Node) bool {
+	un, ok := node.(*UnionKeyword)
+	if !ok {
+		return false
+	}
+
+	if (u == nil && un != nil) ||
+		(u != nil && un == nil) {
+		return false
+	} else if u == nil && un == nil {
+		return true
+	}
+
+	return u.Keyword.Equals(&un.Keyword)
 }
 
 type Union struct {
@@ -1423,12 +2538,94 @@ func (u *Union) SetLocation(loc Location) {
 	u.Location = loc
 }
 
+func (u *Union) Equals(node Node) bool {
+	un, ok := node.(*Union)
+	if !ok {
+		return false
+	}
+
+	if (u == nil && un != nil) ||
+		(u != nil && un == nil) {
+		return false
+	} else if u == nil && un == nil {
+		return true
+	}
+
+	if !u.UnionKeyword.Equals(un.UnionKeyword) {
+		return false
+	}
+
+	if !u.LCurKeyword.Equals(un.LCurKeyword) {
+		return false
+	}
+
+	if !u.RCurKeyword.Equals(un.RCurKeyword) {
+		return false
+	}
+
+	if !u.Name.Equals(un.Name) {
+		return false
+	}
+
+	if len(u.Fields) != len(un.Fields) {
+		return false
+	}
+
+	for i := range u.Fields {
+		if !u.Fields[i].Equals(un.Fields[i]) {
+			return false
+		}
+	}
+
+	if len(u.Comments) != len(un.Comments) {
+		return false
+	}
+
+	for i := range u.Comments {
+		if !u.Comments[i].Equals(un.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(u.EndLineComments) != len(un.EndLineComments) {
+		return false
+	}
+
+	for i := range u.EndLineComments {
+		if !u.EndLineComments[i].Equals(un.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	if !u.Annotations.Equals(un.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type ExceptionKeyword struct {
 	Keyword
 }
 
 func (e *ExceptionKeyword) Type() string {
 	return "ExceptionKeyword"
+}
+
+func (e *ExceptionKeyword) Equals(node Node) bool {
+	en, ok := node.(*ExceptionKeyword)
+	if !ok {
+		return false
+	}
+
+	if (e == nil && en != nil) ||
+		(e != nil && en == nil) {
+		return false
+	} else if e == nil && en == nil {
+		return true
+	}
+
+	return e.Keyword.Equals(&en.Keyword)
 }
 
 type Exception struct {
@@ -1517,6 +2714,76 @@ func (e *Exception) SetLocation(loc Location) {
 	e.Location = loc
 }
 
+func (e *Exception) Equals(node Node) bool {
+	en, ok := node.(*Exception)
+	if !ok {
+		return false
+	}
+
+	if (e == nil && en != nil) ||
+		(e != nil && en == nil) {
+		return false
+	} else if e == nil && en == nil {
+		return true
+	}
+
+	if e.BadNode != en.BadNode {
+		return false
+	}
+
+	if !e.ExceptionKeyword.Equals(en.ExceptionKeyword) {
+		return false
+	}
+
+	if !e.LCurKeyword.Equals(en.LCurKeyword) {
+		return false
+	}
+
+	if !e.RCurKeyword.Equals(en.RCurKeyword) {
+		return false
+	}
+
+	if !e.Name.Equals(en.Name) {
+		return false
+	}
+
+	if len(e.Fields) != len(en.Fields) {
+		return false
+	}
+
+	for i := range e.Fields {
+		if !e.Fields[i].Equals(en.Fields[i]) {
+			return false
+		}
+	}
+
+	if len(e.Comments) != len(en.Comments) {
+		return false
+	}
+
+	for i := range e.Comments {
+		if !e.Comments[i].Equals(en.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(e.EndLineComments) != len(en.EndLineComments) {
+		return false
+	}
+
+	for i := range e.EndLineComments {
+		if !e.EndLineComments[i].Equals(en.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	if !e.Annotations.Equals(en.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type IdentifierName struct {
 	Text string
 
@@ -1555,6 +2822,30 @@ func (i *IdentifierName) ChildrenBadNode() bool {
 		}
 	}
 	return false
+}
+
+func (i *IdentifierName) Equals(node Node) bool {
+	in, ok := node.(*IdentifierName)
+	if !ok {
+		return false
+	}
+
+	if (i == nil && in != nil) ||
+		(i != nil && in == nil) {
+		return false
+	} else if i == nil && in == nil {
+		return true
+	}
+
+	if i.BadNode != in.BadNode {
+		return false
+	}
+
+	if i.Text != in.Text {
+		return false
+	}
+
+	return true
 }
 
 type Identifier struct {
@@ -1623,6 +2914,40 @@ func (i *Identifier) ChildrenBadNode() bool {
 		}
 	}
 	return false
+}
+
+func (i *Identifier) Equals(node Node) bool {
+	in, ok := node.(*Identifier)
+	if !ok {
+		return false
+	}
+
+	if (i == nil && in != nil) ||
+		(i != nil && in == nil) {
+		return false
+	} else if i == nil && in == nil {
+		return true
+	}
+
+	if i.BadNode != in.BadNode {
+		return false
+	}
+
+	if !i.Name.Equals(in.Name) {
+		return false
+	}
+
+	if len(i.Comments) != len(in.Comments) {
+		return false
+	}
+
+	for n := range i.Comments {
+		if !i.Comments[n].Equals(in.Comments[n]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func ConvertPosition(pos position) Position {
@@ -1728,12 +3053,100 @@ func (f *Field) ChildrenBadNode() bool {
 	return false
 }
 
+func (f *Field) Equals(node Node) bool {
+	fn, ok := node.(*Field)
+	if !ok {
+		return false
+	}
+
+	if (f == nil && fn != nil) ||
+		(f != nil && fn == nil) {
+		return false
+	} else if f == nil && fn == nil {
+		return true
+	}
+
+	if f.BadNode != fn.BadNode {
+		return false
+	}
+
+	if !f.Index.Equals(fn.Index) {
+		return false
+	}
+
+	if !f.RequiredKeyword.Equals(fn.RequiredKeyword) {
+		return false
+	}
+
+	if !f.FieldType.Equals(fn.FieldType) {
+		return false
+	}
+
+	if !f.Identifier.Equals(fn.Identifier) {
+		return false
+	}
+
+	if !f.ConstValue.Equals(fn.ConstValue) {
+		return false
+	}
+
+	if !f.EqualKeyword.Equals(fn.EqualKeyword) {
+		return false
+	}
+
+	if !f.ListSeparatorKeyword.Equals(fn.ListSeparatorKeyword) {
+		return false
+	}
+
+	if len(f.Comments) != len(fn.Comments) {
+		return false
+	}
+
+	for i := range f.Comments {
+		if !f.Comments[i].Equals(fn.Comments[i]) {
+			return false
+		}
+	}
+
+	if len(f.EndLineComments) != len(fn.EndLineComments) {
+		return false
+	}
+
+	for i := range f.EndLineComments {
+		if !f.EndLineComments[i].Equals(fn.EndLineComments[i]) {
+			return false
+		}
+	}
+
+	if !f.Annotations.Equals(fn.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type ColonKeyword struct {
 	Keyword
 }
 
 func (c *ColonKeyword) Type() string {
 	return "ColonKeyword"
+}
+
+func (c *ColonKeyword) Equals(node Node) bool {
+	cn, ok := node.(*ColonKeyword)
+	if !ok {
+		return false
+	}
+
+	if (c == nil && cn != nil) ||
+		(c != nil && cn == nil) {
+		return false
+	} else if c == nil && cn == nil {
+		return true
+	}
+
+	return c.Keyword.Equals(&cn.Keyword)
 }
 
 type FieldIndex struct {
@@ -1787,12 +3200,66 @@ func (f *FieldIndex) ChildrenBadNode() bool {
 	return false
 }
 
+func (f *FieldIndex) Equals(node Node) bool {
+	fn, ok := node.(*FieldIndex)
+	if !ok {
+		return false
+	}
+
+	if (f == nil && fn != nil) ||
+		(f != nil && fn == nil) {
+		return false
+	} else if f == nil && fn == nil {
+		return true
+	}
+
+	if f.BadNode != fn.BadNode {
+		return false
+	}
+
+	if !f.ColonKeyword.Equals(fn.ColonKeyword) {
+		return false
+	}
+
+	if f.Value != fn.Value {
+		return false
+	}
+
+	if len(f.Comments) != len(fn.Comments) {
+		return false
+	}
+
+	for i := range f.Comments {
+		if !f.Comments[i].Equals(fn.Comments[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 type RequiredKeyword struct {
 	Keyword
 }
 
 func (r *RequiredKeyword) Type() string {
 	return "RequiredKeyword"
+}
+
+func (r *RequiredKeyword) Equals(node Node) bool {
+	rn, ok := node.(*RequiredKeyword)
+	if !ok {
+		return false
+	}
+
+	if (r == nil && rn != nil) ||
+		(r != nil && rn == nil) {
+		return false
+	} else if r == nil && rn == nil {
+		return true
+	}
+
+	return r.Keyword.Equals(&rn.Keyword)
 }
 
 type LPointKeyword struct {
@@ -1803,12 +3270,44 @@ func (l *LPointKeyword) Type() string {
 	return "LPointKeyword"
 }
 
+func (l *LPointKeyword) Equals(node Node) bool {
+	ln, ok := node.(*LPointKeyword)
+	if !ok {
+		return false
+	}
+
+	if (l == nil && ln != nil) ||
+		(l != nil && ln == nil) {
+		return false
+	} else if l == nil && ln == nil {
+		return true
+	}
+
+	return l.Keyword.Equals(&ln.Keyword)
+}
+
 type RPointKeyword struct {
 	Keyword
 }
 
 func (r *RPointKeyword) Type() string {
 	return "RPointKeyword"
+}
+
+func (r *RPointKeyword) Equals(node Node) bool {
+	rn, ok := node.(*RPointKeyword)
+	if !ok {
+		return false
+	}
+
+	if (r == nil && rn != nil) ||
+		(r != nil && rn == nil) {
+		return false
+	} else if r == nil && rn == nil {
+		return true
+	}
+
+	return r.Keyword.Equals(&rn.Keyword)
 }
 
 type CommaKeyword struct {
@@ -1819,12 +3318,44 @@ func (r *CommaKeyword) Type() string {
 	return "CommaKeyword"
 }
 
+func (r *CommaKeyword) Equals(node Node) bool {
+	rn, ok := node.(*CommaKeyword)
+	if !ok {
+		return false
+	}
+
+	if (r == nil && rn != nil) ||
+		(r != nil && rn == nil) {
+		return false
+	} else if r == nil && rn == nil {
+		return true
+	}
+
+	return r.Keyword.Equals(&rn.Keyword)
+}
+
 type CppTypeKeyword struct {
 	Keyword
 }
 
-func (c *CppTypeKeyword) Type() string {
+func (r *CppTypeKeyword) Type() string {
 	return "CppTypeKeyword"
+}
+
+func (r *CppTypeKeyword) Equals(node Node) bool {
+	rn, ok := node.(*CppTypeKeyword)
+	if !ok {
+		return false
+	}
+
+	if (r == nil && rn != nil) ||
+		(r != nil && rn == nil) {
+		return false
+	} else if r == nil && rn == nil {
+		return true
+	}
+
+	return r.Keyword.Equals(&rn.Keyword)
 }
 
 type CppType struct {
@@ -1866,6 +3397,33 @@ func (c *CppType) ChildrenBadNode() bool {
 		}
 	}
 	return false
+}
+
+func (c *CppType) Equals(node Node) bool {
+	cn, ok := node.(*CppType)
+	if !ok {
+		return false
+	}
+	if (c == nil && cn != nil) ||
+		(c != nil && cn == nil) {
+		return false
+	} else if c == nil && cn == nil {
+		return true
+	}
+
+	if c.BadNode != cn.BadNode {
+		return false
+	}
+
+	if !c.CppTypeKeyword.Equals(cn.CppTypeKeyword) {
+		return false
+	}
+
+	if !c.Literal.Equals(cn.Literal) {
+		return false
+	}
+
+	return true
 }
 
 type FieldType struct {
@@ -1941,6 +3499,58 @@ func (c *FieldType) ChildrenBadNode() bool {
 	return false
 }
 
+func (c *FieldType) Equals(node Node) bool {
+	fn, ok := node.(*FieldType)
+	if !ok {
+		return false
+	}
+
+	if (c == nil && fn != nil) ||
+		(c != nil && fn == nil) {
+		return false
+	} else if c == nil && fn == nil {
+		return true
+	}
+
+	if c.BadNode != fn.BadNode {
+		return false
+	}
+
+	if !c.TypeName.Equals(fn.TypeName) {
+		return false
+	}
+
+	if !c.KeyType.Equals(fn.KeyType) {
+		return false
+	}
+
+	if !c.ValueType.Equals(fn.ValueType) {
+		return false
+	}
+
+	if !c.CppType.Equals(fn.CppType) {
+		return false
+	}
+
+	if !c.LPointKeyword.Equals(fn.LPointKeyword) {
+		return false
+	}
+
+	if !c.RPointKeyword.Equals(fn.RPointKeyword) {
+		return false
+	}
+
+	if !c.CommaKeyword.Equals(fn.CommaKeyword) {
+		return false
+	}
+
+	if !c.Annotations.Equals(fn.Annotations) {
+		return false
+	}
+
+	return true
+}
+
 type TypeName struct {
 	// TypeName can be:
 	// container type: map, set, list
@@ -1991,6 +3601,40 @@ func (t *TypeName) ChildrenBadNode() bool {
 	return false
 }
 
+func (t *TypeName) Equals(node Node) bool {
+	tn, ok := node.(*TypeName)
+	if !ok {
+		return false
+	}
+
+	if (t == nil && tn != nil) ||
+		(t != nil && tn == nil) {
+		return false
+	} else if t == nil && tn == nil {
+		return true
+	}
+
+	if t.BadNode != tn.BadNode {
+		return false
+	}
+
+	if t.Name != tn.Name {
+		return false
+	}
+
+	if len(t.Comments) != len(tn.Comments) {
+		return false
+	}
+
+	for i := range t.Comments {
+		if !t.Comments[i].Equals(tn.Comments[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 type LBrkKeyword struct {
 	Keyword
 }
@@ -1999,12 +3643,44 @@ func (l *LBrkKeyword) Type() string {
 	return "LBrkKeyword"
 }
 
+func (l *LBrkKeyword) Equals(node Node) bool {
+	ln, ok := node.(*LBrkKeyword)
+	if !ok {
+		return false
+	}
+
+	if (l == nil && ln != nil) ||
+		(l != nil && ln == nil) {
+		return false
+	} else if l == nil && ln == nil {
+		return true
+	}
+
+	return l.Keyword.Equals(&ln.Keyword)
+}
+
 type RBrkKeyword struct {
 	Keyword
 }
 
 func (l *RBrkKeyword) Type() string {
 	return "RBrkKeyword"
+}
+
+func (l *RBrkKeyword) Equals(node Node) bool {
+	ln, ok := node.(*RBrkKeyword)
+	if !ok {
+		return false
+	}
+
+	if (l == nil && ln != nil) ||
+		(l != nil && ln == nil) {
+		return false
+	} else if l == nil && ln == nil {
+		return true
+	}
+
+	return l.Keyword.Equals(&ln.Keyword)
 }
 
 type ConstValue struct {
@@ -2103,6 +3779,78 @@ func (c *ConstValue) ChildrenBadNode() bool {
 	return false
 }
 
+func (c *ConstValue) Equals(node Node) bool {
+	cn, ok := node.(*ConstValue)
+	if !ok {
+		return false
+	}
+
+	if (c == nil && cn != nil) ||
+		(c != nil && cn == nil) {
+		return false
+	} else if c == nil && cn == nil {
+		return true
+	}
+
+	if c.BadNode != cn.BadNode {
+		return false
+	}
+
+	if c.TypeName != cn.TypeName {
+		return false
+	}
+
+	// TODO(jpf): any 的比对
+	// if c.Value != cn.Value {
+	// 	return false
+	// }
+
+	if c.ValueInText != cn.ValueInText {
+		return false
+	}
+
+	// TODO(jpf): any 的比对
+	// if c.Key != cn.Key {
+	// 	return false
+	// }
+
+	if !c.LBrkKeyword.Equals(cn.LBrkKeyword) {
+		return false
+	}
+
+	if !c.RBrkKeyword.Equals(cn.RBrkKeyword) {
+		return false
+	}
+
+	if !c.LCurKeyword.Equals(cn.LCurKeyword) {
+		return false
+	}
+
+	if !c.RCurKeyword.Equals(cn.RCurKeyword) {
+		return false
+	}
+
+	if !c.ListSeparatorKeyword.Equals(cn.ListSeparatorKeyword) {
+		return false
+	}
+
+	if !c.ColonKeyword.Equals(cn.ColonKeyword) {
+		return false
+	}
+
+	if len(c.Comments) != len(cn.Comments) {
+		return false
+	}
+
+	for i := range c.Comments {
+		if !c.Comments[i].Equals(cn.Comments[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 type LiteralValue struct {
 	Text string
 
@@ -2147,6 +3895,30 @@ func (l *LiteralValue) ChildrenBadNode() bool {
 		}
 	}
 	return false
+}
+
+func (l *LiteralValue) Equals(node Node) bool {
+	ln, ok := node.(*LiteralValue)
+	if !ok {
+		return false
+	}
+
+	if (l == nil && ln != nil) ||
+		(l != nil && ln == nil) {
+		return false
+	} else if l == nil && ln == nil {
+		return true
+	}
+
+	if l.BadNode != ln.BadNode {
+		return false
+	}
+
+	if l.Text != ln.Text {
+		return false
+	}
+
+	return true
 }
 
 type Literal struct {
@@ -2209,6 +3981,44 @@ func (l *Literal) ChildrenBadNode() bool {
 	return false
 }
 
+func (l *Literal) Equals(node Node) bool {
+	ln, ok := node.(*Literal)
+	if !ok {
+		return false
+	}
+
+	if (l == nil && ln != nil) ||
+		(l != nil && ln == nil) {
+		return false
+	} else if l == nil && ln == nil {
+		return true
+	}
+
+	if l.BadNode != ln.BadNode {
+		return false
+	}
+
+	if !l.Value.Equals(ln.Value) {
+		return false
+	}
+
+	if l.Quote != ln.Quote {
+		return false
+	}
+
+	if len(l.Comments) != len(ln.Comments) {
+		return false
+	}
+
+	for i := range l.Comments {
+		if !l.Comments[i].Equals(ln.Comments[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 type Annotations struct {
 	Annotations []*Annotation
 	LParKeyword *LParKeyword
@@ -2255,6 +4065,45 @@ func (a *Annotations) ChildrenBadNode() bool {
 		}
 	}
 	return false
+}
+
+func (a *Annotations) Equals(node Node) bool {
+	an, ok := node.(*Annotations)
+	if !ok {
+		return false
+	}
+
+	if (a == nil && an != nil) ||
+		(a != nil && an == nil) {
+		return false
+	} else if a == nil && an == nil {
+		return true
+	}
+
+	if a.BadNode != an.BadNode {
+		return false
+	}
+
+	if len(a.Annotations) != len(an.Annotations) {
+		return false
+	}
+
+	for i := range a.Annotations {
+		if !a.Annotations[i].Equals(an.Annotations[i]) {
+			return false
+		}
+	}
+
+	if !a.LParKeyword.Equals(an.LParKeyword) {
+		return false
+	}
+
+	if !a.RParKeyword.Equals(an.RParKeyword) {
+		return false
+	}
+
+	return true
+
 }
 
 type Annotation struct {
@@ -2315,6 +4164,43 @@ func (a *Annotation) ChildrenBadNode() bool {
 	return false
 }
 
+func (a *Annotation) Equals(node Node) bool {
+	an, ok := node.(*Annotation)
+	if !ok {
+		return false
+	}
+
+	if (a == nil && an != nil) ||
+		(a != nil && an == nil) {
+		return false
+	} else if a == nil && an == nil {
+		return true
+	}
+
+	if a.BadNode != an.BadNode {
+		return false
+	}
+
+	if !a.EqualKeyword.Equals(an.EqualKeyword) {
+		return false
+	}
+
+	if !a.ListSeparatorKeyword.Equals(an.ListSeparatorKeyword) {
+		return false
+	}
+
+	if !a.Identifier.Equals(an.Identifier) {
+		return false
+	}
+
+	if !a.Value.Equals(an.Value) {
+		return false
+	}
+
+	return true
+
+}
+
 type CommentStyle string
 
 const (
@@ -2360,6 +4246,43 @@ func (c *Comment) IsBadNode() bool {
 
 func (c *Comment) ChildrenBadNode() bool {
 	return false
+}
+
+func (c *Comment) Equals(node Node) bool {
+	cn, ok := node.(*Comment)
+	if !ok {
+		return false
+	}
+
+	if (c == nil && cn != nil) ||
+		(c != nil && cn == nil) {
+		return false
+	} else if c == nil && cn == nil {
+		return true
+	}
+
+	if c.BadNode != cn.BadNode {
+		return false
+	}
+
+	aLines := strings.Split(c.Text, "\n")
+	bLines := strings.Split(cn.Text, "\n")
+
+	if len(aLines) != len(bLines) {
+		return false
+	}
+
+	for i := range aLines {
+		if strings.TrimSpace(aLines[i]) != strings.TrimSpace(bLines[i]) {
+			return false
+		}
+	}
+
+	if c.Style != cn.Style {
+		return false
+	}
+
+	return true
 }
 
 type Location struct {

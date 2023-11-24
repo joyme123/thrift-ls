@@ -54,7 +54,7 @@ func MustFormatEndLineComments(comments []*parser.Comment, indent string) string
 func formatMultiLineComment(comment string, indent string) string {
 	comment = strings.TrimSpace(comment)
 
-	if strings.HasPrefix(comment, "//") {
+	if strings.HasPrefix(comment, "//") || strings.HasPrefix(comment, "#") {
 		return indent + comment
 	}
 

@@ -4,7 +4,7 @@ import (
 	"github.com/joyme123/thrift-ls/parser"
 )
 
-const includeTpl = "{{.Comments}}{{.Include}} {{.Path}} {{.EndLineComments}}\n"
+const includeTpl = "{{.Comments}}{{.Include}} {{.Path}}{{.EndLineComments}}\n"
 
 type IncludeFormatter struct {
 	Comments        string
@@ -22,7 +22,7 @@ func MustFormatInclude(inc *parser.Include) string {
 	f := &IncludeFormatter{
 		Comments:        comments,
 		Include:         MustFormatKeyword(inc.IncludeKeyword.Keyword),
-		Path:            MustFormatLiteral(inc.Path),
+		Path:            MustFormatLiteral(inc.Path, ""),
 		EndLineComments: MustFormatComments(inc.EndLineComments, ""),
 	}
 
@@ -38,7 +38,7 @@ func MustFormatCPPInclude(inc *parser.CPPInclude) string {
 	f := &IncludeFormatter{
 		Comments:        comments,
 		Include:         MustFormatKeyword(inc.CPPIncludeKeyword.Keyword),
-		Path:            MustFormatLiteral(inc.Path),
+		Path:            MustFormatLiteral(inc.Path, ""),
 		EndLineComments: MustFormatComments(inc.EndLineComments, ""),
 	}
 
