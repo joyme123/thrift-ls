@@ -41,9 +41,19 @@ func MustFormatConstValue(cv *parser.ConstValue, indent string) string {
 			}
 		}
 
-		buf.WriteString(MustFormatKeyword(cv.LCurKeyword.Keyword) + "\n")
+		var preNode parser.Node
+		buf.WriteString(MustFormatKeyword(cv.LCurKeyword.Keyword))
+		preNode = cv.LCurKeyword
 		for i := range values {
+			distance := lineDistance(preNode, values[i])
+			if distance >= 1 {
+				buf.WriteString("\n")
+			}
 			buf.WriteString(MustFormatConstValue(values[i], ""))
+			preNode = values[i]
+		}
+		if lineDistance(cv.RCurKeyword, preNode) >= 1 {
+			buf.WriteString("\n")
 		}
 		buf.WriteString(MustFormatKeyword(cv.RCurKeyword.Keyword))
 	case "pair":
@@ -59,7 +69,7 @@ func MustFormatConstValue(cv *parser.ConstValue, indent string) string {
 		if cv.ListSeparatorKeyword != nil {
 			sep = MustFormatKeyword(cv.ListSeparatorKeyword.Keyword)
 		}
-		buf.WriteString(fmt.Sprintf("%s%s %s%s\n", MustFormatConstValue(key, indent+Indent), MustFormatKeyword(cv.ColonKeyword.Keyword), MustFormatConstValue(value, ""), sep))
+		buf.WriteString(fmt.Sprintf("%s%s %s%s", MustFormatConstValue(key, indent+Indent), MustFormatKeyword(cv.ColonKeyword.Keyword), MustFormatConstValue(value, ""), sep))
 	case "identifier":
 		if len(cv.Comments) > 0 {
 			// special case for iline distance

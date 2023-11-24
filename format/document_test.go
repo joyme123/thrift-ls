@@ -41,11 +41,11 @@ var expectedFormated = `/*
  * details.
  */
 
-include "a.thrift" 
-include "b.thrift" 
+include "a.thrift"
+include "b.thrift"
 
-cpp_include "aaaaa" 
-cpp_include "bbbbb" 
+cpp_include "aaaaa"
+cpp_include "bbbbb"
 
 namespace c_glib TTest
 namespace cpp thrift.test
@@ -456,6 +456,14 @@ struct OptionalBinary {
     2: optional map<binary,i32> bin_map = {}
 }
 
+struct OptionalMap {
+    1: optional map<string, i32> str_map = {/* comment 1 */ "text": 1, "text2": 2}
+    2: optional map<string, string> str_map2 = {
+        // comments
+        "text": "text",
+        "text2": "text2", "text3": "text3"
+    }
+}
 
 // comments at end of doc`
 
@@ -910,6 +918,15 @@ struct OptionalSetDefaultTest {
 struct OptionalBinary {
   1: optional set<binary> bin_set = {}
   2: optional map<binary,i32> bin_map = {}
+}
+
+struct OptionalMap {
+  1: optional map<string, i32> str_map = {/* comment 1 */ "text": 1, "text2": 2}
+  2: optional map<string, string> str_map2 = {
+    // comments
+    "text": "text",
+    "text2": "text2", "text3": "text3"
+  }
 }
 
 // comments at end of doc
