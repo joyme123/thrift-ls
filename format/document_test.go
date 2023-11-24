@@ -475,6 +475,15 @@ struct OptionalMap {
     }
 }
 
+const map<UserType,bool> SIGNATURE_SUPPORT = {
+    UserType.DEV_XIAOMI_SSO: false,
+    UserType.DEV_XIAOMI: true,
+    UserType.APP_SECRET: true,
+    UserType.APP_ACCESS_TOKEN: true,
+    UserType.APP_XIAOMI_SSO: false,
+    UserType.APP_ANONYMOUS: false
+}
+
 // comments at end of doc`
 
 const ThriftTestContent = `
@@ -945,6 +954,16 @@ struct OptionalMap {
         // comments
 	1: true,
     }
+}
+
+
+const map<UserType, bool> SIGNATURE_SUPPORT = {
+  UserType.DEV_XIAOMI_SSO: false,
+  UserType.DEV_XIAOMI: true,
+  UserType.APP_SECRET: true,
+  UserType.APP_ACCESS_TOKEN: true,
+  UserType.APP_XIAOMI_SSO: false,
+  UserType.APP_ANONYMOUS: false
 }
 
 // comments at end of doc

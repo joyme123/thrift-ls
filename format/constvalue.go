@@ -60,7 +60,7 @@ func MustFormatConstValue(cv *parser.ConstValue, indent string, newLine bool) st
 		}
 		if lineDistance(preNode, cv.RCurKeyword) >= 1 {
 			buf.WriteString("\n")
-			buf.WriteString(Indent)
+			buf.WriteString(indent)
 		}
 		buf.WriteString(MustFormatKeyword(cv.RCurKeyword.Keyword))
 	case "pair":

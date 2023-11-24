@@ -64,10 +64,6 @@ func FormatDocumentWithValidation(doc *parser.Document, selfValidation bool) (st
 	}
 
 	if len(doc.Comments) > 0 {
-		addtionalLine := needAddtionalLineInDocument(fmtCtx.preNode, doc.Comments[0])
-		if addtionalLine {
-			buf.WriteString("\n")
-		}
 		buf.WriteString(MustFormatComments(doc.Comments, ""))
 	}
 	res := buf.String()
