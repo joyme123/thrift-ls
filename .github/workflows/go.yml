@@ -21,6 +21,15 @@ jobs:
     - name: Test
       run: go test -v ./...
 
+    - name: Update coverage report
+      uses: ncruces/go-coverage-report@v0
+      with:
+        report: true
+        chart: true
+        amend: true
+        reuse-go: true
+      continue-on-error: true
+
     - name: Build with xgo
       uses: crazy-max/ghaction-xgo@v2
       with:

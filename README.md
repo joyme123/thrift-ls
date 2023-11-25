@@ -1,7 +1,6 @@
 # Thrift language server
 
-[![Language grade: Go](https://img.shields.io/lgtm/grade/go/g/joyme123/thrift-ls.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/joyme123/thrift-ls/context:go)
-
+[![Go Coverage](https://github.com/joyme123/thrift-ls/wiki/coverage.svg)](https://raw.githack.com/wiki/joyme123/thrift-ls/coverage.html)
 ![Go](https://github.com/joyme123/thrift-ls/workflows/Go/badge.svg?branch=main)
 
 thrift-ls implements language server protocol
