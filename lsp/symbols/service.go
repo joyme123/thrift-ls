@@ -14,8 +14,8 @@ func ServiceSymbol(svc *parser.Service) *protocol.DocumentSymbol {
 	res := &protocol.DocumentSymbol{
 		Name:           svc.Name.Name.Text,
 		Kind:           protocol.SymbolKindInterface,
-		Range:          lsputils.ASTNodeToRange(svc),
-		SelectionRange: lsputils.ASTNodeToRange(svc),
+		Range:          lsputils.ASTNodeToRange(svc.Name.Name),
+		SelectionRange: lsputils.ASTNodeToRange(svc.Name.Name),
 	}
 
 	for i := range svc.Functions {
@@ -37,8 +37,8 @@ func FunctionSymbol(fn *parser.Function) *protocol.DocumentSymbol {
 	res := &protocol.DocumentSymbol{
 		Name:           fn.Name.Name.Text,
 		Kind:           protocol.SymbolKindFunction,
-		Range:          lsputils.ASTNodeToRange(fn),
-		SelectionRange: lsputils.ASTNodeToRange(fn),
+		Range:          lsputils.ASTNodeToRange(fn.Name.Name),
+		SelectionRange: lsputils.ASTNodeToRange(fn.Name.Name),
 	}
 
 	return res

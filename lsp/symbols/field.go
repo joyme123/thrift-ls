@@ -14,7 +14,7 @@ func FieldSymbol(field *parser.Field) *protocol.DocumentSymbol {
 
 	detail := ""
 	if field.RequiredKeyword != nil {
-		detail = field.RequiredKeyword.Literal.Text
+		detail = field.RequiredKeyword.Literal.Text + " "
 	}
 	detail += format.MustFormatFieldType(field.FieldType)
 
@@ -22,8 +22,8 @@ func FieldSymbol(field *parser.Field) *protocol.DocumentSymbol {
 		Name:           field.Identifier.Name.Text,
 		Detail:         detail,
 		Kind:           protocol.SymbolKindField,
-		Range:          lsputils.ASTNodeToRange(field),
-		SelectionRange: lsputils.ASTNodeToRange(field),
+		Range:          lsputils.ASTNodeToRange(field.Identifier.Name),
+		SelectionRange: lsputils.ASTNodeToRange(field.Identifier.Name),
 	}
 
 	return res

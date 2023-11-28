@@ -15,6 +15,7 @@ thrift-ls implements language server protocol
 - dignostic
 - rename
 - format
+- document symbols
 
 ## As Thrift Langugae Server
 
@@ -72,4 +73,6 @@ config file default location:
 - windows: `C:\Users\${user}\.thriftls\config.yaml`
 - macos, linux: `~/.thriftls/config.yaml`
 
+## TODO
 
+[] optimize code completion

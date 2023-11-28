@@ -15,8 +15,8 @@ func StructSymbol(st *parser.Struct) *protocol.DocumentSymbol {
 		Name:           st.Identifier.Name.Text,
 		Detail:         "Struct",
 		Kind:           protocol.SymbolKindStruct,
-		Range:          lsputils.ASTNodeToRange(st),
-		SelectionRange: lsputils.ASTNodeToRange(st),
+		Range:          lsputils.ASTNodeToRange(st.Identifier.Name),
+		SelectionRange: lsputils.ASTNodeToRange(st.Identifier.Name),
 	}
 
 	for i := range st.Fields {
@@ -40,8 +40,8 @@ func UnionSymbol(un *parser.Union) *protocol.DocumentSymbol {
 		Name:           un.Name.Name.Text,
 		Detail:         "Union",
 		Kind:           protocol.SymbolKindStruct,
-		Range:          lsputils.ASTNodeToRange(un),
-		SelectionRange: lsputils.ASTNodeToRange(un),
+		Range:          lsputils.ASTNodeToRange(un.Name.Name),
+		SelectionRange: lsputils.ASTNodeToRange(un.Name.Name),
 	}
 
 	for i := range un.Fields {
@@ -65,8 +65,8 @@ func ExceptionSymbol(ex *parser.Exception) *protocol.DocumentSymbol {
 		Name:           ex.Name.Name.Text,
 		Detail:         "Exception",
 		Kind:           protocol.SymbolKindStruct,
-		Range:          lsputils.ASTNodeToRange(ex),
-		SelectionRange: lsputils.ASTNodeToRange(ex),
+		Range:          lsputils.ASTNodeToRange(ex.Name.Name),
+		SelectionRange: lsputils.ASTNodeToRange(ex.Name.Name),
 	}
 
 	for i := range ex.Fields {

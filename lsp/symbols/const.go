@@ -14,8 +14,8 @@ func ConstSymbol(cst *parser.Const) *protocol.DocumentSymbol {
 	res := &protocol.DocumentSymbol{
 		Name:           cst.Name.Name.Text,
 		Kind:           protocol.SymbolKindConstant,
-		Range:          lsputils.ASTNodeToRange(cst),
-		SelectionRange: lsputils.ASTNodeToRange(cst),
+		Range:          lsputils.ASTNodeToRange(cst.Name.Name),
+		SelectionRange: lsputils.ASTNodeToRange(cst.Name.Name),
 	}
 
 	return res

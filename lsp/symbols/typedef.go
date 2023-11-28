@@ -12,8 +12,8 @@ func TypedefSymbol(td *parser.Typedef) *protocol.DocumentSymbol {
 		Name:           td.Alias.Name.Text,
 		Detail:         format.MustFormatFieldType(td.T),
 		Kind:           protocol.SymbolKindTypeParameter,
-		Range:          lsputils.ASTNodeToRange(td),
-		SelectionRange: lsputils.ASTNodeToRange(td),
+		Range:          lsputils.ASTNodeToRange(td.Alias.Name),
+		SelectionRange: lsputils.ASTNodeToRange(td.Alias.Name),
 	}
 
 	return res
