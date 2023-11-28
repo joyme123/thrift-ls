@@ -17,8 +17,8 @@ func EnumSymbol(enum *parser.Enum) *protocol.DocumentSymbol {
 		Name:           enum.Name.Name.Text,
 		Detail:         "Enum",
 		Kind:           protocol.SymbolKindEnum,
-		Range:          lsputils.ASTNodeToRange(enum),
-		SelectionRange: lsputils.ASTNodeToRange(enum),
+		Range:          lsputils.ASTNodeToRange(enum.Name.Name),
+		SelectionRange: lsputils.ASTNodeToRange(enum.Name.Name),
 	}
 
 	for i := range enum.Values {
@@ -42,8 +42,8 @@ func EnumValueSymbol(v *parser.EnumValue) *protocol.DocumentSymbol {
 		Name:           v.Name.Name.Text,
 		Detail:         strconv.FormatInt(v.Value, 10),
 		Kind:           protocol.SymbolKindNumber,
-		Range:          lsputils.ASTNodeToRange(v),
-		SelectionRange: lsputils.ASTNodeToRange(v),
+		Range:          lsputils.ASTNodeToRange(v.Name.Name),
+		SelectionRange: lsputils.ASTNodeToRange(v.Name.Name),
 	}
 
 	return res
