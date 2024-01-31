@@ -42,8 +42,10 @@ install thrift-language-server in extension market
 
 **supported flags**
 
-```bash
+```plaintext
 Usage of ./bin/thriftls:
+  -align string
+        Align enables align option for struct/enum/exception/union fields, Options: "field", "assign", "disable", Default is "field" if not set. (default "field")
   -d	Do not print reformatted sources to standard output. If a file's formatting is different than gofmt's, print diffs to standard output.
   -f string
     	file path to format
