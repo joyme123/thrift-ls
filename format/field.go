@@ -23,7 +23,11 @@ func MustFormatFields(fields []*parser.Field, indent string) string {
 			fieldGroups = append(fieldGroups, fg)
 			fg = make(fieldGroup, 0)
 		}
-		fg = append(fg, MustFormatField(field, "\t", indent))
+		space := " "
+		if Align == AlignTypeField {
+			space = "\t"
+		}
+		fg = append(fg, MustFormatField(field, space, indent))
 		fmtCtx.preNode = field
 	}
 
@@ -33,7 +37,7 @@ func MustFormatFields(fields []*parser.Field, indent string) string {
 
 	for i, fg := range fieldGroups {
 		w := new(tabwriter.Writer)
-		w.Init(buf, 1, 0, 1, ' ', 0)
+		w.Init(buf, 1, 8, 1, ' ', tabwriter.TabIndent)
 		for j := range fg {
 			fmt.Fprintln(w, fg[j])
 		}
@@ -73,7 +77,11 @@ func MustFormatField(field *parser.Field, space string, indent string) string {
 
 	value := ""
 	if field.ConstValue != nil {
-		value = fmt.Sprintf("%s%s%s%s", space, MustFormatKeyword(field.EqualKeyword.Keyword), space, MustFormatConstValue(field.ConstValue, indent, false))
+		equalSpace := space
+		if Align == AlignTypeAssign {
+			equalSpace = "\t"
+		}
+		value = fmt.Sprintf("%s%s%s%s", equalSpace, MustFormatKeyword(field.EqualKeyword.Keyword), equalSpace, MustFormatConstValue(field.ConstValue, indent, false))
 	}
 	str := fmt.Sprintf("%s%d:%s%s%s%s%s%s", indent, field.Index.Value, space, required, MustFormatFieldType(field.FieldType), space, field.Identifier.Name.Text, value)
 	buf.WriteString(str)

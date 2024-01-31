@@ -9,6 +9,12 @@ import (
 	"github.com/joyme123/thrift-ls/parser"
 )
 
+const (
+	AlignTypeAssign  = "assign"
+	AlignTypeField   = "field"
+	AlignTypeDisable = "disable"
+)
+
 func MustFormat(tplText string, formatter any) string {
 	tpl, err := template.New("default").Parse(tplText)
 	if err != nil {

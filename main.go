@@ -27,8 +27,6 @@ type Options struct {
 }
 
 func main_format(opt format.Options, file string) error {
-	opt.InitDefaultIndent()
-
 	if file == "" {
 		err := errors.New("must specified a thrift file to format")
 		fmt.Println(err)
@@ -87,6 +85,8 @@ func main() {
 	flag.StringVar(&formatFile, "f", "", "file path to format")
 	formatOpts := format.Options{}
 	formatOpts.SetFlags()
+	flag.Parse()
+	formatOpts.InitDefault()
 
 	opts := configInit()
 	tlog.Init(opts.LogLevel)

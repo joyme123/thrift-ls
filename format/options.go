@@ -7,6 +7,7 @@ import (
 )
 
 var Indent = "    "
+var Align = "field"
 
 type Options struct {
 	// Do not print reformatted sources to standard output.
@@ -21,17 +22,29 @@ type Options struct {
 	// Do not print reformatted sources to standard output.
 	// If a file's formatting is different than gofmt's, print diffs
 	// to standard output.
-	Diff bool `yaml:"Diff"`
+	Diff bool `yaml:"diff"`
+
+	// Align enables align option for struct/enum/exception/union fields
+	// Options: "field", "assign", "disable"
+	// Default is "field" if not set
+	Align string `yaml:"alignByAssign"`
 }
 
 func (o *Options) SetFlags() {
 	flag.BoolVar(&o.Write, "w", false, "Do not print reformatted sources to standard output. If a file's formatting is different from thriftls's, overwrite it with thrfitls's version.")
 	flag.BoolVar(&o.Diff, "d", false, "Do not print reformatted sources to standard output. If a file's formatting is different than gofmt's, print diffs to standard output.")
 	flag.StringVar(&o.Indent, "indent", "4spaces", "Indent to use. Support: num*space, num*tab. example: 4spaces, 1tab, tab")
+	flag.StringVar(&o.Align, "align", "field", `Align enables align option for struct/enum/exception/union fields, Options: "field", "assign", "disable", Default is "field" if not set.`)
 }
 
-func (o *Options) InitDefaultIndent() {
+func (o *Options) InitDefault() {
 	Indent = o.GetIndent()
+
+	if o.Align == "" || (o.Align != AlignTypeField && o.Align != AlignTypeAssign && o.Align != AlignTypeDisable) {
+		o.Align = "field"
+	}
+
+	Align = o.Align
 }
 
 func (o *Options) GetIndent() string {
