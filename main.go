@@ -46,6 +46,10 @@ func main_format(opt format.Options, file string) error {
 		return err
 	}
 	formated, err := format.FormatDocumentWithValidation(ast.(*parser.Document), true)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 
 	if opt.Write {
 		var perms os.FileMode

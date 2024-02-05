@@ -15,6 +15,12 @@ const (
 	AlignTypeDisable = "disable"
 )
 
+const (
+	FieldLineCommaAdd     = "add"
+	FieldLineCommaRemove  = "remove"
+	FieldLineCommaDisable = "disable"
+)
+
 func MustFormat(tplText string, formatter any) string {
 	tpl, err := template.New("default").Parse(tplText)
 	if err != nil {
