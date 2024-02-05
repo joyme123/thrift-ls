@@ -3094,9 +3094,10 @@ func (f *Field) Equals(node Node) bool {
 		return false
 	}
 
-	if !f.ListSeparatorKeyword.Equals(fn.ListSeparatorKeyword) {
-		return false
-	}
+	// 末尾的 , 不影响语义，暂时注释掉
+	// if !f.ListSeparatorKeyword.Equals(fn.ListSeparatorKeyword) {
+	// 	return false
+	// }
 
 	if len(f.Comments) != len(fn.Comments) {
 		return false

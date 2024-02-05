@@ -8,6 +8,7 @@ import (
 
 var Indent = "    "
 var Align = "field"
+var FieldLineComma = "disable"
 
 type Options struct {
 	// Do not print reformatted sources to standard output.
@@ -28,6 +29,12 @@ type Options struct {
 	// Options: "field", "assign", "disable"
 	// Default is "field" if not set
 	Align string `yaml:"alignByAssign"`
+
+	// FieldLineComma represents whether to add or remove comma at the end of field line.
+	// Options: "add", "remove", "disable"
+	// if choose disable, user input will be retained without modification
+	// Default is "disable" if not set
+	FieldLineComma string `yaml:"fieldLineComma"`
 }
 
 func (o *Options) SetFlags() {
@@ -35,6 +42,7 @@ func (o *Options) SetFlags() {
 	flag.BoolVar(&o.Diff, "d", false, "Do not print reformatted sources to standard output. If a file's formatting is different than gofmt's, print diffs to standard output.")
 	flag.StringVar(&o.Indent, "indent", "4spaces", "Indent to use. Support: num*space, num*tab. example: 4spaces, 1tab, tab")
 	flag.StringVar(&o.Align, "align", "field", `Align enables align option for struct/enum/exception/union fields, Options: "field", "assign", "disable", Default is "field" if not set.`)
+	flag.StringVar(&o.FieldLineComma, "fieldLineComma", "disable", `FieldLineComma enables whether to add or remove comma at end of field line. Options: "add", "remove", "disable". If choose disable, user input will be retained without modification. Default is "disable" if not set`)
 }
 
 func (o *Options) InitDefault() {
@@ -45,6 +53,15 @@ func (o *Options) InitDefault() {
 	}
 
 	Align = o.Align
+
+	if o.FieldLineComma == "" ||
+		(o.FieldLineComma != FieldLineCommaAdd &&
+			o.FieldLineComma != FieldLineCommaRemove &&
+			o.FieldLineComma != FieldLineCommaDisable) {
+		o.FieldLineComma = "disable"
+	}
+
+	FieldLineComma = o.FieldLineComma
 }
 
 func (o *Options) GetIndent() string {
