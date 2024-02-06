@@ -8,8 +8,7 @@ const (
 	enumOneLineTpl = `{{.Comments}}{{.Enum}} {{.Identifier}} {{.LCUR}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}`
 
 	enumMultiLineTpl = `{{.Comments}}{{.Enum}} {{.Identifier}} {{.LCUR}}
-{{.EnumValues}}
-{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
+{{.EnumValues}}{{.RCUR}}{{.Annotations}}{{.EndLineComments}}
 `
 )
 

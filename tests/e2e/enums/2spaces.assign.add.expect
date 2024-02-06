@@ -1,0 +1,8 @@
+enum UserType {
+  PHONE      = 1,
+  EMMAIL     = 211,
+  INVITATION = 300000,
+
+  OTHER1   = 2,
+  ANOTHER2 = 33,
+}
