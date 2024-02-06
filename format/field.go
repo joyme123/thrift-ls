@@ -27,7 +27,7 @@ func MustFormatFields(fields []*parser.Field, indent string) string {
 		if Align == AlignTypeField {
 			space = "\t"
 		}
-		fg = append(fg, MustFormatField(field, space, indent))
+		fg = append(fg, MustFormatField(field, space, indent, false))
 		fmtCtx.preNode = field
 	}
 
@@ -54,7 +54,7 @@ func MustFormatFields(fields []*parser.Field, indent string) string {
 func MustFormatOneLineFields(fields []*parser.Field) string {
 	buf := bytes.NewBuffer(nil)
 	for i, field := range fields {
-		buf.WriteString(MustFormatField(field, " ", ""))
+		buf.WriteString(MustFormatField(field, " ", "", true))
 		if i < len(fields)-1 {
 			buf.WriteString(" ")
 		}
@@ -63,7 +63,7 @@ func MustFormatOneLineFields(fields []*parser.Field) string {
 	return buf.String()
 }
 
-func MustFormatField(field *parser.Field, space string, indent string) string {
+func MustFormatField(field *parser.Field, space string, indent string, oneline bool) string {
 	comments, annos := formatCommentsAndAnnos(field.Comments, field.Annotations, indent)
 	if len(field.Comments) > 0 && lineDistance(field.Comments[len(field.Comments)-1], field.Index) > 1 {
 		comments = comments + "\n"
@@ -86,9 +86,9 @@ func MustFormatField(field *parser.Field, space string, indent string) string {
 	str := fmt.Sprintf("%s%d:%s%s%s%s%s%s", indent, field.Index.Value, space, required, MustFormatFieldType(field.FieldType), space, field.Identifier.Name.Text, value)
 	buf.WriteString(str)
 	buf.WriteString(annos)
-	if FieldLineComma == FieldLineCommaAdd {
+	if FieldLineComma == FieldLineCommaAdd && !oneline {
 		buf.WriteString(",")
-	} else if FieldLineComma == FieldLineCommaDisable {
+	} else if FieldLineComma == FieldLineCommaDisable || oneline {
 		buf.WriteString(formatListSeparator(field.ListSeparatorKeyword))
 	}
 
