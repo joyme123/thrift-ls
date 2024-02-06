@@ -1752,9 +1752,10 @@ func (e *EnumValue) Equals(node Node) bool {
 		return true
 	}
 
-	if !e.ListSeparatorKeyword.Equals(en.ListSeparatorKeyword) {
-		return false
-	}
+	// comma 不影响语义
+	// if !e.ListSeparatorKeyword.Equals(en.ListSeparatorKeyword) {
+	// 	return false
+	// }
 
 	if !e.EqualKeyword.Equals(en.EqualKeyword) {
 		return false

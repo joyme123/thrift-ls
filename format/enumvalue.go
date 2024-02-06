@@ -3,31 +3,55 @@ package format
 import (
 	"bytes"
 	"fmt"
+	"text/tabwriter"
 
 	"github.com/joyme123/thrift-ls/parser"
 )
+
+type enumValueGroup []string
 
 func MustFormatEnumValues(values []*parser.EnumValue, indent string) string {
 	buf := bytes.NewBuffer(nil)
 
 	fmtCtx := &fmtContext{}
 
+	var enumValueGroups []enumValueGroup
+	var eg enumValueGroup
+
 	for i, v := range values {
 		if needAddtionalLineForEnumValues(fmtCtx.preNode, values[i]) {
-			buf.WriteString("\n")
+			enumValueGroups = append(enumValueGroups, eg)
+			eg = make(enumValueGroup, 0)
 		}
-		buf.WriteString(MustFormatEnumValue(v, indent))
-		if i < len(values)-1 {
-			buf.WriteString("\n")
+		space := " "
+		if Align == AlignTypeField {
+			space = "\t"
 		}
+		eg = append(eg, MustFormatEnumValue(v, space, indent))
 		fmtCtx.preNode = values[i]
+	}
+
+	if len(eg) > 0 {
+		enumValueGroups = append(enumValueGroups, eg)
+	}
+
+	for i, eg := range enumValueGroups {
+		w := new(tabwriter.Writer)
+		w.Init(buf, 1, 8, 1, ' ', tabwriter.TabIndent)
+		for j := range eg {
+			fmt.Fprintln(w, eg[j])
+		}
+		w.Flush()
+
+		if i < len(enumValueGroups)-1 {
+			buf.WriteString("\n")
+		}
 	}
 
 	return buf.String()
 }
 
-// TODO(jpf): comments
-func MustFormatEnumValue(enumValue *parser.EnumValue, indent string) string {
+func MustFormatEnumValue(enumValue *parser.EnumValue, space, indent string) string {
 	comments, annos := formatCommentsAndAnnos(enumValue.Comments, enumValue.Annotations, indent)
 
 	if len(comments) > 0 && lineDistance(enumValue.Comments[len(enumValue.Comments)-1], enumValue.Name) > 1 {
@@ -37,13 +61,21 @@ func MustFormatEnumValue(enumValue *parser.EnumValue, indent string) string {
 	buf := bytes.NewBufferString(comments)
 	buf.WriteString(indent + MustFormatIdentifier(enumValue.Name))
 	if enumValue.ValueNode != nil {
-		buf.WriteString(fmt.Sprintf(" %s %s", MustFormatKeyword(enumValue.EqualKeyword.Keyword), MustFormatConstValue(enumValue.ValueNode, indent, false)))
+		equalSpace := space
+		if Align == AlignTypeAssign {
+			equalSpace = "\t"
+		}
+		buf.WriteString(fmt.Sprintf("%s%s%s%s", equalSpace, MustFormatKeyword(enumValue.EqualKeyword.Keyword), equalSpace, MustFormatConstValue(enumValue.ValueNode, indent, false)))
 	}
 
 	buf.WriteString(annos)
 
-	if enumValue.ListSeparatorKeyword != nil {
-		buf.WriteString(MustFormatKeyword(enumValue.ListSeparatorKeyword.Keyword))
+	if FieldLineComma == FieldLineCommaAdd {
+		buf.WriteString(",")
+	} else if FieldLineComma == FieldLineCommaDisable {
+		if enumValue.ListSeparatorKeyword != nil {
+			buf.WriteString(MustFormatKeyword(enumValue.ListSeparatorKeyword.Keyword))
+		}
 	}
 
 	buf.WriteString(MustFormatEndLineComments(enumValue.EndLineComments, ""))
