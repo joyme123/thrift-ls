@@ -434,7 +434,7 @@ IdentifierType = v:Identifier {
 	return v.(*Identifier).ToFieldType(), nil
 }
 
-BaseType = v:(BOOL / BYTE / I8 / I16 / I32 / I64 / DOUBLE / STRING / BINARY) {
+BaseType = v:(BOOL / BYTE / I8 / I16 / I32 / I64 / DOUBLE / STRING / BINARY / UUID) {
 	return NewFieldType(nil, nil, nil, nil, v.(*TypeName), nil, nil, NewLocationFromCurrent(c)), nil
 }
 
@@ -808,6 +808,16 @@ BINARY = comments:ReservedComments t:BINARYToken      !LetterOrDigit  Indent* {
 	return tn, nil
 }
 BINARYToken = "binary" {
+	return NewTypeName(string(c.text), c.pos), nil
+}
+
+UUID = comments:ReservedComments t:UUIDToken      !LetterOrDigit  Indent* {
+	tn := t.(*TypeName)
+	tn.Comments = comments.([]*Comment)
+
+	return tn, nil
+}
+UUIDToken = "uuid" {
 	return NewTypeName(string(c.text), c.pos), nil
 }
 

@@ -3556,7 +3556,7 @@ func (c *FieldType) Equals(node Node) bool {
 type TypeName struct {
 	// TypeName can be:
 	// container type: map, set, list
-	// base type: bool, byte, i8, i16, i32, i64, double, string, binary
+	// base type: bool, byte, i8, i16, i32, i64, double, string, binary, uuid
 	// struct, enum, union, exception, identifier
 	Name     string
 	Comments []*Comment

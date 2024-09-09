@@ -48,6 +48,10 @@ struct TestContainer {
 	101: required i64 user3 = 2
 	102: required bool isUser = true
 }
+// line 36
+struct TestUUID {
+	1: required uuid id
+}
 `
 	ss := buildSnapshotForTest([]*cache.FileChange{
 		{
