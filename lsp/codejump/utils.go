@@ -214,6 +214,7 @@ var basicType = map[string]struct{}{
 	"bool":   {},
 	"byte":   {},
 	"binary": {},
+	"uuid":   {},
 }
 
 var containerType = map[string]struct{}{

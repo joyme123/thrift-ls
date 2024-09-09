@@ -29,6 +29,7 @@ var keywords = map[string]protocol.InsertTextFormat{
 	"i64":                   protocol.InsertTextFormatPlainText,
 	"double":                protocol.InsertTextFormatPlainText,
 	"binary":                protocol.InsertTextFormatPlainText,
+	"uuid":                  protocol.InsertTextFormatPlainText,
 	"string":                protocol.InsertTextFormatPlainText,
 	"required":              protocol.InsertTextFormatPlainText,
 	"optional":              protocol.InsertTextFormatPlainText,

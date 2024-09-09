@@ -43,7 +43,6 @@ namespace cocoa EDAM
 namespace perl EDAMTypes
 namespace go edam
 
-
 // =============================== typedefs ====================================
 
 /**
@@ -51,14 +50,10 @@ namespace go edam
  * cache invalidation event.
  */
 typedef i64 InvalidationSequenceNumber
-
-
 /**
  * A type alias for the primary identifiers for Identity objects.
  */
 typedef i64 IdentityID
-
-
 /**
  * Every Evernote account is assigned a unique numeric identifier which
  * will not change for the life of the account.  This is independent of
@@ -66,8 +61,6 @@ typedef i64 IdentityID
  * purposes.  The user should have no reason to know their UserID.
  */
 typedef i32 UserID
-
-
 /**
  * Most data elements within a user's account (e.g. notebooks, notes, tags,
  * resources, etc.) are internally referred to using a globally unique
@@ -79,8 +72,6 @@ typedef i32 UserID
  * only the entire string is relevant as a unique identifier.
  */
 typedef string Guid
-
-
 /**
  * An Evernote Timestamp is the date and time of an event in UTC time.
  * This is expressed as a specific number of milliseconds since the
@@ -99,12 +90,10 @@ typedef string Guid
  * times) between 1000-01-01 and 9999-12-31
  */
 typedef i64 Timestamp
-
 /**
  * A sequence number for the MessageStore subsystem.
  */
 typedef i64 MessageEventID
-
 /**
  * A type alias for the primary identifiers for MessageThread objects.
  */
@@ -118,12 +107,12 @@ typedef i64 MessageThreadID
  * will have a level of PREMIUM.
  */
 enum PrivilegeLevel {
-  NORMAL = 1,
-  PREMIUM = 3,
-  VIP = 5,
-  MANAGER = 7,
-  SUPPORT = 8,
-  ADMIN = 9
+    NORMAL  = 1,
+    PREMIUM = 3,
+    VIP     = 5,
+    MANAGER = 7,
+    SUPPORT = 8,
+    ADMIN   = 9
 }
 
 /**
@@ -132,10 +121,10 @@ enum PrivilegeLevel {
  * other ServiceLevel.
  */
 enum ServiceLevel {
-  BASIC = 1,
-  PLUS = 2,
-  PREMIUM = 3,
-  BUSINESS = 4
+    BASIC    = 1,
+    PLUS     = 2,
+    PREMIUM  = 3,
+    BUSINESS = 4
 }
 
 /**
@@ -143,23 +132,21 @@ enum ServiceLevel {
  * Currently, only the USER query format is supported.
  */
 enum QueryFormat {
-  USER = 1,
-  SEXP = 2
+    USER = 1,
+    SEXP = 2
 }
-
 
 /**
  * This enumeration defines the possible sort ordering for notes when
  * they are returned from a search result.
  */
 enum NoteSortOrder {
-  CREATED = 1,
-  UPDATED = 2,
-  RELEVANCE = 3,
-  UPDATE_SEQUENCE_NUMBER = 4,
-  TITLE = 5
+    CREATED                = 1,
+    UPDATED                = 2,
+    RELEVANCE              = 3,
+    UPDATE_SEQUENCE_NUMBER = 4,
+    TITLE                  = 5
 }
-
 
 /**
  * This enumeration defines the possible states of a premium account
@@ -182,12 +169,12 @@ enum NoteSortOrder {
  *   or user cancelation. No more attempts will be made to activate the account.
  */
 enum PremiumOrderStatus {
-  NONE                 = 0,
-  PENDING              = 1,
-  ACTIVE               = 2,
-  FAILED               = 3,
-  CANCELLATION_PENDING = 4,
-  CANCELED             = 5
+    NONE                 = 0,
+    PENDING              = 1,
+    ACTIVE               = 2,
+    FAILED               = 3,
+    CANCELLATION_PENDING = 4,
+    CANCELED             = 5
 }
 
 /**
@@ -226,12 +213,12 @@ enum PremiumOrderStatus {
  *   FULL_ACCESS being synonymous.
  */
 enum SharedNotebookPrivilegeLevel {
-  READ_NOTEBOOK                  = 0,
-  MODIFY_NOTEBOOK_PLUS_ACTIVITY  = 1,
-  READ_NOTEBOOK_PLUS_ACTIVITY    = 2,
-  GROUP                          = 3,
-  FULL_ACCESS                    = 4,
-  BUSINESS_FULL_ACCESS           = 5
+    READ_NOTEBOOK                 = 0,
+    MODIFY_NOTEBOOK_PLUS_ACTIVITY = 1,
+    READ_NOTEBOOK_PLUS_ACTIVITY   = 2,
+    GROUP                         = 3,
+    FULL_ACCESS                   = 4,
+    BUSINESS_FULL_ACCESS          = 5
 }
 
 /**
@@ -249,9 +236,9 @@ enum SharedNotebookPrivilegeLevel {
  *   remove other recipient's note sharing rights.
  */
 enum SharedNotePrivilegeLevel {
-  READ_NOTE = 0,
-  MODIFY_NOTE = 1,
-  FULL_ACCESS = 2
+    READ_NOTE   = 0,
+    MODIFY_NOTE = 1,
+    FULL_ACCESS = 2
 }
 
 /**
@@ -264,9 +251,9 @@ enum SharedNotePrivilegeLevel {
  * GROUP_OWNER: The user is the owner of the group.
  */
 enum SponsoredGroupRole {
-  GROUP_MEMBER = 1,
-  GROUP_ADMIN = 2,
-  GROUP_OWNER = 3
+    GROUP_MEMBER = 1,
+    GROUP_ADMIN  = 2,
+    GROUP_OWNER  = 3
 }
 
 /**
@@ -277,8 +264,8 @@ enum SponsoredGroupRole {
  * NORMAL: The user is a regular user within the Evernote Business account.
  */
 enum BusinessUserRole {
-  ADMIN = 1,
-  NORMAL = 2,
+    ADMIN  = 1,
+    NORMAL = 2,
 }
 
 /**
@@ -295,8 +282,8 @@ enum BusinessUserRole {
  * </dl>
  */
 enum BusinessUserStatus {
-  ACTIVE = 1,
-  DEACTIVATED = 2,
+    ACTIVE      = 1,
+    DEACTIVATED = 2,
 }
 
 /**
@@ -310,16 +297,16 @@ enum BusinessUserStatus {
  * NO_SHARED_NOTEBOOKS: No shared notebooks are applicable to the operation.
  */
 enum SharedNotebookInstanceRestrictions {
-  /*
-   * originally had the name ONLY_JOINED_OR_PREVIEW and was renamed after the
-   * allowPreview feature was removed.
-   */
-  ASSIGNED = 1,
+    /*
+     * originally had the name ONLY_JOINED_OR_PREVIEW and was renamed after the
+     * allowPreview feature was removed.
+     */
+    ASSIGNED = 1,
 
-  /*
-   * most restrictive
-   */
-  NO_SHARED_NOTEBOOKS = 2
+    /*
+     * most restrictive
+     */
+    NO_SHARED_NOTEBOOKS = 2
 }
 
 /**
@@ -333,8 +320,8 @@ enum SharedNotebookInstanceRestrictions {
  *   days when there is a reminder.
  */
 enum ReminderEmailConfig {
-  DO_NOT_SEND      = 1,
-  SEND_DAILY_EMAIL = 2
+    DO_NOT_SEND      = 1,
+    SEND_DAILY_EMAIL = 2
 }
 
 /**
@@ -351,32 +338,31 @@ enum ReminderEmailConfig {
  *   against a business' seat limit.
  */
 enum BusinessInvitationStatus {
-  APPROVED = 0,
-  REQUESTED = 1,
-  REDEEMED = 2
+    APPROVED  = 0,
+    REQUESTED = 1,
+    REDEEMED  = 2
 }
 
 /**
  * What kinds of Contacts does the Evernote service know about?
  */
 enum ContactType {
-  EVERNOTE = 1,
-  SMS = 2,
-  FACEBOOK = 3,
-  EMAIL = 4,
-  TWITTER = 5,
-  LINKEDIN = 6,
+    EVERNOTE = 1,
+    SMS      = 2,
+    FACEBOOK = 3,
+    EMAIL    = 4,
+    TWITTER  = 5,
+    LINKEDIN = 6,
 }
 
 /**
  * Entity types
  */
 enum EntityType {
-  NOTE = 1,
-  NOTEBOOK = 2,
-  WORKSPACE = 3
+    NOTE      = 1,
+    NOTEBOOK  = 2,
+    WORKSPACE = 3
 }
-
 
 // ============================== Constants ===================================
 
@@ -385,43 +371,36 @@ enum EntityType {
  * that indicates the user has classified a note as being a non-recipe.
  */
 const string CLASSIFICATION_RECIPE_USER_NON_RECIPE = "000";
-
 /**
  * A value for the "recipe" key in the "classifications" map in NoteAttributes
  * that indicates the user has classified a note as being a recipe.
  */
 const string CLASSIFICATION_RECIPE_USER_RECIPE = "001";
-
 /**
  * A value for the "recipe" key in the "classifications" map in NoteAttributes
  * that indicates the Evernote service has classified a note as being a recipe.
  */
 const string CLASSIFICATION_RECIPE_SERVICE_RECIPE = "002";
-
 /**
  * Standardized value for the 'source' NoteAttribute for notes that
  * were clipped from the web in some manner.
  */
 const string EDAM_NOTE_SOURCE_WEB_CLIP = "web.clip";
-
 /**
  * Standardized value for the 'source' NoteAttribute for notes that
  * were clipped using the "simplified article" function of the clipper.
  */
 const string EDAM_NOTE_SOURCE_WEB_CLIP_SIMPLIFIED = "Clearly";
-
 /**
  * Standardized value for the 'source' NoteAttribute for notes that
  * were clipped from an email message.
  */
 const string EDAM_NOTE_SOURCE_MAIL_CLIP = "mail.clip";
-
 /**
  * Standardized value for the 'source' NoteAttribute for notes that
  * were created via email sent to Evernote's email interface.
  */
 const string EDAM_NOTE_SOURCE_MAIL_SMTP_GATEWAY = "mail.smtp";
-
 
 // ============================== Structures ===================================
 
@@ -454,11 +433,10 @@ const string EDAM_NOTE_SOURCE_MAIL_SMTP_GATEWAY = "mail.smtp";
  * </dl>
  */
 struct Data {
-  1:  optional  binary bodyHash,
-  2:  optional  i32 size,
-  3:  optional  binary body
+    1: optional binary bodyHash,
+    2: optional i32    size,
+    3: optional binary body
 }
-
 
 /**
  * A structure holding the optional attributes that can be stored
@@ -658,41 +636,41 @@ struct Data {
  *   </dl>
  */
 struct UserAttributes {
-  1:  optional  string defaultLocationName,
-  2:  optional  double defaultLatitude,
-  3:  optional  double defaultLongitude,
-  4:  optional  bool preactivation,
-  5:  optional  list<string> viewedPromotions,
-  6:  optional  string incomingEmailAddress,
-  7:  optional  list<string> recentMailedAddresses,
-  9:  optional  string comments,
-  11: optional  Timestamp dateAgreedToTermsOfService,
-  12: optional  i32 maxReferrals,
-  13: optional  i32 referralCount,
-  14: optional  string refererCode,
-  15: optional  Timestamp sentEmailDate,
-  16: optional  i32 sentEmailCount,
-  17: optional  i32 dailyEmailLimit,
-  18: optional  Timestamp emailOptOutDate,
-  19: optional  Timestamp partnerEmailOptInDate,
-  20: optional  string preferredLanguage,
-  21: optional  string preferredCountry,
-  22: optional  bool clipFullPage,
-  23: optional  string twitterUserName,
-  24: optional  string twitterId,
-  25: optional  string groupName,
-  26: optional  string recognitionLanguage,
-  28: optional  string referralProof,
-  29: optional  bool educationalDiscount,
-  30: optional  string businessAddress,
-  31: optional  bool hideSponsorBilling,
-  33: optional  bool useEmailAutoFiling,
-  34: optional  ReminderEmailConfig reminderEmailConfig,
-  35: optional  Timestamp emailAddressLastConfirmed,
-  36: optional  Timestamp passwordUpdated,
-  37: optional  bool salesforcePushEnabled,
-  38: optional  bool shouldLogClientEvent,
-  39: optional  bool optOutMachineLearning
+    1:  optional string              defaultLocationName,
+    2:  optional double              defaultLatitude,
+    3:  optional double              defaultLongitude,
+    4:  optional bool                preactivation,
+    5:  optional list<string>        viewedPromotions,
+    6:  optional string              incomingEmailAddress,
+    7:  optional list<string>        recentMailedAddresses,
+    9:  optional string              comments,
+    11: optional Timestamp           dateAgreedToTermsOfService,
+    12: optional i32                 maxReferrals,
+    13: optional i32                 referralCount,
+    14: optional string              refererCode,
+    15: optional Timestamp           sentEmailDate,
+    16: optional i32                 sentEmailCount,
+    17: optional i32                 dailyEmailLimit,
+    18: optional Timestamp           emailOptOutDate,
+    19: optional Timestamp           partnerEmailOptInDate,
+    20: optional string              preferredLanguage,
+    21: optional string              preferredCountry,
+    22: optional bool                clipFullPage,
+    23: optional string              twitterUserName,
+    24: optional string              twitterId,
+    25: optional string              groupName,
+    26: optional string              recognitionLanguage,
+    28: optional string              referralProof,
+    29: optional bool                educationalDiscount,
+    30: optional string              businessAddress,
+    31: optional bool                hideSponsorBilling,
+    33: optional bool                useEmailAutoFiling,
+    34: optional ReminderEmailConfig reminderEmailConfig,
+    35: optional Timestamp           emailAddressLastConfirmed,
+    36: optional Timestamp           passwordUpdated,
+    37: optional bool                salesforcePushEnabled,
+    38: optional bool                shouldLogClientEvent,
+    39: optional bool                optOutMachineLearning
 }
 
 /**
@@ -725,13 +703,13 @@ struct UserAttributes {
  * </dl>
  */
 struct BusinessUserAttributes {
-  1: optional string title,
-  2: optional string location,
-  3: optional string department,
-  4: optional string mobilePhone,
-  5: optional string linkedInProfileUrl,
-  6: optional string workPhone,
-  7: optional Timestamp companyStartDate
+    1: optional string    title,
+    2: optional string    location,
+    3: optional string    department,
+    4: optional string    mobilePhone,
+    5: optional string    linkedInProfileUrl,
+    6: optional string    workPhone,
+    7: optional Timestamp companyStartDate
 }
 
 /**
@@ -817,29 +795,29 @@ struct BusinessUserAttributes {
  * </dl>
  */
 struct Accounting {
-  2:  optional  Timestamp          uploadLimitEnd,
-  3:  optional  i64                uploadLimitNextMonth,
-  4:  optional  PremiumOrderStatus premiumServiceStatus,
-  5:  optional  string             premiumOrderNumber,
-  6:  optional  string             premiumCommerceService,
-  7:  optional  Timestamp          premiumServiceStart,
-  8:  optional  string             premiumServiceSKU,
-  9:  optional  Timestamp          lastSuccessfulCharge,
-  10: optional  Timestamp          lastFailedCharge,
-  11: optional  string             lastFailedChargeReason,
-  12: optional  Timestamp          nextPaymentDue,
-  13: optional  Timestamp          premiumLockUntil,
-  14: optional  Timestamp          updated,
-  16: optional  string             premiumSubscriptionNumber,
-  17: optional  Timestamp          lastRequestedCharge,
-  18: optional  string             currency,
-  19: optional  i32                unitPrice,
-  20: optional  i32                businessId,
-  21: optional  string             businessName,
-  22: optional  BusinessUserRole   businessRole,
-  23: optional  i32                unitDiscount,
-  24: optional  Timestamp          nextChargeDate,
-  25: optional  i32                availablePoints
+    2:  optional Timestamp          uploadLimitEnd,
+    3:  optional i64                uploadLimitNextMonth,
+    4:  optional PremiumOrderStatus premiumServiceStatus,
+    5:  optional string             premiumOrderNumber,
+    6:  optional string             premiumCommerceService,
+    7:  optional Timestamp          premiumServiceStart,
+    8:  optional string             premiumServiceSKU,
+    9:  optional Timestamp          lastSuccessfulCharge,
+    10: optional Timestamp          lastFailedCharge,
+    11: optional string             lastFailedChargeReason,
+    12: optional Timestamp          nextPaymentDue,
+    13: optional Timestamp          premiumLockUntil,
+    14: optional Timestamp          updated,
+    16: optional string             premiumSubscriptionNumber,
+    17: optional Timestamp          lastRequestedCharge,
+    18: optional string             currency,
+    19: optional i32                unitPrice,
+    20: optional i32                businessId,
+    21: optional string             businessName,
+    22: optional BusinessUserRole   businessRole,
+    23: optional i32                unitDiscount,
+    24: optional Timestamp          nextChargeDate,
+    25: optional i32                availablePoints
 }
 
 /**
@@ -867,11 +845,11 @@ struct Accounting {
  * </dl>
  */
 struct BusinessUserInfo {
-  1:  optional  i32              businessId,
-  2:  optional  string           businessName,
-  3:  optional  BusinessUserRole role,
-  4:  optional  string           email,
-  5:  optional  Timestamp        updated
+    1: optional i32              businessId,
+    2: optional string           businessName,
+    3: optional BusinessUserRole role,
+    4: optional string           email,
+    5: optional Timestamp        updated
 }
 
 /**
@@ -901,15 +879,15 @@ struct BusinessUserInfo {
  *   (in bytes).  For edited notes, this is the the difference between the old
  *   length and the new length (if this is greater than 0) plus the size of
  *   each new resource.
- *   </dd> 
+ *   </dd>
  * <dt>userNoteCountMax</dt>
- *   <dd>Maximum number of Notes per user</dd> 
+ *   <dd>Maximum number of Notes per user</dd>
  * <dt>userNotebookCountMax</dt>
- *   <dd>Maximum number of Notebooks per user</dd> 
+ *   <dd>Maximum number of Notebooks per user</dd>
  * <dt>userTagCountMax</dt>
- *   <dd>Maximum number of Tags per account</dd> 
+ *   <dd>Maximum number of Tags per account</dd>
  * <dt>noteTagCountMax</dt>
- *   <dd>Maximum number of Tags per Note</dd> 
+ *   <dd>Maximum number of Tags per Note</dd>
  * <dt>userSavedSearchesMax</dt>
  *   <dd>Maximum number of SavedSearches per account</dd>
  * <dt>noteResourceCountMax</dt>
@@ -917,17 +895,17 @@ struct BusinessUserInfo {
  * </dl>
  */
 struct AccountLimits {
-  1:  optional i32 userMailLimitDaily,
-  2:  optional i64 noteSizeMax,
-  3:  optional i64 resourceSizeMax,
-  4:  optional i32 userLinkedNotebookMax,
-  5:  optional i64 uploadLimit,
-  6:  optional i32 userNoteCountMax,
-  7:  optional i32 userNotebookCountMax,
-  8:  optional i32 userTagCountMax,
-  9:  optional i32 noteTagCountMax,
-  10: optional i32 userSavedSearchesMax,
-  11: optional i32 noteResourceCountMax
+    1:  optional i32 userMailLimitDaily,
+    2:  optional i64 noteSizeMax,
+    3:  optional i64 resourceSizeMax,
+    4:  optional i32 userLinkedNotebookMax,
+    5:  optional i64 uploadLimit,
+    6:  optional i32 userNoteCountMax,
+    7:  optional i32 userNotebookCountMax,
+    8:  optional i32 userTagCountMax,
+    9:  optional i32 noteTagCountMax,
+    10: optional i32 userSavedSearchesMax,
+    11: optional i32 noteResourceCountMax
 }
 
 /**
@@ -1043,26 +1021,25 @@ struct AccountLimits {
  *   <dd>Account limits applicable for this user.</dd>
  */
 struct User {
-  1:  optional  UserID id,
-  2:  optional  string username,
-  3:  optional  string email,
-  4:  optional  string name,
-  6:  optional  string timezone,
-  7:  optional  PrivilegeLevel privilege,
-  21: optional  ServiceLevel serviceLevel,
-  9:  optional  Timestamp created,
-  10: optional  Timestamp updated,
-  11: optional  Timestamp deleted,
-  13: optional  bool active,
-  14: optional  string shardId,
-  15: optional  UserAttributes attributes,
-  16: optional  Accounting accounting,
-  18: optional  BusinessUserInfo businessUserInfo,
-  19: optional  string photoUrl,
-  20: optional  Timestamp photoLastUpdated,
-  22: optional  AccountLimits accountLimits
+    1:  optional UserID           id,
+    2:  optional string           username,
+    3:  optional string           email,
+    4:  optional string           name,
+    6:  optional string           timezone,
+    7:  optional PrivilegeLevel   privilege,
+    21: optional ServiceLevel     serviceLevel,
+    9:  optional Timestamp        created,
+    10: optional Timestamp        updated,
+    11: optional Timestamp        deleted,
+    13: optional bool             active,
+    14: optional string           shardId,
+    15: optional UserAttributes   attributes,
+    16: optional Accounting       accounting,
+    18: optional BusinessUserInfo businessUserInfo,
+    19: optional string           photoUrl,
+    20: optional Timestamp        photoLastUpdated,
+    22: optional AccountLimits    accountLimits
 }
-
 
 /**
  * A structure that represents contact information. Note this does not necessarily correspond to
@@ -1104,13 +1081,13 @@ struct User {
  * </dl>
  */
 struct Contact {
-  1: optional string name,
-  2: optional string id,
-  3: optional ContactType type,
-  4: optional string photoUrl,
-  5: optional Timestamp photoLastUpdated,
-  6: optional binary messagingPermit,
-  7: optional Timestamp messagingPermitExpires
+    1: optional string      name,
+    2: optional string      id,
+    3: optional ContactType type,
+    4: optional string      photoUrl,
+    5: optional Timestamp   photoLastUpdated,
+    6: optional binary      messagingPermit,
+    7: optional Timestamp   messagingPermitExpires
 }
 
 /**
@@ -1172,14 +1149,14 @@ struct Contact {
  * </dl>
  */
 struct Identity {
-  1: required IdentityID id,
-  2: optional Contact contact,
-  3: optional UserID userId,
-  4: optional bool deactivated,
-  5: optional bool sameBusiness,
-  6: optional bool blocked,
-  7: optional bool userConnected,
-  8: optional MessageEventID eventId
+    1: required IdentityID     id,
+    2: optional Contact        contact,
+    3: optional UserID         userId,
+    4: optional bool           deactivated,
+    5: optional bool           sameBusiness,
+    6: optional bool           blocked,
+    7: optional bool           userConnected,
+    8: optional MessageEventID eventId
 }
 
 /**
@@ -1229,12 +1206,11 @@ struct Identity {
  * </dl>
  */
 struct Tag {
-  1:  optional  Guid guid,
-  2:  optional  string name,
-  3:  optional  Guid parentGuid,
-  4:  optional  i32 updateSequenceNum
+    1: optional Guid   guid,
+    2: optional string name,
+    3: optional Guid   parentGuid,
+    4: optional i32    updateSequenceNum
 }
-
 
 /**
  * A structure that wraps a map of name/value pairs whose values are not
@@ -1266,10 +1242,9 @@ struct Tag {
  * </dl>
  */
 struct LazyMap {
-  1:  optional  set<string> keysOnly,
-  2:  optional  map<string, string> fullMap
+    1: optional set<string>        keysOnly,
+    2: optional map<string,string> fullMap
 }
-
 
 /**
  * Structure holding the optional attributes of a Resource
@@ -1353,20 +1328,19 @@ struct LazyMap {
  * </dl>
  */
 struct ResourceAttributes {
-  1:  optional  string sourceURL,
-  2:  optional  Timestamp timestamp,
-  3:  optional  double latitude,
-  4:  optional  double longitude,
-  5:  optional  double altitude,
-  6:  optional  string cameraMake,
-  7:  optional  string cameraModel,
-  8:  optional  bool clientWillIndex,
-  9:  optional  string recoType,
-  10: optional  string fileName,
-  11: optional  bool attachment,
-  12: optional  LazyMap applicationData
+    1:  optional string    sourceURL,
+    2:  optional Timestamp timestamp,
+    3:  optional double    latitude,
+    4:  optional double    longitude,
+    5:  optional double    altitude,
+    6:  optional string    cameraMake,
+    7:  optional string    cameraModel,
+    8:  optional bool      clientWillIndex,
+    9:  optional string    recoType,
+    10: optional string    fileName,
+    11: optional bool      attachment,
+    12: optional LazyMap   applicationData
 }
-
 
 /**
  * Every media file that is embedded or attached to a note is represented
@@ -1449,20 +1423,19 @@ struct ResourceAttributes {
  * </dl>
  */
 struct Resource {
-  1:  optional  Guid guid,
-  2:  optional  Guid noteGuid,
-  3:  optional  Data data,
-  4:  optional  string mime,
-  5:  optional  i16 width,
-  6:  optional  i16 height,
-  7:  optional  i16 duration,
-  8:  optional  bool active,
-  9:  optional  Data recognition,
-  11: optional  ResourceAttributes attributes,
-  12: optional  i32 updateSequenceNum,
-  13: optional  Data alternateData
+    1:  optional Guid               guid,
+    2:  optional Guid               noteGuid,
+    3:  optional Data               data,
+    4:  optional string             mime,
+    5:  optional i16                width,
+    6:  optional i16                height,
+    7:  optional i16                duration,
+    8:  optional bool               active,
+    9:  optional Data               recognition,
+    11: optional ResourceAttributes attributes,
+    12: optional i32                updateSequenceNum,
+    13: optional Data               alternateData
 }
-
 
 /**
  * The list of optional attributes that can be stored on a note.
@@ -1667,30 +1640,29 @@ struct Resource {
  * </dl>
  */
 struct NoteAttributes {
-  1:  optional  Timestamp subjectDate,
-  10: optional  double latitude,
-  11: optional  double longitude,
-  12: optional  double altitude,
-  13: optional  string author,
-  14: optional  string source,
-  15: optional  string sourceURL,
-  16: optional  string sourceApplication,
-  17: optional  Timestamp shareDate,
-  18: optional  i64 reminderOrder,
-  19: optional  Timestamp reminderDoneTime,
-  20: optional  Timestamp reminderTime,
-  21: optional  string placeName,
-  22: optional  string contentClass,
-  23: optional  LazyMap applicationData,
-  24: optional  string lastEditedBy,
-  26: optional  map<string, string> classifications,
-  27: optional  UserID creatorId,
-  28: optional  UserID lastEditorId,
-  29: optional  bool sharedWithBusiness,
-  30: optional  Guid conflictSourceNoteGuid,
-  31: optional  i32 noteTitleQuality
+    1:  optional Timestamp          subjectDate,
+    10: optional double             latitude,
+    11: optional double             longitude,
+    12: optional double             altitude,
+    13: optional string             author,
+    14: optional string             source,
+    15: optional string             sourceURL,
+    16: optional string             sourceApplication,
+    17: optional Timestamp          shareDate,
+    18: optional i64                reminderOrder,
+    19: optional Timestamp          reminderDoneTime,
+    20: optional Timestamp          reminderTime,
+    21: optional string             placeName,
+    22: optional string             contentClass,
+    23: optional LazyMap            applicationData,
+    24: optional string             lastEditedBy,
+    26: optional map<string,string> classifications,
+    27: optional UserID             creatorId,
+    28: optional UserID             lastEditorId,
+    29: optional bool               sharedWithBusiness,
+    30: optional Guid               conflictSourceNoteGuid,
+    31: optional i32                noteTitleQuality
 }
-
 
 /**
  * Represents a relationship between a note and a single share invitation recipient. The recipient
@@ -1721,12 +1693,12 @@ struct NoteAttributes {
  * </dl>
  */
 struct SharedNote {
-  1: optional UserID sharerUserID,
-  2: optional Identity recipientIdentity,
-  3: optional SharedNotePrivilegeLevel privilege,
-  4: optional Timestamp serviceCreated,
-  5: optional Timestamp serviceUpdated,
-  6: optional Timestamp serviceAssigned
+    1: optional UserID                   sharerUserID,
+    2: optional Identity                 recipientIdentity,
+    3: optional SharedNotePrivilegeLevel privilege,
+    4: optional Timestamp                serviceCreated,
+    5: optional Timestamp                serviceUpdated,
+    6: optional Timestamp                serviceAssigned
 }
 
 /**
@@ -1786,11 +1758,11 @@ struct SharedNote {
  * </dl>
  */
 struct NoteRestrictions {
-  1: optional bool noUpdateTitle,
-  2: optional bool noUpdateContent,
-  3: optional bool noEmail,
-  4: optional bool noShare,
-  5: optional bool noSharePublicly
+    1: optional bool noUpdateTitle,
+    2: optional bool noUpdateContent,
+    3: optional bool noEmail,
+    4: optional bool noShare,
+    5: optional bool noSharePublicly
 }
 
 /**
@@ -1802,11 +1774,11 @@ struct NoteRestrictions {
  * See SyncState and AccountLimits struct field definitions for more details.
  */
 struct NoteLimits {
-  1: optional i32 noteResourceCountMax,
-  2: optional i64 uploadLimit,
-  3: optional i64 resourceSizeMax,
-  4: optional i64 noteSizeMax,
-  5: optional i64 uploaded
+    1: optional i32 noteResourceCountMax,
+    2: optional i64 uploadLimit,
+    3: optional i64 resourceSizeMax,
+    4: optional i64 noteSizeMax,
+    5: optional i64 uploaded
 }
 
 /**
@@ -1954,26 +1926,25 @@ struct NoteLimits {
  * </dl>
  */
 struct Note {
-  1:  optional  Guid guid,
-  2:  optional  string title,
-  3:  optional  string content,
-  4:  optional  binary contentHash,
-  5:  optional  i32 contentLength,
-  6:  optional  Timestamp created,
-  7:  optional  Timestamp updated,
-  8:  optional  Timestamp deleted,
-  9:  optional  bool active,
-  10: optional  i32 updateSequenceNum,
-  11: optional  string notebookGuid,
-  12: optional  list<Guid> tagGuids,
-  13: optional  list<Resource> resources,
-  14: optional  NoteAttributes attributes,
-  15: optional  list<string> tagNames,
-  16: optional  list<SharedNote> sharedNotes,
-  17: optional  NoteRestrictions restrictions,
-  18: optional  NoteLimits limits
+    1:  optional Guid             guid,
+    2:  optional string           title,
+    3:  optional string           content,
+    4:  optional binary           contentHash,
+    5:  optional i32              contentLength,
+    6:  optional Timestamp        created,
+    7:  optional Timestamp        updated,
+    8:  optional Timestamp        deleted,
+    9:  optional bool             active,
+    10: optional i32              updateSequenceNum,
+    11: optional string           notebookGuid,
+    12: optional list<Guid>       tagGuids,
+    13: optional list<Resource>   resources,
+    14: optional NoteAttributes   attributes,
+    15: optional list<string>     tagNames,
+    16: optional list<SharedNote> sharedNotes,
+    17: optional NoteRestrictions restrictions,
+    18: optional NoteLimits       limits
 }
-
 
 /**
  * If a Notebook has been opened to the public, the Notebook will have a
@@ -2017,10 +1988,10 @@ struct Note {
  * </dl>
  */
 struct Publishing {
-  1:  optional  string uri,
-  2:  optional  NoteSortOrder order,
-  3:  optional  bool ascending,
-  4:  optional  string publicDescription
+    1: optional string        uri,
+    2: optional NoteSortOrder order,
+    3: optional bool          ascending,
+    4: optional string        publicDescription
 }
 
 /**
@@ -2053,11 +2024,10 @@ struct Publishing {
  * </dl>
  */
 struct BusinessNotebook {
-  1:  optional  string notebookDescription,
-  2:  optional  SharedNotebookPrivilegeLevel privilege,
-  3:  optional  bool recommended
+    1: optional string                       notebookDescription,
+    2: optional SharedNotebookPrivilegeLevel privilege,
+    3: optional bool                         recommended
 }
-
 
 /**
  * A structure defining the scope of a SavedSearch.
@@ -2077,11 +2047,10 @@ struct BusinessNotebook {
  * </dl>
  */
 struct SavedSearchScope {
-  1:  optional bool includeAccount,
-  2:  optional bool includePersonalLinkedNotebooks,
-  3:  optional bool includeBusinessLinkedNotebooks
+    1: optional bool includeAccount,
+    2: optional bool includePersonalLinkedNotebooks,
+    3: optional bool includeBusinessLinkedNotebooks
 }
-
 
 /**
  * A named search associated with the account that can be quickly re-used.
@@ -2139,12 +2108,12 @@ struct SavedSearchScope {
  * </dl>
  */
 struct SavedSearch {
-  1:  optional  Guid guid,
-  2:  optional  string name,
-  3:  optional  string query,
-  4:  optional  QueryFormat format,
-  5:  optional  i32 updateSequenceNum,
-  6:  optional  SavedSearchScope scope
+    1: optional Guid             guid,
+    2: optional string           name,
+    3: optional string           query,
+    4: optional QueryFormat      format,
+    5: optional i32              updateSequenceNum,
+    6: optional SavedSearchScope scope
 }
 
 /**
@@ -2174,8 +2143,8 @@ struct SavedSearch {
  * </dl>
  **/
 struct SharedNotebookRecipientSettings {
- 1:  optional bool reminderNotifyEmail,
- 2:  optional bool reminderNotifyInApp
+    1: optional bool reminderNotifyEmail,
+    2: optional bool reminderNotifyInApp
 }
 
 /**
@@ -2193,9 +2162,9 @@ struct SharedNotebookRecipientSettings {
  * </dl>
  */
 enum RecipientStatus {
-  NOT_IN_MY_LIST = 1,
-  IN_MY_LIST = 2,
-  IN_MY_LIST_AND_DEFAULT_NOTEBOOK = 3,
+    NOT_IN_MY_LIST                  = 1,
+    IN_MY_LIST                      = 2,
+    IN_MY_LIST_AND_DEFAULT_NOTEBOOK = 3,
 }
 
 /**
@@ -2235,11 +2204,11 @@ enum RecipientStatus {
  * </dl>
  **/
 struct NotebookRecipientSettings {
- 1:  optional bool reminderNotifyEmail,
- 2:  optional bool reminderNotifyInApp,
- 3:  optional bool inMyList,
- 4:  optional string stack,
- 5:  optional RecipientStatus recipientStatus,
+    1: optional bool            reminderNotifyEmail,
+    2: optional bool            reminderNotifyInApp,
+    3: optional bool            inMyList,
+    4: optional string          stack,
+    5: optional RecipientStatus recipientStatus,
 }
 
 /**
@@ -2342,22 +2311,22 @@ struct NotebookRecipientSettings {
  * </dl>
  */
 struct SharedNotebook {
-  1:  optional i64 id,
-  2:  optional UserID userId,
-  3:  optional Guid notebookGuid,
-  4:  optional string email,
-  18: optional IdentityID recipientIdentityId,
-  5:  optional bool notebookModifiable,  // deprecated
-  7:  optional Timestamp serviceCreated,
- 10:  optional Timestamp serviceUpdated,
-  8:  optional string globalId, // rename from shareKey
-  9:  optional string username, // deprecated
- 11:  optional SharedNotebookPrivilegeLevel privilege,
- 13:  optional SharedNotebookRecipientSettings recipientSettings,
- 14:  optional UserID sharerUserId,
- 15:  optional string recipientUsername,
- 17:  optional UserID recipientUserId,
- 16:  optional Timestamp serviceAssigned
+    1:  optional i64                             id,
+    2:  optional UserID                          userId,
+    3:  optional Guid                            notebookGuid,
+    4:  optional string                          email,
+    18: optional IdentityID                      recipientIdentityId,
+    5:  optional bool                            notebookModifiable, // deprecated
+    7:  optional Timestamp                       serviceCreated,
+    10: optional Timestamp                       serviceUpdated,
+    8:  optional string                          globalId, // rename from shareKey
+    9:  optional string                          username, // deprecated
+    11: optional SharedNotebookPrivilegeLevel    privilege,
+    13: optional SharedNotebookRecipientSettings recipientSettings,
+    14: optional UserID                          sharerUserId,
+    15: optional string                          recipientUsername,
+    17: optional UserID                          recipientUserId,
+    16: optional Timestamp                       serviceAssigned
 }
 
 /**
@@ -2379,16 +2348,16 @@ struct SharedNotebook {
  * </dl>
  */
 enum CanMoveToContainerStatus {
-  CAN_BE_MOVED = 1,
-  INSUFFICIENT_ENTITY_PRIVILEGE = 2,
-  INSUFFICIENT_CONTAINER_PRIVILEGE = 3
+    CAN_BE_MOVED                     = 1,
+    INSUFFICIENT_ENTITY_PRIVILEGE    = 2,
+    INSUFFICIENT_CONTAINER_PRIVILEGE = 3
 }
 
 /**
  * Specifies if the client can move a Notebook to a Workspace.
  */
 struct CanMoveToContainerRestrictions {
-  1:  optional CanMoveToContainerStatus canMoveToContainer
+    1: optional CanMoveToContainerStatus canMoveToContainer
 }
 
 /**
@@ -2515,35 +2484,35 @@ struct CanMoveToContainerRestrictions {
  * </dl>
  */
 struct NotebookRestrictions {
-  1:  optional bool noReadNotes,
-  2:  optional bool noCreateNotes,
-  3:  optional bool noUpdateNotes,
-  4:  optional bool noExpungeNotes,
-  5:  optional bool noShareNotes,
-  6:  optional bool noEmailNotes,
-  7:  optional bool noSendMessageToRecipients,
-  8:  optional bool noUpdateNotebook,
-  9:  optional bool noExpungeNotebook,
-  10: optional bool noSetDefaultNotebook,
-  11: optional bool noSetNotebookStack,
-  12: optional bool noPublishToPublic,
-  13: optional bool noPublishToBusinessLibrary,
-  14: optional bool noCreateTags,
-  15: optional bool noUpdateTags,
-  16: optional bool noExpungeTags,
-  17: optional bool noSetParentTag,
-  18: optional bool noCreateSharedNotebooks,
-  19: optional SharedNotebookInstanceRestrictions updateWhichSharedNotebookRestrictions,
-  20: optional SharedNotebookInstanceRestrictions expungeWhichSharedNotebookRestrictions,
-  21: optional bool noShareNotesWithBusiness,
-  22: optional bool noRenameNotebook,
-  23: optional bool noSetInMyList,
-  24: optional bool noChangeContact,
-  26: optional CanMoveToContainerRestrictions canMoveToContainerRestrictions,
-  27: optional bool noSetReminderNotifyEmail,
-  28: optional bool noSetReminderNotifyInApp,
-  29: optional bool noSetRecipientSettingsStack,
-  30: optional bool noCanMoveNote
+    1:  optional bool                               noReadNotes,
+    2:  optional bool                               noCreateNotes,
+    3:  optional bool                               noUpdateNotes,
+    4:  optional bool                               noExpungeNotes,
+    5:  optional bool                               noShareNotes,
+    6:  optional bool                               noEmailNotes,
+    7:  optional bool                               noSendMessageToRecipients,
+    8:  optional bool                               noUpdateNotebook,
+    9:  optional bool                               noExpungeNotebook,
+    10: optional bool                               noSetDefaultNotebook,
+    11: optional bool                               noSetNotebookStack,
+    12: optional bool                               noPublishToPublic,
+    13: optional bool                               noPublishToBusinessLibrary,
+    14: optional bool                               noCreateTags,
+    15: optional bool                               noUpdateTags,
+    16: optional bool                               noExpungeTags,
+    17: optional bool                               noSetParentTag,
+    18: optional bool                               noCreateSharedNotebooks,
+    19: optional SharedNotebookInstanceRestrictions updateWhichSharedNotebookRestrictions,
+    20: optional SharedNotebookInstanceRestrictions expungeWhichSharedNotebookRestrictions,
+    21: optional bool                               noShareNotesWithBusiness,
+    22: optional bool                               noRenameNotebook,
+    23: optional bool                               noSetInMyList,
+    24: optional bool                               noChangeContact,
+    26: optional CanMoveToContainerRestrictions     canMoveToContainerRestrictions,
+    27: optional bool                               noSetReminderNotifyEmail,
+    28: optional bool                               noSetReminderNotifyInApp,
+    29: optional bool                               noSetRecipientSettingsStack,
+    30: optional bool                               noCanMoveNote
 }
 
 /**
@@ -2667,21 +2636,21 @@ struct NotebookRestrictions {
  * </dl>
  */
 struct Notebook {
-  1:  optional  Guid guid,
-  2:  optional  string name,
-  5:  optional  i32 updateSequenceNum,
-  6:  optional  bool defaultNotebook,
-  7:  optional  Timestamp serviceCreated,
-  8:  optional  Timestamp serviceUpdated,
-  10: optional  Publishing publishing,
-  11: optional  bool published,
-  12: optional  string stack,
-  13: optional  list<i64> sharedNotebookIds,
-  14: optional  list<SharedNotebook> sharedNotebooks,
-  15: optional  BusinessNotebook businessNotebook,
-  16: optional  User contact,
-  17: optional  NotebookRestrictions restrictions,
-  18: optional  NotebookRecipientSettings recipientSettings
+    1:  optional Guid                      guid,
+    2:  optional string                    name,
+    5:  optional i32                       updateSequenceNum,
+    6:  optional bool                      defaultNotebook,
+    7:  optional Timestamp                 serviceCreated,
+    8:  optional Timestamp                 serviceUpdated,
+    10: optional Publishing                publishing,
+    11: optional bool                      published,
+    12: optional string                    stack,
+    13: optional list<i64>                 sharedNotebookIds,
+    14: optional list<SharedNotebook>      sharedNotebooks,
+    15: optional BusinessNotebook          businessNotebook,
+    16: optional User                      contact,
+    17: optional NotebookRestrictions      restrictions,
+    18: optional NotebookRecipientSettings recipientSettings
 }
 
 /**
@@ -2760,17 +2729,17 @@ struct Notebook {
  * </dl>
  */
 struct LinkedNotebook {
-  2:  optional string shareName,
-  3:  optional string username,
-  4:  optional string shardId,
-  5:  optional string sharedNotebookGlobalId, // rename from shareKey
-  6:  optional string uri,
-  7:  optional Guid guid,
-  8:  optional i32 updateSequenceNum,
-  9:  optional string noteStoreUrl,
-  10: optional string webApiUrlPrefix,
-  11: optional string stack,
-  12: optional i32 businessId
+    2:  optional string shareName,
+    3:  optional string username,
+    4:  optional string shardId,
+    5:  optional string sharedNotebookGlobalId, // rename from shareKey
+    6:  optional string uri,
+    7:  optional Guid   guid,
+    8:  optional i32    updateSequenceNum,
+    9:  optional string noteStoreUrl,
+    10: optional string webApiUrlPrefix,
+    11: optional string stack,
+    12: optional i32    businessId
 }
 
 /**
@@ -2803,11 +2772,11 @@ struct LinkedNotebook {
  * </dl>
  */
 struct NotebookDescriptor {
-  1: optional Guid guid,
-  2: optional string notebookDisplayName,
-  3: optional string contactName,
-  4: optional bool hasSharedNotebook,
-  5: optional i32 joinedUserCount
+    1: optional Guid   guid,
+    2: optional string notebookDisplayName,
+    3: optional string contactName,
+    4: optional bool   hasSharedNotebook,
+    5: optional i32    joinedUserCount
 }
 
 /**
@@ -2849,16 +2818,16 @@ struct NotebookDescriptor {
  * </dl>
  */
 struct UserProfile {
-  1: optional UserID id,
-  2: optional string name,
-  3: optional string email,
-  4: optional string username,
-  5: optional BusinessUserAttributes attributes,
-  6: optional Timestamp joined
-  7: optional Timestamp photoLastUpdated,
-  8: optional string photoUrl,
-  9: optional BusinessUserRole role,
-  10: optional BusinessUserStatus status
+    1:  optional UserID                 id,
+    2:  optional string                 name,
+    3:  optional string                 email,
+    4:  optional string                 username,
+    5:  optional BusinessUserAttributes attributes,
+    6:  optional Timestamp              joined
+    7:  optional Timestamp              photoLastUpdated,
+    8:  optional string                 photoUrl,
+    9:  optional BusinessUserRole       role,
+    10: optional BusinessUserStatus     status
 }
 
 /**
@@ -2870,10 +2839,10 @@ struct UserProfile {
  * REFERENCE_MATERIAL: This related content is material from reference works
  */
 enum RelatedContentType {
-  NEWS_ARTICLE = 1,
-  PROFILE_PERSON = 2,
-  PROFILE_ORGANIZATION = 3,
-  REFERENCE_MATERIAL = 4,
+    NEWS_ARTICLE         = 1,
+    PROFILE_PERSON       = 2,
+    PROFILE_ORGANIZATION = 3,
+    REFERENCE_MATERIAL   = 4,
 }
 
 /**
@@ -2896,10 +2865,10 @@ enum RelatedContentType {
  *     credentials with the request.
  */
 enum RelatedContentAccess {
-  NOT_ACCESSIBLE = 0,
-  DIRECT_LINK_ACCESS_OK = 1,
-  DIRECT_LINK_LOGIN_REQUIRED = 2,
-  DIRECT_LINK_EMBEDDED_VIEW = 3,
+    NOT_ACCESSIBLE             = 0,
+    DIRECT_LINK_ACCESS_OK      = 1,
+    DIRECT_LINK_LOGIN_REQUIRED = 2,
+    DIRECT_LINK_EMBEDDED_VIEW  = 3,
 }
 
 /**
@@ -2921,11 +2890,11 @@ enum RelatedContentAccess {
  * </dl>
  */
 struct RelatedContentImage {
-  1: optional string url,
-  2: optional i32 width,
-  3: optional i32 height,
-  4: optional double pixelRatio,
-  5: optional i32 fileSize
+    1: optional string url,
+    2: optional i32    width,
+    3: optional i32    height,
+    4: optional double pixelRatio,
+    5: optional i32    fileSize
 }
 
 /**
@@ -2993,22 +2962,22 @@ struct RelatedContentImage {
  * </dl>
  */
 struct RelatedContent {
-  1: optional string contentId,
-  2: optional string title,
-  3: optional string url,
-  4: optional string sourceId,
-  5: optional string sourceUrl,
-  6: optional string sourceFaviconUrl,
-  7: optional string sourceName,
-  8: optional Timestamp date,
-  9: optional string teaser,
-  10: optional list<RelatedContentImage> thumbnails,
-  11: optional RelatedContentType contentType,
-  12: optional RelatedContentAccess accessType,
-  13: optional string visibleUrl,
-  14: optional string clipUrl,
-  15: optional Contact contact,
-  16: optional list<string> authors,
+    1:  optional string                    contentId,
+    2:  optional string                    title,
+    3:  optional string                    url,
+    4:  optional string                    sourceId,
+    5:  optional string                    sourceUrl,
+    6:  optional string                    sourceFaviconUrl,
+    7:  optional string                    sourceName,
+    8:  optional Timestamp                 date,
+    9:  optional string                    teaser,
+    10: optional list<RelatedContentImage> thumbnails,
+    11: optional RelatedContentType        contentType,
+    12: optional RelatedContentAccess      accessType,
+    13: optional string                    visibleUrl,
+    14: optional string                    clipUrl,
+    15: optional Contact                   contact,
+    16: optional list<string>              authors,
 }
 
 /**
@@ -3057,23 +3026,23 @@ struct RelatedContent {
  * </dl>
  */
 struct BusinessInvitation {
-  1: optional i32 businessId,
-  2: optional string email,
-  3: optional BusinessUserRole role,
-  4: optional BusinessInvitationStatus status,
-  5: optional UserID requesterId,
-  6: optional bool fromWorkChat,
-  7: optional Timestamp created,
-  8: optional Timestamp mostRecentReminder
+    1: optional i32                      businessId,
+    2: optional string                   email,
+    3: optional BusinessUserRole         role,
+    4: optional BusinessInvitationStatus status,
+    5: optional UserID                   requesterId,
+    6: optional bool                     fromWorkChat,
+    7: optional Timestamp                created,
+    8: optional Timestamp                mostRecentReminder
 }
 
 /**
  *
  */
 enum UserIdentityType {
-  EVERNOTE_USERID = 1,
-  EMAIL = 2,
-  IDENTITYID = 3
+    EVERNOTE_USERID = 1,
+    EMAIL           = 2,
+    IDENTITYID      = 3
 }
 
 /**
@@ -3106,7 +3075,11 @@ enum UserIdentityType {
  * Evernote UserID UserIdentity ID to match the e-mail address.
  */
 struct UserIdentity {
-  1: optional UserIdentityType type,
-  2: optional string stringIdentifier,
-  3: optional i64 longIdentifier
+    1: optional UserIdentityType type,
+    2: optional string           stringIdentifier,
+    3: optional i64              longIdentifier
+}
+
+struct UUIDUser {
+    1: optional uuid user
 }
