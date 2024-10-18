@@ -101,6 +101,10 @@ func MustFormatField(field *parser.Field, space string, indent string, oneline b
 }
 
 func MustFormatFieldType(ft *parser.FieldType) string {
+	if ft == nil {
+		return ""
+	}
+
 	annos := ""
 	if ft.Annotations != nil {
 		annos = MustFormatAnnotations(ft.Annotations)
