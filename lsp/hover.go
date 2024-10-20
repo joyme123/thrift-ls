@@ -2,6 +2,7 @@ package lsp
 
 import (
 	"context"
+	"strings"
 
 	"github.com/joyme123/thrift-ls/lsp/codejump"
 	"go.lsp.dev/protocol"
@@ -25,10 +26,19 @@ func (s *Server) hover(ctx context.Context, params *protocol.HoverParams) (*prot
 		return nil, nil
 	}
 
+	markdown_prefix := "```thrift\n"
+	if strings.HasPrefix(content, "\n") {
+		markdown_prefix = "```thrift"
+	}
+	markdown_suffix := "\n```"
+	if strings.HasSuffix(content, "\n") {
+		markdown_suffix = "```"
+	}
+
 	return &protocol.Hover{
 		Contents: protocol.MarkupContent{
 			Kind:  protocol.Markdown,
-			Value: "```thrift\n" + content + "```",
+			Value: markdown_prefix + content + markdown_suffix,
 		},
 	}, nil
 }
