@@ -114,6 +114,13 @@ func (c *TokenCompletion) Completion(ctx context.Context, ss *cache.Snapshot, cm
 				break
 			}
 		}
+
+		if len(prefix) == 0 {
+			// prefix is empty, set prefix to content
+			prefix = content
+			rng.Start.Character = rng.Start.Character - uint32(len(prefix))
+		}
+
 		searchCandidate := func(token string, format protocol.InsertTextFormat) {
 			if len(token) > len(prefix) && strings.HasPrefix(token, string(prefix)) {
 				candidates = append(candidates, Candidate{
