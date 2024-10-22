@@ -67,9 +67,14 @@ func MustFormatFunction(fn *parser.Function, indent string) string {
 	}
 
 	sep := ""
-	if fn.ListSeparatorKeyword != nil {
-		sep = MustFormatKeyword(fn.ListSeparatorKeyword.Keyword)
-	}
+
+	if FieldLineComma == FieldLineCommaAdd { // add comma always
+		sep = ","
+	} else if FieldLineComma == FieldLineCommaDisable { // add list separator
+		if fn.ListSeparatorKeyword != nil {
+			sep = MustFormatKeyword(fn.ListSeparatorKeyword.Keyword)
+		}
+	} // otherwise, sep will be removed
 
 	throws := MustFormatThrows(fn.Throws)
 	if fn.Throws != nil {
