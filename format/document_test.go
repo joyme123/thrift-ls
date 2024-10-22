@@ -165,6 +165,7 @@ exception Xception2 {
 }
 
 struct EmptyStruct {}
+
 struct OneField {
     1: EmptyStruct field
 }

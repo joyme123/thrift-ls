@@ -29,6 +29,10 @@ func FormatDocumentWithValidation(doc *parser.Document, selfValidation bool) (st
 
 	writeBuf := func(node parser.Node, addtionalLine bool) {
 		if addtionalLine {
+			if len(buf.Bytes()) > 0 && buf.Bytes()[buf.Len()-1] != '\n' {
+				// if preNode doesn't have \n at end of line, set \n for it
+				buf.WriteString("\n")
+			}
 			buf.WriteString("\n")
 		}
 
