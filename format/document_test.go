@@ -7,6 +7,70 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_FormatDocumentServiceCommaOptions(t *testing.T) {
+	doc := `
+service A {
+    bool func1()
+
+    bool func2();
+}`
+
+	// add comma
+	expectedDoc := `service A {
+    bool func1(),
+
+    bool func2(),
+}`
+
+	FieldLineComma = FieldLineCommaAdd
+
+	ast, err := parser.Parse("test.thrift", []byte(doc))
+	assert.NoError(t, err)
+	assert.NotNil(t, ast)
+
+	formated, err := FormatDocument(ast.(*parser.Document))
+	assert.Equal(t, expectedDoc, formated)
+
+	_, err = FormatDocumentWithValidation(ast.(*parser.Document), true)
+	assert.NoError(t, err)
+
+	// remove comma
+	expectedDoc = `service A {
+    bool func1()
+
+    bool func2()
+}`
+	FieldLineComma = FieldLineCommaRemove
+
+	ast, err = parser.Parse("test.thrift", []byte(doc))
+	assert.NoError(t, err)
+	assert.NotNil(t, ast)
+
+	formated, err = FormatDocument(ast.(*parser.Document))
+	assert.Equal(t, expectedDoc, formated)
+
+	_, err = FormatDocumentWithValidation(ast.(*parser.Document), true)
+	assert.NoError(t, err)
+
+	// disable
+	expectedDoc = `service A {
+    bool func1()
+
+    bool func2();
+}`
+	FieldLineComma = FieldLineCommaDisable
+
+	ast, err = parser.Parse("test.thrift", []byte(doc))
+	assert.NoError(t, err)
+	assert.NotNil(t, ast)
+
+	formated, err = FormatDocument(ast.(*parser.Document))
+	assert.Equal(t, expectedDoc, formated)
+
+	_, err = FormatDocumentWithValidation(ast.(*parser.Document), true)
+	assert.NoError(t, err)
+}
+
 func Test_FormatDocument(t *testing.T) {
 	ast, err := parser.Parse("test.thrift", []byte(ThriftTestContent))
 	assert.NoError(t, err)

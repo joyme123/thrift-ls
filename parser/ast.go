@@ -2362,9 +2362,10 @@ func (f *Function) Equals(node Node) bool {
 		return false
 	}
 
-	if !f.ListSeparatorKeyword.Equals(fn.ListSeparatorKeyword) {
-		return false
-	}
+	// 格式化场景，会变更默认的分隔符，所以在  equals 时不需要比较
+	// if !f.ListSeparatorKeyword.Equals(fn.ListSeparatorKeyword) {
+	// return false
+	// }
 
 	if !f.Name.Equals(fn.Name) {
 		return false
