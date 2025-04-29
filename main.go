@@ -97,7 +97,6 @@ func main() {
 
 	if formatter {
 		main_format(formatOpts, formatFile)
-		os.Exit(1)
 		return
 	}
 
