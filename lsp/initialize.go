@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	log "github.com/sirupsen/logrus"
-	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 

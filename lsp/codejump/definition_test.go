@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/stretchr/testify/assert"
-	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 

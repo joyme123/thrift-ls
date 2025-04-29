@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/types"
 	"github.com/joyme123/thrift-ls/parser"
 	log "github.com/sirupsen/logrus"
-	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 

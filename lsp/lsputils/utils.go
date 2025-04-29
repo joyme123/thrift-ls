@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/parser"
-	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 

@@ -3,9 +3,9 @@ package lsp
 import (
 	"context"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	log "github.com/sirupsen/logrus"
-	"go.lsp.dev/protocol"
 )
 
 type Server struct {

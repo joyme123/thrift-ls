@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/lsputils"
 	"github.com/joyme123/thrift-ls/parser"
 	log "github.com/sirupsen/logrus"
-	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 

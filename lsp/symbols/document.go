@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
-	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 

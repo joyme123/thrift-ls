@@ -3,8 +3,8 @@ package lsp
 import (
 	"context"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/symbols"
-	"go.lsp.dev/protocol"
 )
 
 func (s *Server) documentSymbol(ctx context.Context, params *protocol.DocumentSymbolParams) (result []interface{}, err error) {

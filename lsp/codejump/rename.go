@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/lsputils"
 	"github.com/joyme123/thrift-ls/lsp/types"
 	"github.com/joyme123/thrift-ls/parser"
-	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 

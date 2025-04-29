@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/codejump"
-	"go.lsp.dev/protocol"
 )
 
 func (s *Server) hover(ctx context.Context, params *protocol.HoverParams) (*protocol.Hover, error) {

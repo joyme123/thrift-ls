@@ -3,8 +3,8 @@ package completion
 import (
 	"context"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
-	"go.lsp.dev/protocol"
 )
 
 type Interface interface {

@@ -3,9 +3,9 @@ package lsp
 import (
 	"context"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/format"
 	"github.com/joyme123/thrift-ls/lsp/mapper"
-	"go.lsp.dev/protocol"
 )
 
 func (s *Server) formatting(ctx context.Context, params *protocol.DocumentFormattingParams) (result []protocol.TextEdit, err error) {

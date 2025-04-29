@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/lsputils"
 	"github.com/joyme123/thrift-ls/parser"
 	"github.com/joyme123/thrift-ls/utils"
 	log "github.com/sirupsen/logrus"
-	"go.lsp.dev/protocol"
 	"go.lsp.dev/uri"
 )
 

@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/constants"
 	log "github.com/sirupsen/logrus"
-	"go.lsp.dev/protocol"
 )
 
 func ListDirAndFiles(dir, prefix string) (res []Candidate, err error) {
