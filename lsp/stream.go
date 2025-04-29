@@ -3,11 +3,11 @@ package lsp
 import (
 	"context"
 
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
 	"github.com/joyme123/thrift-ls/lsp/memoize"
 	"go.lsp.dev/jsonrpc2"
 	"go.lsp.dev/pkg/event"
-	"go.lsp.dev/protocol"
 	"go.uber.org/zap"
 )
 

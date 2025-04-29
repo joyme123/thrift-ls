@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"go.lsp.dev/protocol"
+	"github.com/joyme123/protocol"
 	"go.lsp.dev/uri"
 )
 

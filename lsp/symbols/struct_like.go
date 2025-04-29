@@ -1,9 +1,9 @@
 package symbols
 
 import (
+	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/lsputils"
 	"github.com/joyme123/thrift-ls/parser"
-	"go.lsp.dev/protocol"
 )
 
 func StructSymbol(st *parser.Struct) *protocol.DocumentSymbol {
