@@ -34,7 +34,7 @@ And use [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) to configure 
 
 ### vscode
 
-install thrift-language-server in extension market
+install thrift-language-server from extension market
 
 ![vscode](./doc/image/vscode.png)
 
