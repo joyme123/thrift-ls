@@ -63,17 +63,12 @@ struct Foo {
 		{
 			name: "normal",
 			args: args{
-				annotations: ast.(*parser.Document).Structs[0].Annotations,
+				annotations: ast.(*parser.Document).Structs[0].Fields[0].Annotations,
 			},
-			want: `
-struct Foo {
-  // 用户名列表
-  2: list<string> strings (
-    custom_tag_1 = "1"
-    custom_tag_2 = "2"
-  )
-}
-`,
+			want: `(
+        custom_tag_1 = "1"
+        custom_tag_2 = "2"
+    )`,
 		},
 	}
 	for _, tt := range tests {

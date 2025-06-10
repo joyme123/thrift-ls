@@ -59,7 +59,7 @@ func MustFormatEnumValue(enumValue *parser.EnumValue, space, indent string) stri
 	}
 
 	buf := bytes.NewBufferString(comments)
-	buf.WriteString(indent + MustFormatIdentifier(enumValue.Name))
+	buf.WriteString(indent + MustFormatIdentifier(enumValue.Name, ""))
 	if enumValue.ValueNode != nil {
 		equalSpace := space
 		if Align == AlignTypeAssign {

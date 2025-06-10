@@ -84,7 +84,7 @@ func MustFormatFunction(fn *parser.Function, indent string) string {
 	f := &FunctionFormatter{
 		Oneway:          oneway,
 		FunctionType:    ft,
-		Identifier:      MustFormatIdentifier(fn.Name),
+		Identifier:      MustFormatIdentifier(fn.Name, ""),
 		LPAR:            MustFormatKeyword(fn.LParKeyword.Keyword),
 		Args:            args,
 		RPAR:            MustFormatKeyword(fn.RParKeyword.Keyword),

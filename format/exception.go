@@ -31,7 +31,7 @@ func MustFormatException(excep *parser.Exception) string {
 	f := ExceptionFormatter{
 		Comments:        comments,
 		Exception:       MustFormatKeyword(excep.ExceptionKeyword.Keyword),
-		Identifier:      MustFormatIdentifier(excep.Name),
+		Identifier:      MustFormatIdentifier(excep.Name, ""),
 		LCUR:            MustFormatKeyword(excep.LCurKeyword.Keyword),
 		Fields:          MustFormatFields(excep.Fields, Indent),
 		RCUR:            MustFormatKeyword(excep.RCurKeyword.Keyword),
