@@ -24,9 +24,10 @@ func MustFormatAnnotations(annotations *parser.Annotations) string {
 			isNewLine = true
 			indent = Indent + Indent
 		}
-		buf.WriteString(MustFormatAnnotation(anno, i == len(annotations.Annotations)-1, indent, isNewLine))
+		buf.WriteString(MustFormatAnnotation(anno, i == len(annotations.Annotations)-1, i == 0, indent, isNewLine))
 		preNode = annotations.Annotations[i]
 		isNewLine = false
+		indent = ""
 	}
 
 	if lineDistance(preNode, annotations.RParKeyword) >= 1 {
@@ -38,17 +39,17 @@ func MustFormatAnnotations(annotations *parser.Annotations) string {
 	return buf.String()
 }
 
-func MustFormatAnnotation(anno *parser.Annotation, isLast bool, indent string, isNewLine bool) string {
+func MustFormatAnnotation(anno *parser.Annotation, isLast bool, isFirst bool, indent string, isNewLine bool) string {
 	sep := ""
 	if (!isLast) && anno.ListSeparatorKeyword != nil {
 		sep = MustFormatKeyword(anno.ListSeparatorKeyword.Keyword)
 	}
 
 	space := ""
-	if (!isLast) && (!isNewLine) {
+	if (!isFirst) && (!isNewLine) {
 		space = " "
 	}
 
 	// a = "xxxx",
-	return fmt.Sprintf("%s %s %s%s%s", MustFormatIdentifier(anno.Identifier, indent), MustFormatKeyword(anno.EqualKeyword.Keyword), MustFormatLiteral(anno.Value, ""), sep, space)
+	return fmt.Sprintf("%s%s %s %s%s", space, MustFormatIdentifier(anno.Identifier, indent), MustFormatKeyword(anno.EqualKeyword.Keyword), MustFormatLiteral(anno.Value, ""), sep)
 }
