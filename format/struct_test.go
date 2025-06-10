@@ -160,6 +160,54 @@ struct Foo {
 }
 `,
 		},
+		{
+			name: "test struct annotation case 4",
+			args: args{
+				st: func() *parser.Struct {
+					ast, err := parser.Parse("test.thrift", []byte(`
+struct Foo {
+  // 用户名列表
+  2: list<string> strings (
+  	custom_tag_1 = "1", /* 自定义标签2 */ custom_tag_2 = "2"
+  )
+}
+`))
+					assert.NoError(t, err)
+					return ast.(*parser.Document).Structs[0]
+				}(),
+			},
+			want: `struct Foo {
+    // 用户名列表
+    2: list<string> strings (
+        custom_tag_1 = "1", /* 自定义标签2 */ custom_tag_2 = "2"
+    )
+}
+`,
+		},
+		{
+			name: "test struct annotation case 5",
+			args: args{
+				st: func() *parser.Struct {
+					ast, err := parser.Parse("test.thrift", []byte(`
+struct Foo {
+  // 用户名列表
+  2: list<string> strings (
+  	custom_tag_1 = "1", custom_tag_2 = "2"
+  )
+}
+`))
+					assert.NoError(t, err)
+					return ast.(*parser.Document).Structs[0]
+				}(),
+			},
+			want: `struct Foo {
+    // 用户名列表
+    2: list<string> strings (
+        custom_tag_1 = "1", custom_tag_2 = "2"
+    )
+}
+`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
