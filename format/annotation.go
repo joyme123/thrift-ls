@@ -23,7 +23,7 @@ func MustFormatAnnotations(annotations *parser.Annotations) string {
 
 func MustFormatAnnotation(anno *parser.Annotation, isLast bool) string {
 	sep := ""
-	if !isLast {
+	if (!isLast) && anno.ListSeparatorKeyword != nil {
 		sep = MustFormatKeyword(anno.ListSeparatorKeyword.Keyword)
 	}
 
