@@ -35,7 +35,7 @@ func MustFormatService(svc *parser.Service) string {
 	f := ServiceFormatter{
 		Comments:        comments,
 		Service:         MustFormatKeyword(svc.ServiceKeyword.Keyword),
-		Identifier:      MustFormatIdentifier(svc.Name),
+		Identifier:      MustFormatIdentifier(svc.Name, ""),
 		LCUR:            MustFormatKeyword(svc.LCurKeyword.Keyword),
 		Functions:       MustFormatFunctions(svc.Functions, Indent),
 		RCUR:            MustFormatKeyword(svc.RCurKeyword.Keyword),
@@ -47,7 +47,7 @@ func MustFormatService(svc *parser.Service) string {
 		f.Extends = " " + MustFormatKeyword(svc.ExtendsKeyword.Keyword)
 	}
 	if svc.Extends != nil {
-		f.ExtendServiceName = " " + MustFormatIdentifier(svc.Extends)
+		f.ExtendServiceName = " " + MustFormatIdentifier(svc.Extends, "")
 	}
 
 	if len(svc.Functions) > 0 {

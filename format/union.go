@@ -33,7 +33,7 @@ func MustFormatUnion(union *parser.Union) string {
 	f := UnionFormatter{
 		Comments:        comments,
 		Union:           MustFormatKeyword(union.UnionKeyword.Keyword),
-		Identifier:      MustFormatIdentifier(union.Name),
+		Identifier:      MustFormatIdentifier(union.Name, ""),
 		LCUR:            MustFormatKeyword(union.LCurKeyword.Keyword),
 		Fields:          MustFormatFields(union.Fields, Indent),
 		RCUR:            MustFormatKeyword(union.RCurKeyword.Keyword),

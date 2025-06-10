@@ -34,7 +34,7 @@ func MustFormatConst(cst *parser.Const) string {
 		Comments:        comments,
 		Const:           MustFormatKeyword(cst.ConstKeyword.Keyword),
 		Type:            MustFormatFieldType(cst.ConstType),
-		Name:            MustFormatIdentifier(cst.Name),
+		Name:            MustFormatIdentifier(cst.Name, ""),
 		Annotations:     annos,
 		Equal:           MustFormatKeyword(cst.EqualKeyword.Keyword),
 		Value:           MustFormatConstValue(cst.Value, "", false),

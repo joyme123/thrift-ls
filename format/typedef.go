@@ -27,7 +27,7 @@ func MustFormatTypedef(td *parser.Typedef) string {
 		Comments:        comments,
 		Typedef:         MustFormatKeyword(td.TypedefKeyword.Keyword),
 		Type:            MustFormatFieldType(td.T),
-		Name:            MustFormatIdentifier(td.Alias),
+		Name:            MustFormatIdentifier(td.Alias, ""),
 		Annotations:     annos,
 		EndLineComments: MustFormatEndLineComments(td.EndLineComments, ""),
 	}

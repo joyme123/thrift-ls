@@ -24,8 +24,8 @@ func MustFormatNamespace(ns *parser.Namespace) string {
 	f := &NamespaceFormatter{
 		Comments:        comments,
 		Namespace:       MustFormatKeyword(ns.NamespaceKeyword.Keyword),
-		Language:        MustFormatIdentifier(&ns.Language.Identifier),
-		Name:            MustFormatIdentifier(ns.Name),
+		Language:        MustFormatIdentifier(&ns.Language.Identifier, ""),
+		Name:            MustFormatIdentifier(ns.Name, ""),
 		Annotations:     annos,
 		EndLineComments: MustFormatEndLineComments(ns.EndLineComments, ""),
 	}

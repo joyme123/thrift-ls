@@ -33,7 +33,7 @@ func MustFormatStruct(st *parser.Struct) string {
 	f := StructFormatter{
 		Comments:        comments,
 		Struct:          MustFormatKeyword(st.StructKeyword.Keyword),
-		Identifier:      MustFormatIdentifier(st.Identifier),
+		Identifier:      MustFormatIdentifier(st.Identifier, ""),
 		LCUR:            MustFormatKeyword(st.LCurKeyword.Keyword),
 		Fields:          MustFormatFields(st.Fields, Indent),
 		RCUR:            MustFormatKeyword(st.RCurKeyword.Keyword),

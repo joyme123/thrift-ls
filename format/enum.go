@@ -32,7 +32,7 @@ func MustFormatEnum(enum *parser.Enum) string {
 	f := EnumFormatter{
 		Comments:        comments,
 		Enum:            MustFormatKeyword(enum.EnumKeyword.Keyword),
-		Identifier:      MustFormatIdentifier(enum.Name),
+		Identifier:      MustFormatIdentifier(enum.Name, ""),
 		LCUR:            MustFormatKeyword(enum.LCurKeyword.Keyword),
 		EnumValues:      MustFormatEnumValues(enum.Values, Indent),
 		RCUR:            MustFormatKeyword(enum.RCurKeyword.Keyword),

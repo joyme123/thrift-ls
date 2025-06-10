@@ -36,3 +36,44 @@ func TestMustFormatAnnotations(t *testing.T) {
 		})
 	}
 }
+
+func TestMustFormatAnnotationsInvalidCase(t *testing.T) {
+
+	doc := `
+struct Foo {
+  // 用户名列表
+  2: list<string> strings (
+    custom_tag_1 = "1"
+    custom_tag_2 = "2"
+  )
+}
+`
+	ast, err := parser.Parse("test.thrift", []byte(doc))
+	assert.NoError(t, err)
+	assert.NotNil(t, ast)
+
+	type args struct {
+		annotations *parser.Annotations
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "normal",
+			args: args{
+				annotations: ast.(*parser.Document).Structs[0].Fields[0].Annotations,
+			},
+			want: `(
+        custom_tag_1 = "1"
+        custom_tag_2 = "2"
+    )`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, MustFormatAnnotations(tt.args.annotations))
+		})
+	}
+}
