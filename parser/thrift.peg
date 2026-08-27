@@ -346,7 +346,7 @@ FieldWithThrow = Field / x:( ReservedComments !(( '}' Indent*) / DefinitionStart
 	return x.([]any)[2], nil
 }
 
-Field = comments:ReservedComments index:FieldId required:FieldReq? fieldType:FieldType id:Identifier value:(EQUAL ConstValue)? annos:Annotations? sep:ListSeparator? lineComments:ReservedEndLineComments {
+Field = comments:ReservedComments index:FieldId required:FieldReq? fieldType:FieldType ref:REFERENCE? id:Identifier value:(EQUAL ConstValue)? annos:Annotations? sep:ListSeparator? lineComments:ReservedEndLineComments {
         var constV *ConstValue
 	var equalKeyword *EqualKeyword
 	if value !=  nil {
@@ -357,8 +357,12 @@ Field = comments:ReservedComments index:FieldId required:FieldReq? fieldType:Fie
 	if required != nil {
 		requiredV = required.(*RequiredKeyword)
 	}
+	var referenceV *ReferenceKeyword
+	if ref != nil {
+		referenceV = ref.(*ReferenceKeyword)
+	}
 
-	return NewField(equalKeyword, toListSeparatorKeyword(sep), comments.([]*Comment), lineComments.([]*Comment), toAnnotations(annos), index.(*FieldIndex), requiredV, fieldType.(*FieldType), id.(*Identifier), constV, NewLocationFromCurrent(c)), nil
+	return NewField(equalKeyword, toListSeparatorKeyword(sep), comments.([]*Comment), lineComments.([]*Comment), toAnnotations(annos), index.(*FieldIndex), requiredV, fieldType.(*FieldType), referenceV, id.(*Identifier), constV, NewLocationFromCurrent(c)), nil
 }
 
 
@@ -1035,6 +1039,15 @@ EQUAL = comments:ReservedComments t:EQUALToken     Indent* {
 	return &EqualKeyword{Keyword: kw}, nil
 }
 EQUALToken = "=" {
+	return NewKeywordLiteral(c), nil
+}
+
+REFERENCE   = comments:ReservedComments t:REFERENCEToken     Indent* {
+	kw := NewKeyword(comments.([]*Comment), t.(*KeywordLiteral), NewLocationFromCurrent(c))
+
+	return &ReferenceKeyword{Keyword: kw}, nil
+}
+REFERENCEToken = "&" {
 	return NewKeywordLiteral(c), nil
 }
 

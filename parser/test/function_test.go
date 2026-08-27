@@ -56,3 +56,29 @@ func Test_ParseFunctionArgumentError(t *testing.T) {
 
 	assert.NotNil(t, ast)
 }
+
+func Test_ParseFunctionArgumentReference(t *testing.T) {
+	demoContent := `service Tree {
+void insert(1: Node & node) throws (1: TreeError & err)
+}
+`
+	ast, err := parser.Parse("test.thrift", []byte(demoContent))
+	assert.NoError(t, err)
+	assert.NotNil(t, ast)
+
+	doc := ast.(*parser.Document)
+	assert.Len(t, doc.Services, 1)
+	assert.False(t, doc.Services[0].ChildrenBadNode())
+
+	fn := doc.Services[0].Functions[0]
+
+	assert.Len(t, fn.Arguments, 1)
+	assert.NotNil(t, fn.Arguments[0].ReferenceKeyword)
+	assert.Equal(t, "&", fn.Arguments[0].ReferenceKeyword.Literal.Text)
+	assert.Equal(t, "node", fn.Arguments[0].Identifier.Name.Text)
+
+	assert.Len(t, fn.Throws.Fields, 1)
+	assert.NotNil(t, fn.Throws.Fields[0].ReferenceKeyword)
+	assert.Equal(t, "&", fn.Throws.Fields[0].ReferenceKeyword.Literal.Text)
+	assert.Equal(t, "err", fn.Throws.Fields[0].Identifier.Name.Text)
+}

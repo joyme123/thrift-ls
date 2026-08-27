@@ -191,3 +191,105 @@ func TestMustFormatFieldType(t *testing.T) {
 		})
 	}
 }
+
+func Test_FormatFieldReference(t *testing.T) {
+	tests := []struct {
+		name string
+		doc  string
+		want string
+	}{
+		{
+			name: "aligned struct fields and function argument",
+			doc: `struct Node {
+1: optional Node & next
+2: required i64 value
+3: optional list<Node> & children (cpp.ref = "true")
+}
+
+service Tree {
+void insert(1: Node & node) throws (1: TreeError & err)
+}`,
+			want: `struct Node {
+    1: optional Node       & next
+    2: required i64        value
+    3: optional list<Node> & children (cpp.ref = "true")
+}
+
+service Tree {
+    void insert(1: Node & node) throws (1: TreeError & err)
+}`,
+		},
+		{
+			name: "marker is normalized to a single surrounding space",
+			doc:  "struct A {\n1: Node&next\n}",
+			want: "struct A {\n    1: Node & next\n}",
+		},
+		{
+			name: "newline between marker and name is joined",
+			doc:  "struct A {\n1: Node &\nnext\n}",
+			want: "struct A {\n    1: Node & next\n}",
+		},
+		{
+			name: "comment before the marker is kept",
+			doc:  "struct A {\n1: Node /* a */ & next\n}",
+			want: "struct A {\n    1: Node /* a */ & next\n}",
+		},
+		{
+			name: "comment between marker and name is kept",
+			doc:  "struct A {\n1: Node & /* retain */ next\n}",
+			want: "struct A {\n    1: Node & /* retain */ next\n}",
+		},
+		{
+			name: "comments on both sides of the marker are kept",
+			doc:  "struct A {\n1: Node /* a */ & /* b */ next\n}",
+			want: "struct A {\n    1: Node /* a */ & /* b */ next\n}",
+		},
+		{
+			name: "comment before the name without a marker is kept",
+			doc:  "struct A {\n1: Node /* c */ next\n}",
+			want: "struct A {\n    1: Node /* c */ next\n}",
+		},
+		{
+			name: "comment in a function argument is kept",
+			doc:  "service S {\nvoid f(1: Node & /* c */ n)\n}",
+			want: "service S {\n    void f(1: Node & /* c */ n)\n}",
+		},
+		{
+			name: "marker with default value",
+			doc:  "struct A {\n1: optional Node & next = 1\n}",
+			want: "struct A {\n    1: optional Node & next = 1\n}",
+		},
+		{
+			name: "marker in union and exception fields",
+			doc:  "union U {\n1: U & other\n}\n\nexception E {\n1: E & other\n}",
+			want: "union U {\n    1: U & other\n}\n\nexception E {\n    1: E & other\n}",
+		},
+	}
+
+	FieldLineComma = FieldLineCommaDisable
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ast, err := parser.Parse("test.thrift", []byte(tt.doc))
+			assert.NoError(t, err)
+			assert.NotNil(t, ast)
+
+			formated, err := FormatDocument(ast.(*parser.Document))
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, formated)
+
+			// self validation reparses the formatted result and compares it against
+			// the original ast, so it fails if the reference marker or a comment
+			// attached to the field identifier is dropped
+			_, err = FormatDocumentWithValidation(ast.(*parser.Document), true)
+			assert.NoError(t, err)
+
+			// formatting is a fixed point
+			reparsed, err := parser.Parse("test.thrift", []byte(formated))
+			assert.NoError(t, err)
+			again, err := FormatDocumentWithValidation(reparsed.(*parser.Document), true)
+			assert.NoError(t, err)
+			assert.Equal(t, formated, again)
+		})
+	}
+}

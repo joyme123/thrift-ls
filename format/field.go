@@ -75,6 +75,12 @@ func MustFormatField(field *parser.Field, space string, indent string, oneline b
 		required = MustFormatKeyword(field.RequiredKeyword.Keyword) + space
 	}
 
+	// a plain space, not `space`: the marker must not add a tabwriter column
+	reference := ""
+	if field.ReferenceKeyword != nil {
+		reference = MustFormatKeyword(field.ReferenceKeyword.Keyword) + " "
+	}
+
 	value := ""
 	if field.ConstValue != nil {
 		equalSpace := space
@@ -83,7 +89,7 @@ func MustFormatField(field *parser.Field, space string, indent string, oneline b
 		}
 		value = fmt.Sprintf("%s%s%s%s", equalSpace, MustFormatKeyword(field.EqualKeyword.Keyword), equalSpace, MustFormatConstValue(field.ConstValue, indent, false))
 	}
-	str := fmt.Sprintf("%s%d:%s%s%s%s%s%s", indent, field.Index.Value, space, required, MustFormatFieldType(field.FieldType), space, field.Identifier.Name.Text, value)
+	str := fmt.Sprintf("%s%d:%s%s%s%s%s%s%s", indent, field.Index.Value, space, required, MustFormatFieldType(field.FieldType), space, reference, MustFormatIdentifier(field.Identifier, ""), value)
 	buf.WriteString(str)
 	buf.WriteString(annos)
 	if FieldLineComma == FieldLineCommaAdd && !oneline {
