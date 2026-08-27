@@ -2961,11 +2961,12 @@ func ConvertPosition(pos position) Position {
 }
 
 type Field struct {
-	Index           *FieldIndex
-	RequiredKeyword *RequiredKeyword
-	FieldType       *FieldType
-	Identifier      *Identifier
-	ConstValue      *ConstValue
+	Index            *FieldIndex
+	RequiredKeyword  *RequiredKeyword
+	FieldType        *FieldType
+	ReferenceKeyword *ReferenceKeyword // can be nil
+	Identifier       *Identifier
+	ConstValue       *ConstValue
 
 	EqualKeyword         *EqualKeyword         // can be nil
 	ListSeparatorKeyword *ListSeparatorKeyword // can be nil
@@ -2978,7 +2979,7 @@ type Field struct {
 	Location
 }
 
-func NewField(equalKeyword *EqualKeyword, listSeparatorKeyword *ListSeparatorKeyword, comments []*Comment, endLineComments []*Comment, annotations *Annotations, index *FieldIndex, required *RequiredKeyword, fieldType *FieldType, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
+func NewField(equalKeyword *EqualKeyword, listSeparatorKeyword *ListSeparatorKeyword, comments []*Comment, endLineComments []*Comment, annotations *Annotations, index *FieldIndex, required *RequiredKeyword, fieldType *FieldType, reference *ReferenceKeyword, identifier *Identifier, constValue *ConstValue, loc Location) *Field {
 	field := &Field{
 		EqualKeyword:         equalKeyword,
 		ListSeparatorKeyword: listSeparatorKeyword,
@@ -2988,6 +2989,7 @@ func NewField(equalKeyword *EqualKeyword, listSeparatorKeyword *ListSeparatorKey
 		Index:                index,
 		RequiredKeyword:      required,
 		FieldType:            fieldType,
+		ReferenceKeyword:     reference,
 		Identifier:           identifier,
 		ConstValue:           constValue,
 		Location:             loc,
@@ -3009,6 +3011,9 @@ func (f *Field) Children() []Node {
 	}
 	if f.FieldType != nil {
 		res = append(res, f.FieldType)
+	}
+	if f.ReferenceKeyword != nil {
+		res = append(res, f.ReferenceKeyword)
 	}
 	if f.Identifier != nil {
 		res = append(res, f.Identifier)
@@ -3081,6 +3086,10 @@ func (f *Field) Equals(node Node) bool {
 	}
 
 	if !f.FieldType.Equals(fn.FieldType) {
+		return false
+	}
+
+	if !f.ReferenceKeyword.Equals(fn.ReferenceKeyword) {
 		return false
 	}
 
@@ -3251,6 +3260,31 @@ func (r *RequiredKeyword) Type() string {
 
 func (r *RequiredKeyword) Equals(node Node) bool {
 	rn, ok := node.(*RequiredKeyword)
+	if !ok {
+		return false
+	}
+
+	if (r == nil && rn != nil) ||
+		(r != nil && rn == nil) {
+		return false
+	} else if r == nil && rn == nil {
+		return true
+	}
+
+	return r.Keyword.Equals(&rn.Keyword)
+}
+
+// ReferenceKeyword is the '&' marker in a field declaration (recursive struct members)
+type ReferenceKeyword struct {
+	Keyword
+}
+
+func (r *ReferenceKeyword) Type() string {
+	return "ReferenceKeyword"
+}
+
+func (r *ReferenceKeyword) Equals(node Node) bool {
+	rn, ok := node.(*ReferenceKeyword)
 	if !ok {
 		return false
 	}
