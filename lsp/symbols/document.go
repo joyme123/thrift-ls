@@ -37,6 +37,13 @@ func DocumentSymbols(ctx context.Context, ss *cache.Snapshot, file uri.URI) []*p
 		}
 	}
 
+	for i := range doc.Enums {
+		child := EnumSymbol(doc.Enums[i])
+		if child != nil {
+			res = append(res, child)
+		}
+	}
+
 	for i := range doc.Structs {
 		child := StructSymbol(doc.Structs[i])
 		if child != nil {
