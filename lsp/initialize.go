@@ -8,6 +8,7 @@ import (
 
 	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/lsp/cache"
+	"github.com/joyme123/thrift-ls/lsp/lsputils"
 	log "github.com/sirupsen/logrus"
 	"go.lsp.dev/uri"
 )
@@ -27,6 +28,11 @@ func (s *Server) initialize(ctx context.Context, params *protocol.InitializePara
 		folders = append(folders, uri.URI(ws.URI))
 	}
 
+	roots := make([]string, 0, len(folders))
+	for i := range folders {
+		roots = append(roots, folders[i].Filename())
+	}
+	lsputils.SetIncludeRoots(roots)
 	log.Debugln("initialized folders: ", folders)
 	if len(folders) > 0 {
 		s.session.Initialize(func() {
