@@ -1,6 +1,8 @@
 package lsputils
 
 import (
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/joyme123/thrift-ls/parser"
@@ -9,6 +11,14 @@ import (
 )
 
 func Test_IncludeURI(t *testing.T) {
+	t.Cleanup(func() { SetIncludeRoots(nil) })
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	packageDir := filepath.Dir(file)
+	repositoryRoot := filepath.Clean(filepath.Join(packageDir, "..", ".."))
+
 	type args struct {
 		cur         uri.URI
 		includePath string
@@ -50,7 +60,32 @@ func Test_IncludeURI(t *testing.T) {
 			},
 			want: uri.File("/tmp/workspace/user.subpath.thrift"),
 		},
+		{
+			name: "relative include takes precedence",
+			args: args{
+				cur:         uri.File(filepath.Join(packageDir, "utils.go")),
+				includePath: "utils_test.go",
+			},
+			want: uri.File(filepath.Join(packageDir, "utils_test.go")),
+		},
+		{
+			name: "workspace root include",
+			args: args{
+				cur:         uri.File(filepath.Join(packageDir, "missing.thrift")),
+				includePath: "go.mod",
+			},
+			want: uri.File(filepath.Join(repositoryRoot, "go.mod")),
+		},
+		{
+			name: "missing include falls back to relative path",
+			args: args{
+				cur:         uri.File(filepath.Join(packageDir, "missing.thrift")),
+				includePath: "does-not-exist.thrift",
+			},
+			want: uri.File(filepath.Join(packageDir, "does-not-exist.thrift")),
+		},
 	}
+	SetIncludeRoots([]string{repositoryRoot})
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, IncludeURI(tt.args.cur, tt.args.includePath))

@@ -1,14 +1,38 @@
 package lsputils
 
 import (
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/joyme123/protocol"
 	"github.com/joyme123/thrift-ls/parser"
 	"go.lsp.dev/uri"
 )
+
+var (
+	includeRootsMu sync.RWMutex
+	includeRoots   []string
+)
+
+func SetIncludeRoots(roots []string) {
+	includeRootsMu.Lock()
+	defer includeRootsMu.Unlock()
+	includeRoots = append([]string(nil), roots...)
+}
+
+func getIncludeRoots() []string {
+	includeRootsMu.RLock()
+	defer includeRootsMu.RUnlock()
+	return append([]string(nil), includeRoots...)
+}
+
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
+}
 
 func ASTNodeToRange(node parser.Node) protocol.Range {
 	return protocol.Range{
@@ -65,12 +89,21 @@ func GetIncludePath(ast *parser.Document, includeName string) string {
 // includePath is include name used in code. for example: base.thrift
 func IncludeURI(cur uri.URI, includePath string) uri.URI {
 	filePath := cur.Filename()
-	items := strings.Split(filePath, string(filepath.Separator))
-	basePath := strings.TrimSuffix(filePath, items[len(items)-1])
+	basePath := filepath.Dir(filePath)
 
-	path := filepath.Join(basePath, includePath)
+	relativePath := filepath.Join(basePath, includePath)
+	if fileExists(relativePath) {
+		return uri.File(relativePath)
+	}
 
-	return uri.File(path)
+	for _, root := range getIncludeRoots() {
+		candidate := filepath.Join(root, includePath)
+		if fileExists(candidate) {
+			return uri.File(candidate)
+		}
+	}
+
+	return uri.File(relativePath)
 }
 
 // ParseIdent parse an identifier. identifier format:
