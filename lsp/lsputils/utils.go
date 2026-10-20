@@ -71,18 +71,27 @@ func GetIncludePath(ast *parser.Document, includeName string) string {
 		if include.BadNode || include.Path == nil || include.Path.BadNode || include.Path.Value == nil {
 			continue
 		}
-		items := strings.Split(include.Path.Value.Text, "/")
-		path := items[len(items)-1]
-		if !strings.HasSuffix(path, ".thrift") {
-			continue
-		}
-		name := strings.TrimSuffix(path, ".thrift")
-		if name == includeName {
+		if includeNameMatchesPath(include.Path.Value.Text, includeName) {
 			return include.Path.Value.Text
 		}
 	}
 
 	return ""
+}
+
+func includeNameMatchesPath(includePath, includeName string) bool {
+	items := strings.Split(filepath.ToSlash(includePath), "/")
+	if len(items) == 0 {
+		return false
+	}
+
+	fileName := items[len(items)-1]
+	if !strings.HasSuffix(fileName, ".thrift") {
+		return false
+	}
+
+	fileName = strings.TrimSuffix(fileName, ".thrift")
+	return includeName == fileName || (len(items) > 1 && includeName == items[0])
 }
 
 // cur is current file uri. for example file:///tmp/user.thrift
@@ -104,6 +113,10 @@ func IncludeURI(cur uri.URI, includePath string) uri.URI {
 	}
 
 	return uri.File(relativePath)
+}
+
+func IncludeExists(cur uri.URI, includePath string) bool {
+	return fileExists(IncludeURI(cur, includePath).Filename())
 }
 
 // ParseIdent parse an identifier. identifier format:
@@ -139,8 +152,12 @@ func IncludeNames(cur uri.URI, includes []*parser.Include) (includeNames []strin
 		if inc.Path != nil && inc.Path.Value != nil {
 			path := inc.Path.Value.Text
 			u := IncludeURI(cur, path)
-			includeName := GetIncludeName(u)
-			includeNames = append(includeNames, includeName)
+			includeNames = append(includeNames, GetIncludeName(u))
+
+			items := strings.Split(filepath.ToSlash(path), "/")
+			if len(items) > 1 && items[0] != "." && items[0] != ".." && items[0] != includeNames[len(includeNames)-1] {
+				includeNames = append(includeNames, items[0])
+			}
 		}
 	}
 

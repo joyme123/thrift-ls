@@ -49,10 +49,29 @@ func (s *SemanticAnalysis) diagnostic(ctx context.Context, ss *cache.Snapshot, c
 
 	res := s.checkDefineConflict(ctx, pf)
 
+	res = append(res, s.checkIncludesExist(changeFile, pf.AST())...)
 	items := s.checkDefinitionExist(ctx, ss, changeFile, pf)
 	res = append(res, items...)
 
 	return res, nil
+}
+
+func (s *SemanticAnalysis) checkIncludesExist(file uri.URI, ast *parser.Document) []protocol.Diagnostic {
+	res := make([]protocol.Diagnostic, 0)
+	for _, include := range ast.Includes {
+		if include.BadNode || include.Path == nil || include.Path.BadNode || include.Path.Value == nil {
+			continue
+		}
+		if !lsputils.IncludeExists(file, include.Path.Value.Text) {
+			res = append(res, protocol.Diagnostic{
+				Range:    lsputils.ASTNodeToRange(include.Path),
+				Severity: protocol.DiagnosticSeverityError,
+				Source:   "thrift-ls",
+				Message:  "included file doesn't exist",
+			})
+		}
+	}
+	return res
 }
 
 func (s *SemanticAnalysis) checkDefineConflict(ctx context.Context, pf *cache.ParsedFile) []protocol.Diagnostic {

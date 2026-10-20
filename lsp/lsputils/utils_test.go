@@ -1,6 +1,7 @@
 package lsputils
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -9,6 +10,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.lsp.dev/uri"
 )
+
+func TestIncludeExists(t *testing.T) {
+	root := t.TempDir()
+	include := filepath.Join(root, "shared", "v1", "identity.thrift")
+	assert.NoError(t, os.MkdirAll(filepath.Dir(include), 0o755))
+	assert.NoError(t, os.WriteFile(include, []byte(""), 0o644))
+	SetIncludeRoots([]string{root})
+	t.Cleanup(func() { SetIncludeRoots(nil) })
+
+	current := uri.File(filepath.Join(root, "auth", "auth.thrift"))
+	assert.True(t, IncludeExists(current, "shared/v1/identity.thrift"))
+	assert.False(t, IncludeExists(current, "shared/v1/missing.thrift"))
+}
 
 func Test_IncludeURI(t *testing.T) {
 	t.Cleanup(func() { SetIncludeRoots(nil) })
@@ -96,6 +110,7 @@ func Test_IncludeURI(t *testing.T) {
 func TestGetIncludePath(t *testing.T) {
 	file := `include "../../user.thrift"
 include "../../user.extra.thrift"
+include "shared/v1/identity.thrift"
 service Demo {
   user.Test Api(1:user.Test2 arg1, 2:user.Test3 arg2) throws (1:user.Error1 err)
 }`
@@ -126,6 +141,14 @@ service Demo {
 				includeName: "user.extra",
 			},
 			want: "../../user.extra.thrift",
+		},
+		{
+			name: "directory alias",
+			args: args{
+				ast:         ast.(*parser.Document),
+				includeName: "shared",
+			},
+			want: "shared/v1/identity.thrift",
 		},
 	}
 	for _, tt := range tests {
@@ -237,6 +260,24 @@ func TestParseIdent(t *testing.T) {
 		wantInclude string
 		wantIdent   string
 	}{
+		{
+			name: "directory alias",
+			args: args{
+				cur: uri.New("/tmp/auth.thrift"),
+				includes: []*parser.Include{
+					{
+						Path: &parser.Literal{
+							Value: &parser.LiteralValue{
+								Text: "shared/v1/identity.thrift",
+							},
+						},
+					},
+				},
+				identifier: "shared.AccountIdentity",
+			},
+			wantInclude: "shared",
+			wantIdent:   "AccountIdentity",
+		},
 		{
 			name: "case 1",
 			args: args{
