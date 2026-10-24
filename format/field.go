@@ -23,11 +23,7 @@ func MustFormatFields(fields []*parser.Field, indent string) string {
 			fieldGroups = append(fieldGroups, fg)
 			fg = make(fieldGroup, 0)
 		}
-		space := " "
-		if Align == AlignTypeField {
-			space = "\t"
-		}
-		fg = append(fg, MustFormatField(field, space, indent, false))
+		fg = append(fg, MustFormatField(field, fieldSpace(), indent, false))
 		fmtCtx.preNode = field
 	}
 
@@ -38,17 +34,25 @@ func MustFormatFields(fields []*parser.Field, indent string) string {
 	for i, fg := range fieldGroups {
 		w := new(tabwriter.Writer)
 		w.Init(buf, 1, 8, 1, ' ', tabwriter.TabIndent)
-		for j := range fg {
-			fmt.Fprintln(w, fg[j])
+		for _, field := range fg {
+			fmt.Fprintln(w, field)
 		}
 		w.Flush()
 
 		if i < len(fieldGroups)-1 {
 			buf.WriteString("\n")
 		}
+
 	}
 
 	return buf.String()
+}
+
+func fieldSpace() string {
+	if Align == AlignTypeField {
+		return "\t"
+	}
+	return " "
 }
 
 func MustFormatOneLineFields(fields []*parser.Field) string {
@@ -99,7 +103,11 @@ func MustFormatField(field *parser.Field, space string, indent string, oneline b
 	}
 
 	if len(field.EndLineComments) > 0 {
-		buf.WriteString(MustFormatEndLineComments(field.EndLineComments, ""))
+		endLineSpace := " "
+		if Align == AlignTypeField {
+			endLineSpace = "\t"
+		}
+		buf.WriteString(MustFormatEndLineComments(field.EndLineComments, "", endLineSpace))
 	}
 
 	// remove space at end of line

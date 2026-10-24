@@ -23,11 +23,7 @@ func MustFormatEnumValues(values []*parser.EnumValue, indent string) string {
 			enumValueGroups = append(enumValueGroups, eg)
 			eg = make(enumValueGroup, 0)
 		}
-		space := " "
-		if Align == AlignTypeField {
-			space = "\t"
-		}
-		eg = append(eg, MustFormatEnumValue(v, space, indent))
+		eg = append(eg, MustFormatEnumValue(v, enumValueSpace(), indent))
 		fmtCtx.preNode = values[i]
 	}
 
@@ -38,17 +34,25 @@ func MustFormatEnumValues(values []*parser.EnumValue, indent string) string {
 	for i, eg := range enumValueGroups {
 		w := new(tabwriter.Writer)
 		w.Init(buf, 1, 8, 1, ' ', tabwriter.TabIndent)
-		for j := range eg {
-			fmt.Fprintln(w, eg[j])
+		for _, value := range eg {
+			fmt.Fprintln(w, value)
 		}
 		w.Flush()
 
 		if i < len(enumValueGroups)-1 {
 			buf.WriteString("\n")
 		}
+
 	}
 
 	return buf.String()
+}
+
+func enumValueSpace() string {
+	if Align == AlignTypeField {
+		return "\t"
+	}
+	return " "
 }
 
 func MustFormatEnumValue(enumValue *parser.EnumValue, space, indent string) string {
@@ -78,7 +82,11 @@ func MustFormatEnumValue(enumValue *parser.EnumValue, space, indent string) stri
 		}
 	}
 
-	buf.WriteString(MustFormatEndLineComments(enumValue.EndLineComments, ""))
+	endLineSpace := " "
+	if Align == AlignTypeField {
+		endLineSpace = "\t"
+	}
+	buf.WriteString(MustFormatEndLineComments(enumValue.EndLineComments, "", endLineSpace))
 
 	return buf.String()
 }
